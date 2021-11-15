@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_INTF" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOINTERF>
+    <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Database reader that supports unit test fakes on it</DESCRIPT>
+    <EXPOSURE>2</EXPOSURE>
+    <STATE>1</STATE>
+    <UNICODE>X</UNICODE>
+   </VSEOINTERF>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>COMMIT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Commits changes in database</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>DELETE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs delete according to SQL query</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>DELETE_BY_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs delete from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>FETCH_NEXT_CURSOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns subsequend result set of previously opened cursor</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>FETCH_NEXT_CURSOR_TO_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns subsequend result set of previously opened cursor</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>INSERT_BY_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs insert from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>MODIFY_BY_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs modify from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>OPEN_CURSOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Open cursor for select, call fetch_next_cursor to get data</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Execute select and returns to internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>SELECT_TO_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Execute select and returns to internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>UPDATE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs update according to SQL query</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>UPDATE_BY_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs update from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

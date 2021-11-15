@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Implementation to read from real database</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZTESTABLE_DB_LAYER</MSG_ID>
+    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CHECK_COMP_NAME_UNIQUE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if component name is unique</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_COMPUTE_COMPONENT_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Compute component name to make obvious but unique</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_COMPUTE_COMP_NAMES_FOR_PARAMS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Computes component name in dynamic structure for each param</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CONSIDER_IF_HOST_ALREADY_WAS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Consider situation if new syntax @ symbol was already in SQL</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CONVERT_ITAB_FOR_DB_OPERATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts input internal table for db update operation</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_DUMMY_STRUCTURE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Create dummy structure just to make field symbol assigned</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_DYNAMIC_STRUCT_FORPARS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates dynamic structure where params will be stored</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_INTERNAL_TABLE_FOR_TAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates dynamic internal table like a transparent table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_STANDARD_LIKE_ANY_TAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates dynamic standard table with same type as given table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_TYPE_FOR_PARAMETER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates a type for dynamic structure with where parameters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_EXECUTE_DELETE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Executes DELETE SQL statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_EXECUTE_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Executes select to database</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_EXECUTE_UPDATE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Executes UPDATE SQL statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_OPEN_CURSOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Opens cursor for select</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_PREPARE_FOR_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepare some variables before actual select</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_PREPARE_FOR_UPDATE_DELETE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepare some variables before actual update/delete</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_PREPARE_RESULT_TABLE_FOR_SEL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepares result table for select if necessary</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_PREPARE_SET_FOR_UPDATE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepares set statement according to possible parameters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_PREPARE_WHERE_FOR_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepares where condition for select according to parameters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_REPLACE_FOR_ALL_ENTRIES_TAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Replaces for all entries table name in where clause</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_REPLACE_PARAM_NAMES_IN_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Replaces param names in where clause to bind to dynamic stru</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_SET_PARAM_VALUE_TO_STRUCT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Sets value of parameter to dynamic struct for where clause</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

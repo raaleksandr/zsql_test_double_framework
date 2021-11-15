@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Data store for virtual database data to use in fake objects</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZTESTABLE_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>CREATE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates instance of Z SQL test environment</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>GET_DB_LAYER_FOR_PRODUCTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Create instance of zif_zosql_db_layer for production use</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>MO_FACTORY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Testable database layer factory interface</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>_CREATE_TABLE_RECORD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates record for specified table name</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>_IS_TRANSPARENT_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>If the type is transparent table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>_RAISE_CANNOT_DETECT_TABNAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception that table name could not be detected</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

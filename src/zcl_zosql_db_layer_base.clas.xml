@@ -1,0 +1,187 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Base class for testable db readers</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZTESTABLE_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>CREATE_DYNAMIC_TAB_FOR_RESULT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates dynamic table for result of &apos;SELECT&apos; statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>DELETE_BY_SQL_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs DELETE by SQL passed by parts</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>DETECT_IF_NEW_SYNTAX_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Detects if new syntax is demanded according to SELECT fields</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>IF_TABLE_CONSISTS_OF_STRUCTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if lines of table are structures</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>PREPARE_N_OF_ROWS_FOR_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepare expression under number of rows for select</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>RETURN_RESULT_OF_SELECT_TOITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns result of SQL select statement to internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>SELECT_BY_SQL_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Execute select to read data parameters passed as SQL parts</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>SPLIT_SELECT_INTO_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits SQL select statement into parts (from, where etc)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>UPDATE_BY_SQL_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs UPDATE by SQL passed by parts</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_DETECT_IF_NEW_SYNTAX_SET</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if there is new syntax in &apos;SET&apos; statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_DETECT_IF_NEW_SYNTAX_WHERE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if there is new syntax in where clause of SQL</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_FIND_WORD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Finds a word and returns its position info</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_GET_ORDER_BY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Gets order by from SQL statement if it exists</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_DELETE_TABLE_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Takes table name from delete statement and returns rest</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_FIELD_LIST</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Gets SQL field list from Query and deletes it</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_FOR_ALL_ENTRIES_TABNAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Gets &apos;FOR ALL ENTRIES&apos; base table name and deletes</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_FROM</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns &apos;FROM&apos; part of SQL statement and deletes it</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_GROUP_BY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns &apos;GROUP BY&apos; part of SQL statement and deletes it</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_SET_STATEMENT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Extracts set statement from SQL</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_UPDATE_TABLE_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Takes table name from update statement and returns rest</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_UP_TO_N_ROWS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Extracts &apos;UP TO &lt;&gt; ROWS&apos; statement of SQL expression</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_WHERE_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns &apos;where&apos; part of SQL statement and deletes it</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_POP_WHERE_UPDATE_DELETE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns where clause from UPDATE/DELETE SQL statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_REPLACE_SEPARATORS_TO_SPACE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Replaces different separators to space (cl/lr, tab etc)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_RETURN_LINE_TO_RESULT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns one line of table into result struct (or value)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_RETURN_TABLE_TO_RESULT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns result table into method parameter ET_RESULT_TABLE</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_SPLIT_DELETE_INTO_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits DELETE SQL statement into parts</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
+     <CMPNAME>_SPLIT_UPDATE_INTO_PARTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits UPDATE SQL statement into parts</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
