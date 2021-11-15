@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Instance that stores parameters for dynamic SQL Query</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+     <CMPNAME>CHECK_PARAMETER_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks placeholder of parameter on existence</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+     <CMPNAME>GET_PARAMETER_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data of parameter by parameter in select</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+     <CMPNAME>GET_PARAMETER_VALUE_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns reference to correct parameter value</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_PARAMETERS</CLSNAME>
+     <CMPNAME>MT_PARAMETERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Parameters for SQL for Z-SQL Double Framework</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

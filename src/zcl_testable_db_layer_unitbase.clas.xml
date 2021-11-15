@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_TESTABLE_DB_LAYER_UNITBASE</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Base class for unit test classes</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_LAYER_UNITBASE</CLSNAME>
+     <CMPNAME>CLEAR_MANDANT_FIELD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Clears value of mandant field in all lines of internal table</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

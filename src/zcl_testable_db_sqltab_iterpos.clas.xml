@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Position of iterator on virtual database</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>ADD_DATA_SET_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Adds data about a dataset into the object</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>GET_DATA_SET_LIST</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns list of dataset laying in object at the moment</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>GET_FIELD_REF_OF_DATA_SET</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns field value of given dataset</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>GET_FIRST_DATA_SET</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns params of the first dataset laying in object</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>GET_LINE_FIRST_DATA_SET_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns ref to line with data of first data set</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_SQLTAB_ITERPOS</CLSNAME>
+     <CMPNAME>GET_LINE_FOR_DATA_SET_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns ref to line with data of certain set</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

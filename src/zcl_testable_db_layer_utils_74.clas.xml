@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_TESTABLE_DB_LAYER_UTILS_74</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Some utils starting with 7.40</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZTESTABLE_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_LAYER_UTILS_74</CLSNAME>
+     <CMPNAME>EXECUTE_SELECT_740</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Executes select to database</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_TESTABLE_DB_LAYER_UTILS_74</CLSNAME>
+     <CMPNAME>OPEN_CURSOR_740</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Opens cursor for select to database</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
