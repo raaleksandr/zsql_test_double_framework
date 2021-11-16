@@ -7,7 +7,7 @@ SAP offers a very powerful library for this - SQL Test Double Framework, includi
 But unfortunately the tool is available only since 7.51 version, but there is a lot of projects having maximum 7.50 version of SAP - all ERP installations, SAP Solution Manager etc. So a lot of projects are out of this possibility.  
 For older systems the solution is to use Z-SQL Test Double Framework, a library that allows to mock database interaction by using dynamic SQL calls and special interface called ZIF_ZOSQL_DB_LAYER.  
 
-# Quick start examples
+# Quick start example
 
 " Production code - initialization  
 go_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).  
