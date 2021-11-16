@@ -43,5 +43,5 @@ cl_aunit_assert=>assert_equals( exp = lt_sbook act = lt_sbook_selected ).
 More examples you can find in programs inside project:  
 ZTESTABLE_DB_EXAMPLE_HELLWORLD - a set of database select examples with some unit tests;  
 ZTESTABLE_DB_EXAMPLE_REP - report with several selects and further data modification before alv output. Also contains unit tests for the report;  
-ZTESTABLE_DB_EXAMPLE_REP_INIT - report not using library to show the difference of using Z-SQL Test double framework. Contains no tests;  
 ZTESTABLE_DB_EXAMPLE_DBCHANGE - example of program that writes data to database. Also contains unit tests.  
+ZTESTABLE_DB_EXAMPLE_REP_INIT - the same as ZTESTABLE_DB_EXAMPLE_REP but it does not use the interface. You can compare these two reports to see the difference between code that uses Z-SQL Test Double Framework and the one written just with regular Open SQL
