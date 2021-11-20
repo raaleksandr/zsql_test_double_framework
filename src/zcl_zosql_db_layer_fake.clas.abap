@@ -11,7 +11,7 @@ public section.
     returning
       value(RD_DATA_SET_FOR_SELECT) type ref to DATA
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
@@ -59,10 +59,10 @@ private section.
       !IV_WHERE type STRING
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IO_ITERATOR type ref to ZCL_TESTABLE_DB_SQLTABLES_ITER
-      !IO_SQL_EXECUTOR_FOR_LINE type ref to ZIF_TESTABLE_DB_SQL_EXEC_LINE
+      !IO_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_SQL_EXECUTOR_FOR_LINE type ref to ZIF_ZOSQL_SQL_EXEC_LINE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _PARSE_CONDITION_AS_PARAM
     importing
       !IV_FOR_ALL_ENTRIES_PARAM type STRING
@@ -70,7 +70,7 @@ private section.
     returning
       value(RS_PARAMETER) type ZOSQL_DB_LAYER_PARAM
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _FIND_FOR_ALL_ENTRIES_CONDS
     importing
       !IV_WHERE type STRING
@@ -85,7 +85,7 @@ private section.
     changing
       !CT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _SELECT
     importing
       !IV_SELECT type STRING
@@ -101,7 +101,7 @@ private section.
     exporting
       !ET_RESULT_TABLE type ANY TABLE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _SELECT_FOR_ALL_ENTRIES
     importing
       !IV_SELECT type STRING
@@ -117,7 +117,7 @@ private section.
     exporting
       !ET_RESULT_TABLE type ANY TABLE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
@@ -127,14 +127,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD CONSTRUCTOR.
 
-    DATA: lo_factory TYPE REF TO zif_testable_db_factory.
+    DATA: lo_factory TYPE REF TO zif_zosql_factory.
 
     super->constructor( ).
 
     IF io_zosql_test_environment IS BOUND.
       mo_zosql_test_environment = io_zosql_test_environment.
     ELSE.
-      CREATE OBJECT lo_factory TYPE zcl_testable_db_factory.
+      CREATE OBJECT lo_factory TYPE zcl_zosql_factory.
       mo_zosql_test_environment = lo_factory->get_test_environment( ).
     ENDIF.
   ENDMETHOD.
@@ -145,8 +145,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     DATA: lv_select_field_list TYPE string,
           lv_from              TYPE string,
           lv_new_syntax        TYPE abap_bool,
-          lo_from_iterator     TYPE REF TO zcl_testable_db_sqltables_iter,
-          lo_select            TYPE REF TO zcl_testable_db_select_parser.
+          lo_from_iterator     TYPE REF TO zcl_zosql_sqltables_iter,
+          lo_select            TYPE REF TO zcl_zosql_select_parser.
 
     split_select_into_parts( EXPORTING iv_select            = iv_select
                              IMPORTING ev_select_field_list = lv_select_field_list
@@ -171,9 +171,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD DELETE_BY_SQL_PARTS.
 
-    DATA: lo_table_iterator           TYPE REF TO zcl_testable_db_sqltables_iter,
+    DATA: lo_table_iterator           TYPE REF TO zcl_zosql_sqltables_iter,
           ld_ref_to_buffer_for_delete TYPE REF TO data,
-          lo_sql_executor_for_line    TYPE REF TO zcl_testable_db_sql_exec_delet.
+          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_delet.
 
     FIELD-SYMBOLS: <lt_buffer> TYPE STANDARD TABLE.
 
@@ -265,13 +265,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
-  METHOD UPDATE_BY_SQL_PARTS.
+  METHOD update_by_sql_parts.
 
-    DATA: lo_parameters               TYPE REF TO zcl_testable_db_parameters,
-          lo_set                      TYPE REF TO zcl_testable_db_set_parser,
-          lo_table_iterator           TYPE REF TO zcl_testable_db_sqltables_iter,
+    DATA: lo_parameters               TYPE REF TO zcl_zosql_parameters,
+          lo_set                      TYPE REF TO zcl_zosql_set_parser,
+          lo_table_iterator           TYPE REF TO zcl_zosql_sqltables_iter,
           ld_ref_to_buffer_for_update TYPE REF TO data,
-          lo_sql_executor_for_line TYPE REF TO zcl_testable_db_sql_exec_updat.
+          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_updat.
 
     FIELD-SYMBOLS: <lt_buffer> TYPE STANDARD TABLE.
 
@@ -336,8 +336,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     READ TABLE mt_cursors WITH KEY cursor_number = iv_cursor ASSIGNING <ls_cursor>.
     IF sy-subrc <> 0.
-      MESSAGE e072 WITH iv_cursor INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e072 WITH iv_cursor INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
     ASSIGN <ls_cursor>-ref_to_result_of_select->* TO <lt_result_of_select_all>.
@@ -463,23 +463,23 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     FIELD-SYMBOLS: <ls_result_first_line> TYPE any,
                    <ls_new_result_line>   TYPE any.
 
-    DATA: lo_iter_pos        TYPE REF TO zcl_testable_db_sqltab_iterpos,
-          lo_where           TYPE REF TO zif_testable_db_sqlcond_parser,
-          lo_parameters      TYPE REF TO zcl_testable_db_parameters,
+    DATA: lo_iter_pos        TYPE REF TO zcl_zosql_sqltab_iterpos,
+          lo_where           TYPE REF TO zif_zosql_sqlcond_parser,
+          lo_parameters      TYPE REF TO zcl_zosql_parameters,
           lv_not_end_of_data TYPE abap_bool.
 
     CREATE OBJECT lo_parameters
       EXPORTING
         it_parameters = it_parameters.
 
-    CREATE OBJECT lo_where TYPE zcl_testable_db_where_parser
+    CREATE OBJECT lo_where TYPE zcl_zosql_where_parser
       EXPORTING
         io_parameters = lo_parameters
         iv_new_syntax = iv_new_syntax.
 
     lo_where->parse_condition( iv_where ).
 
-    lv_not_end_of_data = io_iterator->zif_testable_db_iterator~move_to_first( ).
+    lv_not_end_of_data = io_iterator->zif_zosql_iterator~move_to_first( ).
 
     WHILE lv_not_end_of_data = abap_true.
 
@@ -489,7 +489,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         io_sql_executor_for_line->execute_sql_for_line( lo_iter_pos ).
       ENDIF.
 
-      lv_not_end_of_data = io_iterator->zif_testable_db_iterator~move_to_next( ).
+      lv_not_end_of_data = io_iterator->zif_zosql_iterator~move_to_next( ).
     ENDWHILE.
   endmethod.
 
@@ -523,11 +523,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <lv_value_for_all_entries> TYPE any.
 
-    SPLIT iv_for_all_entries_param AT '-' INTO zcl_testable_db_layer_utils=>dummy lv_fieldname_for_all_entries.
+    SPLIT iv_for_all_entries_param AT '-' INTO zcl_zosql_utils=>dummy lv_fieldname_for_all_entries.
     ASSIGN COMPONENT lv_fieldname_for_all_entries OF STRUCTURE ia_for_all_entries_tab_line TO <lv_value_for_all_entries>.
     IF sy-subrc <> 0.
-      MESSAGE e054 WITH lv_fieldname_for_all_entries INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e054 WITH lv_fieldname_for_all_entries INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
     rs_parameter-param_name_in_select   = iv_for_all_entries_param.
@@ -537,10 +537,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD _SELECT.
 
-    DATA: lo_from_iterator         TYPE REF TO zcl_testable_db_sqltables_iter,
-          lo_select                TYPE REF TO zcl_testable_db_select_parser,
-          lo_group_by              TYPE REF TO zcl_testable_db_groupby_parser,
-          lo_sql_executor_for_line TYPE REF TO zif_testable_db_sql_exec_line.
+    DATA: lo_from_iterator         TYPE REF TO zcl_zosql_sqltables_iter,
+          lo_select                TYPE REF TO zcl_zosql_select_parser,
+          lo_group_by              TYPE REF TO zcl_zosql_groupby_parser,
+          lo_sql_executor_for_line TYPE REF TO zif_zosql_sql_exec_line.
 
     REFRESH et_result_table.
 
@@ -556,7 +556,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                            io_sqltables_iterator     = lo_from_iterator
                                            iv_new_syntax             = iv_new_syntax ).
 
-    CREATE OBJECT lo_sql_executor_for_line TYPE zcl_testable_db_sql_exec_selec
+    CREATE OBJECT lo_sql_executor_for_line TYPE zcl_zosql_sql_exec_selec
       EXPORTING
         io_select = lo_select.
 

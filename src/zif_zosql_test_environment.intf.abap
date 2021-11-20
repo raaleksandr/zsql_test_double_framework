@@ -11,13 +11,13 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
       !IT_LINES_FOR_DELETE type ANY TABLE
       !IV_TABLE_NAME type TABNAME16 optional
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods INSERT_TEST_DATA
     importing
       !IT_TABLE type ANY TABLE
       value(IV_TABLE_NAME) type TABNAME16 optional
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods CLEAR_ALL .
   methods CLEAR_DOUBLES .
   methods GET_DATA_OF_TABLE
