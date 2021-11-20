@@ -19,7 +19,7 @@ protected section.
     returning
       value(RD_DYNAMIC_TABLE_SELECT_RESULT) type ref to DATA
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods DELETE_BY_SQL_PARTS
   abstract
     importing
@@ -28,7 +28,7 @@ protected section.
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods RETURN_RESULT_OF_SELECT_TOITAB
     importing
       !IT_RESULT_TABLE type STANDARD TABLE
@@ -46,7 +46,7 @@ protected section.
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods DETECT_IF_NEW_SYNTAX_SELECT
     importing
       !IV_SELECT type STRING
@@ -72,7 +72,7 @@ protected section.
       !ES_RESULT_LINE type ANY
       !EV_SUBRC type SYSUBRC
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods SPLIT_SELECT_INTO_PARTS
     importing
       !IV_SELECT type CLIKE
@@ -87,7 +87,7 @@ protected section.
       value(EV_NEW_SYNTAX) type ABAP_BOOL
       !EV_NUMBER_OF_ROWS_EXPR type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods PREPARE_N_OF_ROWS_FOR_SELECT
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -120,7 +120,7 @@ private section.
     changing
       !CV_SQL type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _POP_SET_STATEMENT
     importing
       !IV_SQL_STATEMENT type CLIKE
@@ -140,7 +140,7 @@ private section.
       !EV_WHERE type CLIKE
       !EV_NEW_SYNTAX type ABAP_BOOL
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _SPLIT_UPDATE_INTO_PARTS
     importing
       !IV_UPDATE_STATEMENT type CLIKE
@@ -150,7 +150,7 @@ private section.
       !EV_WHERE type CLIKE
       !EV_NEW_SYNTAX type ABAP_BOOL
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _FIND_WORD
     importing
       !IV_SQL type CLIKE
@@ -201,7 +201,7 @@ private section.
       !EV_TABLE_NAME type CLIKE
       !EV_OTHER_SELECT type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _POP_DELETE_TABLE_NAME
     importing
       !IV_DELETE_STATEMENT type CLIKE
@@ -209,7 +209,7 @@ private section.
       !EV_TABLE_NAME type CLIKE
       !EV_OTHER_SELECT type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _POP_FIELD_LIST
     exporting
       !EV_SELECT_FIELD_LIST type CLIKE
@@ -218,14 +218,14 @@ private section.
     changing
       !CV_SQL type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _POP_FROM
     exporting
       !EV_FROM type CLIKE
     changing
       !CV_SQL type CLIKE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _REPLACE_SEPARATORS_TO_SPACE
     importing
       !IV_SOURCE_TEXT type CLIKE
@@ -239,9 +239,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
 
   METHOD CREATE_DYNAMIC_TAB_FOR_RESULT.
-    DATA: lo_select_parser TYPE REF TO zcl_testable_db_select_parser,
-          lo_from_iter     TYPE REF TO zcl_testable_db_sqltables_iter,
-          lo_iter_pos      TYPE REF TO zcl_testable_db_sqltab_iterpos.
+    DATA: lo_select_parser TYPE REF TO zcl_zosql_select_parser,
+          lo_from_iter     TYPE REF TO zcl_zosql_sqltables_iter,
+          lo_iter_pos      TYPE REF TO zcl_zosql_sqltab_iterpos.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
@@ -278,16 +278,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     CREATE DATA ld_line LIKE LINE OF it_table.
     ASSIGN ld_line->* TO <ls_line>.
 
-    IF zcl_testable_db_layer_utils=>is_structure( <ls_line> ) = abap_true.
+    IF zcl_zosql_utils=>is_structure( <ls_line> ) = abap_true.
       rv_table_consists_of_structs = abap_true.
     ENDIF.
   endmethod.
 
 
-  method PREPARE_N_OF_ROWS_FOR_SELECT.
+  METHOD prepare_n_of_rows_for_select.
 
-    DATA: lo_parameters          TYPE REF TO zcl_testable_db_parameters,
-          ld_parameter_value_Ref TYPE REF TO data,
+    DATA: lo_parameters          TYPE REF TO zcl_zosql_parameters,
+          ld_parameter_value_ref TYPE REF TO data,
           lv_number_of_rows_expr TYPE string.
 
     FIELD-SYMBOLS: <ls_parameter>       LIKE LINE OF it_parameters,
@@ -314,7 +314,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     ENDLOOP.
 
     rv_number_of_rows_to_select = lv_number_of_rows_expr.
-  endmethod.
+  ENDMETHOD.
 
 
   method RETURN_RESULT_OF_SELECT_TOITAB.
@@ -369,8 +369,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     ev_order_by = _get_order_by( lv_select ).
 
     IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
-      MESSAGE e071 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e071 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ELSEIF lv_single = abap_true.
       ev_number_of_rows_expr = '1'.
     ENDIF.
@@ -510,8 +510,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_result> LIKE LINE OF lt_Result.
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( iv_sql ).
-    lv_word = zcl_testable_db_layer_utils=>to_upper_case( iv_word ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( iv_sql ).
+    lv_word = zcl_zosql_utils=>to_upper_case( iv_word ).
 
     FIND ALL OCCURRENCES OF lv_word IN lv_sql RESULTS lt_result.
 
@@ -544,11 +544,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
   method _GET_ORDER_BY.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = iv_sql
-                                                       iv_starts_with = c_order_by ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql
+                                           iv_starts_with = c_order_by ) = abap_true.
 
-      rv_order_by = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql
-                                                                              iv_start_word_to_delete = c_order_by ).
+      rv_order_by = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql
+                                                                  iv_start_word_to_delete = c_order_by ).
     ENDIF.
   endmethod.
 
@@ -560,27 +560,27 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = iv_delete_statement
-                                                       iv_starts_with = c_delete ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_delete_statement
+                                           iv_starts_with = c_delete ) <> abap_true.
 
-      MESSAGE e055 WITH c_delete INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e055 WITH c_delete INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = iv_delete_statement
-                                                                                iv_start_word_to_delete = c_delete ).
+    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_delete_statement
+                                                                    iv_start_word_to_delete = c_delete ).
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = ev_other_select
-                                                       iv_starts_with = c_from ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = ev_other_select
+                                           iv_starts_with = c_from ) <> abap_true.
 
-      MESSAGE e064 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e064 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = ev_other_select
-                                                                                iv_start_word_to_delete = c_from ).
+    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = ev_other_select
+                                                                    iv_start_word_to_delete = c_from ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( ev_other_select ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( ev_other_select ).
     FIND FIRST OCCURRENCE OF c_where IN lv_sql
       RESULTS ls_result.
     IF sy-subrc = 0.
@@ -599,38 +599,38 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_select ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_select ) <> abap_true.
 
-      MESSAGE e055 WITH c_select INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e055 WITH c_select INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_select ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_select ).
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_distinct ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_distinct ) = abap_true.
       ev_distinct = abap_true.
-      cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                         iv_start_word_to_delete = c_distinct ).
+      cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                             iv_start_word_to_delete = c_distinct ).
     ELSE.
       ev_distinct = abap_false.
     ENDIF.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = lc_single ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = lc_single ) = abap_true.
       ev_single = abap_true.
-      cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                         iv_start_word_to_delete = lc_single ).
+      cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                             iv_start_word_to_delete = lc_single ).
     ENDIF.
 
     IF ev_single = abap_true AND ev_distinct = abap_true.
-      MESSAGE e070 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e070 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( cv_sql ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
     FIND FIRST OCCURRENCE OF c_from IN lv_sql RESULTS ls_result.
     IF sy-subrc = 0.
       ev_select_field_list = cv_sql(ls_result-offset).
@@ -646,16 +646,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     CLEAR ev_for_all_entries_tabname.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_for_all_entries_in ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_for_all_entries_in ) <> abap_true.
 
       RETURN.
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_for_all_entries_in ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_for_all_entries_in ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( cv_sql ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
     FIND FIRST OCCURRENCE OF c_where IN lv_sql RESULTS ls_result.
     IF sy-subrc <> 0.
       FIND FIRST OCCURRENCE OF c_group_by IN lv_sql RESULTS ls_result.
@@ -679,17 +679,17 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_from ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_from ) <> abap_true.
 
-      MESSAGE e056 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e056 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_from ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_from ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( cv_sql ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
     ls_result = _find_word( iv_sql  = lv_sql
                             iv_word = c_up ).
     IF ls_result IS INITIAL.
@@ -722,16 +722,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     CLEAR ev_group_by.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_group_by ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_group_by ) <> abap_true.
 
       RETURN.
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_group_by ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_group_by ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( cv_sql ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
 
     FIND FIRST OCCURRENCE OF c_order_by IN lv_sql RESULTS ls_result.
     IF sy-subrc = 0.
@@ -749,11 +749,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = iv_sql_statement
-                                                       iv_starts_with = c_set ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql_statement
+                                           iv_starts_with = c_set ) = abap_true.
 
-      lv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
-                                                                         iv_start_word_to_delete = c_set ).
+      lv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
+                                                             iv_start_word_to_delete = c_set ).
 
       FIND FIRST OCCURRENCE OF c_where IN lv_sql RESULTS ls_result.
       IF sy-subrc = 0.
@@ -774,17 +774,17 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = iv_update_statement
-                                                       iv_starts_with = c_update ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_update_statement
+                                           iv_starts_with = c_update ) <> abap_true.
 
-      MESSAGE e055 WITH c_update INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e055 WITH c_update INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = iv_update_statement
-                                                                                iv_start_word_to_delete = c_update ).
+    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_update_statement
+                                                                    iv_start_word_to_delete = c_update ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( ev_other_select ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( ev_other_select ).
     FIND FIRST OCCURRENCE OF c_set IN lv_sql
       RESULTS ls_result.
     IF sy-subrc <> 0.
@@ -805,35 +805,35 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     CONSTANTS: lc_to   TYPE string VALUE 'TO',
                lc_rows TYPE string VALUE 'ROWS'.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_up ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_up ) <> abap_true.
       RETURN.
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_up ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_up ).
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = lc_to ) <> abap_true.
-      MESSAGE e068 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = lc_to ) <> abap_true.
+      MESSAGE e068 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = lc_to ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = lc_to ).
 
-    ev_number_of_rows_expr = zcl_testable_db_layer_utils=>get_start_word( cv_sql ).
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word( cv_sql ).
+    ev_number_of_rows_expr = zcl_zosql_utils=>get_start_word( cv_sql ).
+    cv_sql = zcl_zosql_utils=>delete_start_word( cv_sql ).
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = lc_rows ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = lc_rows ) <> abap_true.
 
-      MESSAGE e069 INTO zcl_testable_db_layer_utils=>dummy.
-      zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+      MESSAGE e069 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = lc_rows ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = lc_rows ).
   endmethod.
 
 
@@ -844,16 +844,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     CLEAR ev_where.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = cv_sql
-                                                       iv_starts_with = c_where ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
+                                           iv_starts_with = c_where ) <> abap_true.
 
       RETURN.
     ENDIF.
 
-    cv_sql = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                                       iv_start_word_to_delete = c_where ).
+    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
+                                                           iv_start_word_to_delete = c_where ).
 
-    lv_sql = zcl_testable_db_layer_utils=>to_upper_case( cv_sql ).
+    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
 
     FIND FIRST OCCURRENCE OF c_group_by IN lv_sql RESULTS ls_result.
     IF sy-subrc <> 0.
@@ -872,11 +872,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
   method _POP_WHERE_UPDATE_DELETE.
 
-    IF zcl_testable_db_layer_utils=>check_starts_with( iv_sql         = iv_sql_statement
-                                                       iv_starts_with = c_where ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql_statement
+                                           iv_starts_with = c_where ) = abap_true.
 
-      rv_where = zcl_testable_db_layer_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
-                                                                           iv_start_word_to_delete = c_where ).
+      rv_where = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
+                                                               iv_start_word_to_delete = c_where ).
     ENDIF.
   endmethod.
 
@@ -899,7 +899,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     FIELD-SYMBOLS: <lv_field_src>  TYPE any,
                    <lv_field_dest> TYPE any.
 
-    IF zcl_testable_db_layer_utils=>is_structure( es_result_line ) = abap_true.
+    IF zcl_zosql_utils=>is_structure( es_result_line ) = abap_true.
 
       IF iv_do_into_corresponding = abap_true.
         MOVE-CORRESPONDING is_line_of_result_table TO es_result_line.
@@ -923,7 +923,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
         ENDDO.
       ENDIF.
     ELSE.
-      IF zcl_testable_db_layer_utils=>is_structure( is_line_of_result_table ) = abap_true.
+      IF zcl_zosql_utils=>is_structure( is_line_of_result_table ) = abap_true.
         ASSIGN COMPONENT 1 OF STRUCTURE is_line_of_result_table TO <lv_field_src>.
         IF sy-subrc = 0.
           es_result_line = <lv_field_src>.
@@ -945,8 +945,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     IF if_table_consists_of_structs( et_result_table ) = abap_true
       AND iv_do_into_corresponding = abap_True.
 
-      zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = it_result_table_prepared
-                                                             IMPORTING et_table_dest = et_result_table ).
+      zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = it_result_table_prepared
+                                                 IMPORTING et_table_dest = et_result_table ).
     ELSE.
 
       CREATE DATA ld_line_of_result_table LIKE LINE OF et_result_table.
@@ -972,7 +972,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                             IMPORTING ev_table_name         = ev_table_name
                                       ev_other_select       = lv_sql ).
 
-    zcl_testable_db_layer_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
+    zcl_zosql_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
 
     ev_where = _pop_where_update_delete( lv_sql ).
 
@@ -988,7 +988,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                             IMPORTING ev_table_name         = ev_table_name
                                       ev_other_select       = lv_sql ).
 
-    zcl_testable_db_layer_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
+    zcl_zosql_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
 
     _pop_set_statement( EXPORTING iv_sql_statement = lv_sql
                         IMPORTING ev_set_statement = ev_set_statement

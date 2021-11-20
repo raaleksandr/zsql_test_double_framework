@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Store for one virtual table for Z-SQL Test Double Framework</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>CLEAR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Clears all data in buffer for virtual table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>DELETE_TEST_DATA_FROM_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Deletes certain table records in test data by keys in itab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>GET_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data in virtual table buffer into internal tab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>GET_DATA_AS_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data as reference to standard table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>INSERT_TEST_DATA_FROM_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Insert test data from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>M_MANDANT_FIELD_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fieldname of mandant</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>M_TABLE_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Table name, 16 characters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>M_VIRTUAL_TABLE_BUFFER_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Virtual table buffer (internal hash table)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_CREATE_INTERNAL_HASH_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Create internal hash table with key like in transparent tab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_FILL_MANDANT_FIELD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills the mandant field with current mandant value</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_FIND_MANDANT_FIELD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Finds mandant field in table and stores its name in attribut</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_GET_FIELD_LIST</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns field list of table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_MODIFY_BUFFERLINE_FROM_STRUCT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs modification of line of buf (insert/update/delete)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_PERFORM_UPD_DEL_OPERATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs update/delete operation on buffer data</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

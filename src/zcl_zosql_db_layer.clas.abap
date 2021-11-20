@@ -86,14 +86,14 @@ private section.
     returning
       value(RD_ITAB_FOR_DB_OPERATION) type ref to DATA
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _CREATE_INTERNAL_TABLE_FOR_TAB
     importing
       !IV_TABLE_NAME type CLIKE
     returning
       value(RD_INTERNAL_TABLE) type ref to DATA
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _REPLACE_FOR_ALL_ENTRIES_TAB
     importing
       !IV_NAME_OF_FOR_ALL_ENT_IN_SEL type CLIKE
@@ -120,7 +120,7 @@ private section.
   methods _CREATE_TYPE_FOR_PARAMETER
     importing
       !IS_PARAMETER type TY_PARAMETER_WITH_NAME
-      !IO_WHERE_PARSER type ref to ZCL_TESTABLE_DB_WHERE_PARSER
+      !IO_WHERE_PARSER type ref to ZCL_ZOSQL_WHERE_PARSER
     returning
       value(RO_TYPE) type ref to CL_ABAP_DATADESCR .
   methods _EXECUTE_SELECT
@@ -139,7 +139,7 @@ private section.
     exporting
       !ET_RESULT_TABLE type ANY TABLE
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _OPEN_CURSOR
     importing
       !IV_SELECT type STRING default '*'
@@ -155,7 +155,7 @@ private section.
     returning
       value(RV_CURSOR) type CURSOR
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _PREPARE_WHERE_FOR_SELECT
     importing
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
@@ -339,7 +339,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_lines_for_delete ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_lines_for_delete ).
     ENDIF.
 
     ld_itab_for_db_operation = _convert_itab_for_db_operation( iv_table_name = lv_table_name
@@ -409,7 +409,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_new_lines ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_new_lines ).
     ENDIF.
 
     ld_itab_for_db_operation = _convert_itab_for_db_operation( iv_table_name = lv_table_name
@@ -430,7 +430,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_lines_for_modify ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_lines_for_modify ).
     ENDIF.
 
     ld_itab_for_db_operation = _convert_itab_for_db_operation( iv_table_name = lv_table_name
@@ -516,7 +516,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_lines_for_update ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_lines_for_update ).
     ENDIF.
 
     ld_itab_for_db_operation = _convert_itab_for_db_operation( iv_table_name = lv_table_name
@@ -584,8 +584,8 @@ endmethod.
     rd_itab_for_db_operation = _create_internal_table_for_tab( iv_table_name ).
     ASSIGN rd_itab_for_db_operation->* TO <lt_table_of_database_struct>.
 
-    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = it_input_itab
-                                                           IMPORTING et_table_dest = <lt_table_of_database_struct> ).
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = it_input_itab
+                                               IMPORTING et_table_dest = <lt_table_of_database_struct> ).
   endmethod.
 
 
@@ -600,8 +600,8 @@ endmethod.
           ls_dynamic_component          LIKE LINE OF lt_dynamic_components,
           lo_dynamic_struct_with_params TYPE REF TO cl_abap_structdescr,
           lt_parameters                 TYPE zosql_db_layer_params,
-          lo_where_parser               TYPE REF TO zcl_testable_db_where_parser,
-          lo_parameters                 TYPE REF TO zcl_testable_db_parameters.
+          lo_where_parser               TYPE REF TO zcl_zosql_where_parser,
+          lo_parameters                 TYPE REF TO zcl_zosql_parameters.
 
     FIELD-SYMBOLS: <ls_parameter_with_name>      LIKE LINE OF it_parameters_with_name,
                    <ls_dynamic_struct_with_pars> TYPE any,
@@ -612,8 +612,8 @@ endmethod.
       RETURN.
     ENDIF.
 
-    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = it_parameters_with_name
-                                                           IMPORTING et_table_dest = lt_parameters ).
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = it_parameters_with_name
+                                               IMPORTING et_table_dest = lt_parameters ).
     CREATE OBJECT lo_parameters
       EXPORTING
         it_parameters = lt_parameters.
@@ -622,7 +622,7 @@ endmethod.
       EXPORTING
         io_parameters = lo_parameters.
 
-    lo_where_parser->zif_testable_db_sqlcond_parser~parse_condition( iv_where ).
+    lo_where_parser->zif_zosql_sqlcond_parser~parse_condition( iv_where ).
 
     LOOP AT it_parameters_with_name ASSIGNING <ls_parameter_with_name>.
       ls_dynamic_component-name = <ls_parameter_with_name>-param_name.
@@ -649,7 +649,7 @@ endmethod.
     DATA: lo_struct TYPE REF TO cl_abap_structdescr,
           lo_table  TYPE REF TO cl_abap_tabledescr.
 
-    zcl_testable_db_layer_utils=>raise_if_transp_tab_not_exist( iv_table_name ).
+    zcl_zosql_utils=>raise_if_transp_tab_not_exist( iv_table_name ).
 
     lo_struct ?= cl_abap_structdescr=>describe_by_name( iv_table_name ).
     lo_table = cl_abap_tabledescr=>create( lo_struct ).
@@ -700,7 +700,7 @@ endmethod.
     IF iv_new_syntax = abap_true.
 
       " Dynamic call for backward compatibility with older versions
-      CALL METHOD ('ZCL_TESTABLE_DB_LAYER_UTILS_74')=>('EXECUTE_SELECT_740')
+      CALL METHOD ('ZCL_ZOSQL_UTILS_740')=>('EXECUTE_SELECT_740')
         EXPORTING
           iv_select                     = iv_select
           iv_from                       = iv_from
@@ -721,13 +721,13 @@ endmethod.
     IF it_for_all_entries_table IS NOT INITIAL.
 
       IF iv_order_by IS NOT INITIAL.
-        MESSAGE e051 INTO zcl_testable_db_layer_utils=>dummy.
-        zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+        MESSAGE e051 INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
 
       IF iv_group_by IS NOT INITIAL.
-        MESSAGE e052 INTO zcl_testable_db_layer_utils=>dummy.
-        zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+        MESSAGE e052 INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
 
       IF iv_distinct = abap_true.
@@ -846,13 +846,13 @@ endmethod.
     IF it_for_all_entries_table IS NOT INITIAL.
 
       IF iv_order_by IS NOT INITIAL.
-        MESSAGE e051 INTO zcl_testable_db_layer_utils=>dummy.
-        zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+        MESSAGE e051 INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
 
       IF iv_group_by IS NOT INITIAL.
-        MESSAGE e052 INTO zcl_testable_db_layer_utils=>dummy.
-        zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+        MESSAGE e052 INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
 
       IF iv_distinct = abap_true.
@@ -940,7 +940,7 @@ ENDMETHOD.
   METHOD _PREPARE_RESULT_TABLE_FOR_SEL.
 
     IF if_table_consists_of_structs( it_result_table ) <> abap_true
-      AND zcl_testable_db_layer_utils=>is_structure( is_result_line ) = abap_true.
+      AND zcl_zosql_utils=>is_structure( is_result_line ) = abap_true.
 
       CREATE DATA rd_result_table LIKE TABLE OF is_result_line.
     ELSE.
@@ -1045,7 +1045,7 @@ ENDMETHOD.
       <lv_value> = <lv_parameter>.
     ELSEIF is_parameter-parameter_value_range IS NOT INITIAL.
       <lv_value> = is_parameter-parameter_value_range.
-    ELSEIF zcl_testable_db_layer_utils=>is_internal_table( <lv_value> ) <> abap_true.
+    ELSEIF zcl_zosql_utils=>is_internal_table( <lv_value> ) <> abap_true.
       <lv_value> = is_parameter-parameter_value_single.
     ENDIF.
   ENDMETHOD.

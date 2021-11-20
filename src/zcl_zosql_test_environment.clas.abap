@@ -14,17 +14,17 @@ public section.
       value(RO_DB_LAYER_FOR_PROD) type ref to ZIF_ZOSQL_DB_LAYER .
   methods CONSTRUCTOR
     importing
-      !IO_FACTORY type ref to ZIF_TESTABLE_DB_FACTORY optional .
+      !IO_FACTORY type ref to ZIF_ZOSQL_FACTORY optional .
 protected section.
 private section.
 
   types:
     BEGIN OF TY_VIRTUAL_TABLE,
            table_name TYPE tabname16,
-           virt_table TYPE REF TO zcl_testable_db_one_virt_table,
+           virt_table TYPE REF TO zcl_zosql_one_virt_table,
          END OF ty_virtual_table .
 
-  data MO_FACTORY type ref to ZIF_TESTABLE_DB_FACTORY .
+  data MO_FACTORY type ref to ZIF_ZOSQL_FACTORY .
   data:
     MT_VIRTUAL_TABLES  TYPE HASHED TABLE OF ty_virtual_table WITH UNIQUE KEY table_name .
 
@@ -33,7 +33,7 @@ private section.
       !IV_TABLE_NAME type CLIKE .
   methods _RAISE_CANNOT_DETECT_TABNAME
     raising
-      ZCX_TESTABLE_DB_LAYER .
+      ZCX_ZOSQL_ERROR .
   methods _IS_TRANSPARENT_TABLE
     importing
       !IV_DICTIONARY_TYPE type CLIKE
@@ -51,7 +51,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
     IF io_factory IS BOUND.
       mo_factory = io_factory.
     ELSE.
-      CREATE OBJECT mo_factory TYPE zcl_testable_db_factory.
+      CREATE OBJECT mo_factory TYPE zcl_zosql_factory.
     ENDIF.
   endmethod.
 
@@ -79,7 +79,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
   method ZIF_ZOSQL_TEST_ENVIRONMENT~CLEAR_ONE_TABLE.
     DATA: lv_table_name TYPE tabname16.
 
-    lv_table_name = zcl_testable_db_layer_utils=>to_upper_case( iv_table_name ).
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
     DELETE mt_virtual_tables WHERE table_name = lv_table_name.
   endmethod.
 
@@ -92,7 +92,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_lines_for_delete ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_lines_for_delete ).
     ENDIF.
 
     IF lv_table_name IS INITIAL.
@@ -149,7 +149,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
     lv_table_name = iv_table_name.
 
     IF lv_table_name IS INITIAL.
-      lv_table_name = zcl_testable_db_layer_utils=>try_to_guess_tabname_by_data( it_table ).
+      lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_table ).
     ENDIF.
 
     IF lv_table_name IS INITIAL.
@@ -176,12 +176,12 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   METHOD _IS_TRANSPARENT_TABLE.
-    rv_is_transparent_table = zcl_testable_db_layer_utils=>transparent_table_exists( iv_dictionary_type ).
+    rv_is_transparent_table = zcl_zosql_utils=>transparent_table_exists( iv_dictionary_type ).
   ENDMETHOD.
 
 
   METHOD _RAISE_CANNOT_DETECT_TABNAME.
-    MESSAGE e053 INTO zcl_testable_db_layer_utils=>dummy.
-    zcl_testable_db_layer_utils=>raise_exception_from_sy_msg( ).
+    MESSAGE e053 INTO zcl_zosql_utils=>dummy.
+    zcl_zosql_utils=>raise_exception_from_sy_msg( ).
   ENDMETHOD.
 ENDCLASS.

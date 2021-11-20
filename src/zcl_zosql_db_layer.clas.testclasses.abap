@@ -1,8 +1,7 @@
-
 CLASS ltc_testable_db_layer DEFINITION FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS
- INHERITING FROM zcl_testable_db_layer_unitbase.
+ INHERITING FROM zcl_zosql_unitbase.
 *?﻿<asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
 *?<asx:values>
 *?<TESTCLASS_OPTIONS>
@@ -25,41 +24,41 @@ CLASS ltc_testable_db_layer DEFINITION FOR TESTING
       f_cut TYPE REF TO zcl_zosql_db_layer.  "class under test
 
     METHODS: setup,
-      one_table_no_conditions FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_where_static FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_where_param_eq FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_where_param_range FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_where_param_ref FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_2_params_with_or FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_for_all_entries FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_group_by FOR TESTING RAISING zcx_testable_db_layer,
-      one_table_distinct FOR TESTING RAISING zcx_testable_db_layer,
-      join FOR TESTING RAISING zcx_testable_db_layer,
-      new_syntax FOR TESTING RAISING zcx_testable_db_layer,
-      new_syntax_no_host_var FOR TESTING RAISING zcx_testable_db_layer,
-      select_from_view FOR TESTING RAISING zcx_testable_db_layer,
-      select_as_ref_to_data FOR TESTING RAISING zcx_testable_db_layer,
-      select_without_corresponding FOR TESTING RAISING zcx_testable_db_layer,
-      select_into_tab_with_string FOR TESTING RAISING zcx_testable_db_layer,
-      select_into_tab_no_struct FOR TESTING RAISING zcx_testable_db_layer,
-      select_one_line FOR TESTING RAISING zcx_testable_db_layer,
-      select_up_to_n_rows FOR TESTING RAISING zcx_testable_db_layer,
-      select_up_to_n_rows_prm FOR TESTING RAISING zcx_testable_db_layer,
-      select_single FOR TESTING RAISING zcx_testable_db_layer,
-      select_with_empty_range FOR TESTING RAISING zcx_testable_db_layer,
-      select_into_sorted_table FOR TESTING RAISING zcx_testable_db_layer,
-      open_cursor_fetch_itab FOR TESTING RAISING zcx_testable_db_layer,
-      open_cursor_fetch FOR TESTING RAISING zcx_testable_db_layer,
-      insert_by_itab FOR TESTING RAISING zcx_testable_db_layer,
-      update_by_itab FOR TESTING RAISING zcx_testable_db_layer,
-      modify_by_itab FOR TESTING RAISING zcx_testable_db_layer,
-      delete_by_itab FOR TESTING RAISING zcx_testable_db_layer,
-      update_by_sql_no_params FOR TESTING RAISING zcx_testable_db_layer,
-      update_by_sql_with_params FOR TESTING RAISING zcx_testable_db_layer,
-      update_by_sql_params_set FOR TESTING RAISING zcx_testable_db_layer,
-      update_by_sql_new_syntax FOR TESTING RAISING zcx_testable_db_layer,
-      delete_by_sql_no_params FOR TESTING RAISING zcx_testable_db_layer,
-      delete_by_sql_with_params FOR TESTING RAISING zcx_testable_db_layer.
+      one_table_no_conditions FOR TESTING RAISING zcx_zosql_error,
+      one_table_where_static FOR TESTING RAISING zcx_zosql_error,
+      one_table_where_param_eq FOR TESTING RAISING zcx_zosql_error,
+      one_table_where_param_range FOR TESTING RAISING zcx_zosql_error,
+      one_table_where_param_ref FOR TESTING RAISING zcx_zosql_error,
+      one_table_2_params_with_or FOR TESTING RAISING zcx_zosql_error,
+      one_table_for_all_entries FOR TESTING RAISING zcx_zosql_error,
+      one_table_group_by FOR TESTING RAISING zcx_zosql_error,
+      one_table_distinct FOR TESTING RAISING zcx_zosql_error,
+      join FOR TESTING RAISING zcx_zosql_error,
+      new_syntax FOR TESTING RAISING zcx_zosql_error,
+      new_syntax_no_host_var FOR TESTING RAISING zcx_zosql_error,
+      select_from_view FOR TESTING RAISING zcx_zosql_error,
+      select_as_ref_to_data FOR TESTING RAISING zcx_zosql_error,
+      select_without_corresponding FOR TESTING RAISING zcx_zosql_error,
+      select_into_tab_with_string FOR TESTING RAISING zcx_zosql_error,
+      select_into_tab_no_struct FOR TESTING RAISING zcx_zosql_error,
+      select_one_line FOR TESTING RAISING zcx_zosql_error,
+      select_up_to_n_rows FOR TESTING RAISING zcx_zosql_error,
+      select_up_to_n_rows_prm FOR TESTING RAISING zcx_zosql_error,
+      select_single FOR TESTING RAISING zcx_zosql_error,
+      select_with_empty_range FOR TESTING RAISING zcx_zosql_error,
+      select_into_sorted_table FOR TESTING RAISING zcx_zosql_error,
+      open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
+      open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
+      insert_by_itab FOR TESTING RAISING zcx_zosql_error,
+      update_by_itab FOR TESTING RAISING zcx_zosql_error,
+      modify_by_itab FOR TESTING RAISING zcx_zosql_error,
+      delete_by_itab FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_with_params FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_params_set FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_new_syntax FOR TESTING RAISING zcx_zosql_error,
+      delete_by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
+      delete_by_sql_with_params FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_Testable_Db_Reader
 
 
@@ -71,12 +70,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD one_table_no_conditions.
 
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -90,16 +89,16 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst,
-          ls_result_line  TYPE zdblayr_for_tst,
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst,
+          ls_result_line  TYPE zosql_for_tst,
           lv_subrc        TYPE sysubrc.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
@@ -110,7 +109,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
 
-    DATA: ls_expected_line TYPE zdblayr_for_tst.
+    DATA: ls_expected_line TYPE zosql_for_tst.
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
     ls_expected_line-text_field1 = 'VALUE1_1'.
@@ -122,12 +121,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD one_table_where_static.
 
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -141,22 +140,22 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'WHERE KEY_FIELD = ''KEY2'''
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY2'.
@@ -168,11 +167,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD one_table_where_param_eq.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -186,14 +185,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
           lv_select TYPE string.
 
     CONCATENATE 'select *'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'where key_field = :KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
@@ -202,7 +201,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
 
 
@@ -211,8 +210,8 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY2'.
@@ -225,11 +224,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD one_table_where_param_range.
 
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -249,7 +248,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE3_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lv_select           TYPE string,
           lt_params           TYPE zosql_db_layer_params,
@@ -268,21 +267,21 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'WHERE TEXT_FIELD1 IN :TEXT_FIELD'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                                         it_parameters   = lt_params
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -299,12 +298,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD one_table_where_param_ref.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_some_value    TYPE text50.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -318,7 +317,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
@@ -330,20 +329,20 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     CONCATENATE 'SELECT *'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'WHERE KEY_FIELD = :KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                                         it_parameters   = lt_params
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY2'.
@@ -355,11 +354,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD one_table_2_params_with_or.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -379,7 +378,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE3_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lt_params           TYPE zosql_db_layer_params,
           ls_param            TYPE zosql_db_layer_param,
@@ -401,20 +400,20 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     CONCATENATE 'SELECT *'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'WHERE TEXT_FIELD1 IN :TEXT_FIELD OR KEY_FIELD = :KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                                         it_parameters   = lt_params
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -431,13 +430,13 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD one_table_for_all_entries.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " Check if for all entries works
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -457,10 +456,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE3_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
-    DATA: lt_base_table           TYPE TABLE OF zdblayr_for_tst,
-          ls_line_for_all_entries TYPE zdblayr_for_tst,
+    DATA: lt_base_table           TYPE TABLE OF zosql_for_tst,
+          ls_line_for_all_entries TYPE zosql_for_tst,
           lv_select               TYPE string.
 
     ls_line_for_all_entries-key_field = 'KEY2'.
@@ -470,21 +469,21 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_line_for_all_entries TO lt_base_table.
 
     CONCATENATE 'SELECT *'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'FOR ALL ENTRIES IN lt_base_table'
       'WHERE KEY_FIELD = LT_BASE_TABLE-KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
                                                         it_for_all_entries_table   = lt_base_table
                                               IMPORTING et_result_table            = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY2'.
@@ -502,11 +501,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD one_table_group_by.
 
-    DATA: ls_line          TYPE zdblayr_for_tst2,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst2.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst2.
+    DELETE FROM zosql_for_tst2.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -529,24 +528,24 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-qty         = 1.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst2 FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table.
 
     DATA: lv_select   TYPE string.
 
     CONCATENATE 'SELECT key_field sum( amount ) as amount sum( qty ) as qty'
-      'FROM zdblayr_for_tst2'
+      'FROM zosql_for_tst2'
       'GROUP BY key_field'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst2.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst2.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
                                               IMPORTING et_result_table            = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst2,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst2.
+    DATA: ls_expected_line  TYPE zosql_for_tst2,
+          lt_expected_table TYPE TABLE OF zosql_for_tst2.
 
     ls_expected_line-key_field = 'KEY1'.
     ls_expected_line-amount    = 30.
@@ -562,11 +561,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD one_table_distinct.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'SOME VALUE'.
@@ -580,14 +579,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'SOME VALUE2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst,
           lv_select       TYPE string.
 
     CONCATENATE 'SELECT DISTINCT TEXT_FIELD1'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY TEXT_FIELD1'
       INTO lv_select SEPARATED BY space.
 
@@ -595,8 +594,8 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                               IMPORTING et_result_table            = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-text_field1 = 'SOME VALUE'.
     APPEND ls_expected_line TO lt_expected_table.
@@ -609,14 +608,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD join.
 
-    DATA: lt_table1_initial TYPE TABLE OF zdblayr_for_tst,
-          ls_line1_initial  TYPE zdblayr_for_tst,
-          lt_table2_initial TYPE TABLE OF zdblayr_for_tst2,
-          ls_line2_initial  TYPE zdblayr_for_tst2.
+    DATA: lt_table1_initial TYPE TABLE OF zosql_for_tst,
+          ls_line1_initial  TYPE zosql_for_tst,
+          lt_table2_initial TYPE TABLE OF zosql_for_tst2,
+          ls_line2_initial  TYPE zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
-    DELETE FROM zdblayr_for_tst2.
+    DELETE FROM zosql_for_tst.
+    DELETE FROM zosql_for_tst2.
 
     " Table 1
     ls_line1_initial-key_field   = 'KEY1'.
@@ -631,7 +630,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line1_initial-text_field1 = 'TEXT3_1'.
     APPEND ls_line1_initial TO lt_table1_initial.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table1_initial.
+    INSERT zosql_for_tst FROM TABLE lt_table1_initial.
 
     " Table 2
     ls_line2_initial-key_field = 'KEY1'.
@@ -646,18 +645,18 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line2_initial-key_field2 = 'KEY2_1'.
     APPEND ls_line2_initial TO lt_table2_initial.
 
-    INSERT zdblayr_for_tst2 FROM TABLE lt_table2_initial.
+    INSERT zosql_for_tst2 FROM TABLE lt_table2_initial.
 
     DATA: lv_select TYPE string.
 
     CONCATENATE 'SELECT t1~key_field t2~key_field2'
-      'FROM zdblayr_for_tst as t1 JOIN zdblayr_for_tst2 as t2 ON t1~key_field = t2~key_field'
+      'FROM zosql_for_tst as t1 JOIN zosql_for_tst2 as t2 ON t1~key_field = t2~key_field'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
     TYPES: BEGIN OF ty_result_line,
-             key_field  TYPE zdblayr_for_tst-key_field,
-             key_field2 TYPE zdblayr_for_tst2-key_field2,
+             key_field  TYPE zosql_for_tst-key_field,
+             key_field2 TYPE zosql_for_tst2-key_field2,
            END OF ty_result_line.
 
     DATA: lt_result_table TYPE TABLE OF ty_result_line.
@@ -684,11 +683,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD new_syntax.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -698,14 +697,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
           lv_select TYPE string.
 
     CONCATENATE 'SELECT key_field, text_field1'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'WHERE KEY_FIELD = @:KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
@@ -714,15 +713,15 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                                         it_parameters   = lt_params
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-key_field   = 'KEY2'.
     ls_expected_line-text_field1 = 'VALUE2_1'.
@@ -732,11 +731,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD new_syntax_no_host_var.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -746,14 +745,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
           lv_select TYPE string.
 
     CONCATENATE 'SELECT key_field, text_field1'
-      'FROM zdblayr_for_tst'
+      'FROM zosql_for_tst'
       'WHERE KEY_FIELD = :KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
@@ -762,15 +761,15 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_param TO lt_params.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                                         it_parameters   = lt_params
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     ls_expected_line-key_field   = 'KEY2'.
     ls_expected_line-text_field1 = 'VALUE2_1'.
@@ -780,13 +779,13 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_from_view.
-    DATA: ls_line           TYPE zdblayr_for_tst,
-          lt_initial_table  TYPE TABLE OF zdblayr_for_tst,
-          ls_line2          TYPE zdblayr_for_tst2,
-          lt_initial_table2 TYPE TABLE OF zdblayr_for_tst2.
+    DATA: ls_line           TYPE zosql_for_tst,
+          lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line2          TYPE zosql_for_tst2,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -796,9 +795,9 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
-    DELETE FROM zdblayr_for_tst2.
+    DELETE FROM zosql_for_tst2.
 
     ls_line2-key_field   = 'KEY1'.
     ls_line2-key_field2  = 'KEY1_1'.
@@ -818,17 +817,17 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line2-qty         = '3'.
     APPEND ls_line2 TO lt_initial_table2.
 
-    INSERT zdblayr_for_tst2 FROM TABLE lt_initial_table2.
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table2.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tsv.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tsv.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM ZDBLAYR_FOR_TSV'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM ZOSQL_FOR_TSV'
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: ls_expected_line  TYPE zdblayr_for_tsv,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tsv.
+    DATA: ls_expected_line  TYPE zosql_for_tsv,
+          lt_expected_table TYPE TABLE OF zosql_for_tsv.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -855,12 +854,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_as_ref_to_data.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -874,16 +873,16 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
     DATA: ld_result       TYPE REF TO data,
-          lt_result_table TYPE TABLE OF zdblayr_for_tst,
+          lt_result_table TYPE TABLE OF zosql_for_tst,
           lv_subrc        TYPE sysubrc.
 
     FIELD-SYMBOLS: <lt_result_table> TYPE STANDARD TABLE.
@@ -893,8 +892,8 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                                 ev_subrc           = lv_subrc ).
 
     ASSIGN ld_result->* TO <lt_result_table>.
-    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src = <lt_result_table>
-                                                           IMPORTING et_table_dest = lt_result_table ).
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src = <lt_result_table>
+                                               IMPORTING et_table_dest = lt_result_table ).
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
@@ -903,12 +902,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD select_without_corresponding.
 
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -922,10 +921,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT KEY_FIELD TEXT_FIELD1'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
@@ -957,12 +956,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_into_tab_with_string.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -976,10 +975,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT KEY_FIELD TEXT_FIELD1'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
@@ -1013,12 +1012,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   METHOD select_into_tab_no_struct.
     " Select into table where each line is not a structure
 
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1028,10 +1027,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-key_field   = 'KEY2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT KEY_FIELD'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
@@ -1052,12 +1051,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_one_line.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1071,21 +1070,21 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT KEY_FIELD TEXT_FIELD1'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: ls_result_line TYPE zdblayr_for_tst.
+    DATA: ls_result_line TYPE zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                = lv_select
                                               IMPORTING es_result_line           = ls_result_line ).
 
     " THEN
-    DATA: ls_expected_result TYPE zdblayr_for_tst.
+    DATA: ls_expected_result TYPE zosql_for_tst.
 
     ls_expected_result-key_field   = 'KEY1'.
     ls_expected_result-text_field1 = 'VALUE1_1'.
@@ -1094,12 +1093,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_up_to_n_rows.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1119,25 +1118,25 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE3_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'UP TO 2 ROWS'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst,
-          ls_result_line  TYPE zdblayr_for_tst,
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst,
+          ls_result_line  TYPE zosql_for_tst,
           lv_subrc        TYPE sysubrc.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: lt_expected_table TYPE TABLE OF zdblayr_for_tst,
-          ls_expected_line  TYPE zdblayr_for_tst.
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -1155,12 +1154,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_up_to_n_rows_prm.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1180,16 +1179,16 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE3_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'UP TO :LINES_COUNT ROWS'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst,
           lt_parameters   TYPE zosql_db_layer_params,
           ls_parameter    TYPE zosql_db_layer_param.
 
@@ -1202,8 +1201,8 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: lt_expected_table TYPE TABLE OF zdblayr_for_tst,
-          ls_expected_line  TYPE zdblayr_for_tst.
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -1221,12 +1220,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_single.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1240,22 +1239,22 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT SINGLE *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
                                               IMPORTING et_result_table = lt_result_table ).
 
     " THEN
-    DATA: lt_expected_table TYPE TABLE OF zdblayr_for_tst,
-          ls_expected_line  TYPE zdblayr_for_tst.
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -1267,12 +1266,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_with_empty_range.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1286,16 +1285,16 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     " WHEN
 
     DATA: lt_parameters   TYPE zosql_db_layer_params,
           ls_parameter    LIKE LINE OF lt_parameters,
-          lt_result_table TYPE TABLE OF zdblayr_for_tst.
+          lt_result_table TYPE TABLE OF zosql_for_tst.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'WHERE KEY_FIELD IN :KEY_FIELD_RANGE'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
@@ -1313,12 +1312,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_into_sorted_table.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1332,17 +1331,17 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE2_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table TYPE SORTED TABLE OF zdblayr_for_tst
+    DATA: lt_result_table TYPE SORTED TABLE OF zosql_for_tst
                                WITH UNIQUE KEY key_field,
-          ls_result_line  TYPE zdblayr_for_tst,
+          ls_result_line  TYPE zosql_for_tst,
           lv_subrc        TYPE sysubrc.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
@@ -1353,12 +1352,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD open_cursor_fetch_itab.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1384,17 +1383,17 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE4_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
     " WHEN
-    DATA: lt_result_table1     TYPE TABLE OF zdblayr_for_tst,
-          lt_result_table2     TYPE TABLE OF zdblayr_for_tst,
-          lt_result_table3     TYPE TABLE OF zdblayr_for_tst,
+    DATA: lt_result_table1     TYPE TABLE OF zosql_for_tst,
+          lt_result_table2     TYPE TABLE OF zosql_for_tst,
+          lt_result_table3     TYPE TABLE OF zosql_for_tst,
           lv_subrc_after_call3 TYPE sysubrc,
           lv_cursor            TYPE cursor.
 
@@ -1413,9 +1412,9 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                                                    ev_subrc        = lv_subrc_after_call3 ).
 
     " THEN
-    DATA: lt_expected_table1 TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table2 TYPE TABLE OF zdblayr_for_tst,
-          ls_expected_line   TYPE zdblayr_for_tst.
+    DATA: lt_expected_table1 TYPE TABLE OF zosql_for_tst,
+          lt_expected_table2 TYPE TABLE OF zosql_for_tst,
+          ls_expected_line   TYPE zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -1449,12 +1448,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD open_cursor_fetch.
-    DATA: ls_line          TYPE zdblayr_for_tst,
-          lt_initial_table TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
@@ -1480,10 +1479,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field2 = 'VALUE4_2'.
     APPEND ls_line TO lt_initial_table.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_initial_table.
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
 
     CONCATENATE 'SELECT *'
-      'FROM ZDBLAYR_FOR_TST'
+      'FROM ZOSQL_FOR_TST'
       'ORDER BY PRIMARY KEY'
       INTO lv_select SEPARATED BY space.
 
@@ -1491,8 +1490,8 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     DATA: ld_result_table1     TYPE REF TO data,
           ld_result_table2     TYPE REF TO data,
           ld_result_table3     TYPE REF TO data,
-          lt_result_table1     TYPE TABLE OF zdblayr_for_tst,
-          lt_result_table2     TYPE TABLE OF zdblayr_for_tst,
+          lt_result_table1     TYPE TABLE OF zosql_for_tst,
+          lt_result_table2     TYPE TABLE OF zosql_for_tst,
           lv_subrc_after_call3 TYPE sysubrc,
           lv_cursor            TYPE cursor.
 
@@ -1504,15 +1503,15 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                                            iv_package_size    = 2
                                                  IMPORTING ed_result_as_table = ld_result_table1 ).
     ASSIGN ld_result_table1->* TO <lt_result_table1>.
-    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result_table1>
-                                                           IMPORTING et_table_dest = lt_result_table1 ).
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result_table1>
+                                               IMPORTING et_table_dest = lt_result_table1 ).
 
     f_cut->zif_zosql_db_layer~fetch_next_cursor( EXPORTING iv_cursor          = lv_cursor
                                                            iv_package_size    = 2
                                                  IMPORTING ed_result_as_table = ld_result_table2 ).
     ASSIGN ld_result_table2->* TO <lt_result_table2>.
-    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result_table2>
-                                                           IMPORTING et_table_dest = lt_result_table2 ).
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result_table2>
+                                               IMPORTING et_table_dest = lt_result_table2 ).
 
     f_cut->zif_zosql_db_layer~fetch_next_cursor( EXPORTING iv_cursor          = lv_cursor
                                                            iv_package_size    = 2
@@ -1520,9 +1519,9 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                                            ev_subrc           = lv_subrc_after_call3 ).
 
     " THEN
-    DATA: lt_expected_table1 TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table2 TYPE TABLE OF zdblayr_for_tst,
-          ls_expected_line   TYPE zdblayr_for_tst.
+    DATA: lt_expected_table1 TYPE TABLE OF zosql_for_tst,
+          lt_expected_table2 TYPE TABLE OF zosql_for_tst,
+          ls_expected_line   TYPE zosql_for_tst.
 
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY1'.
@@ -1557,11 +1556,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD insert_by_itab.
 
-    DATA: ls_line         TYPE zdblayr_for_tst,
-          lt_insert_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line         TYPE zosql_for_tst,
+          lt_insert_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1572,13 +1571,13 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_insert_table.
 
     " WHEN
-    f_cut->zif_zosql_db_layer~insert_by_itab( iv_table_name = 'ZDBLAYR_FOR_TST'
+    f_cut->zif_zosql_db_layer~insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
                                               it_new_lines  = lt_insert_table ).
 
     " THEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1588,11 +1587,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
 
   METHOD update_by_itab.
 
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_update TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1602,10 +1601,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_update.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_update.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_update.
 
     " WHEN
-    DATA: lt_update_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_update_table TYPE TABLE OF zosql_for_tst.
 
     ls_line-key_field = 'KEY1'.
     ls_line-text_field1 = 'VALUE_1_1_UPD'.
@@ -1615,13 +1614,13 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE_2_1_UPD'.
     APPEND ls_line TO lt_update_table.
 
-    f_cut->zif_zosql_db_layer~update_by_itab( iv_table_name       = 'ZDBLAYR_FOR_TST'
+    f_cut->zif_zosql_db_layer~update_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
                                               it_lines_for_update = lt_update_table ).
 
     " THEN
-    DATA: lt_result_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1630,11 +1629,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD modify_by_itab.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_modify TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_modify TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1644,10 +1643,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_modify.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_modify.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_modify.
 
     " WHEN
-    DATA: lt_modify_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_modify_table TYPE TABLE OF zosql_for_tst.
 
     ls_line-key_field = 'KEY1'.
     ls_line-text_field1 = 'VALUE_1_1_MOD'.
@@ -1657,14 +1656,14 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE_3_1_MOD'.
     APPEND ls_line TO lt_modify_table.
 
-    f_cut->zif_zosql_db_layer~modify_by_itab( iv_table_name       = 'ZDBLAYR_FOR_TST'
+    f_cut->zif_zosql_db_layer~modify_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
                                               it_lines_for_modify = lt_modify_table ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1685,11 +1684,11 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete_by_itab.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_modify TYPE TABLE OF zdblayr_for_tst.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_modify TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1699,23 +1698,23 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_modify.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_modify.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_modify.
 
     " WHEN
-    DATA: lt_delete_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_delete_table TYPE TABLE OF zosql_for_tst.
 
     CLEAR ls_line.
     ls_line-key_field = 'KEY2'.
     APPEND ls_line TO lt_delete_table.
 
-    f_cut->zif_zosql_db_layer~delete_by_itab( iv_table_name       = 'ZDBLAYR_FOR_TST'
+    f_cut->zif_zosql_db_layer~delete_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
                                               it_lines_for_delete = lt_delete_table ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1728,12 +1727,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_no_params.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_update TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1743,10 +1742,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_update.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_update.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_update.
 
     " WHEN
-    CONCATENATE 'UPDATE ZDBLAYR_FOR_TST'
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
       'SET text_field2 = ''NEW_VAL_FIELD2'''
       'WHERE TEXT_FIELD1 = ''VALUE2_1'''
       INTO lv_update_statement SEPARATED BY space.
@@ -1754,10 +1753,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     f_cut->zif_zosql_db_layer~update( lv_update_statement ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1777,12 +1776,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_with_params.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_update TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1792,7 +1791,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_update.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_update.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_update.
 
     " WHEN
     DATA: lt_params TYPE zosql_db_layer_params,
@@ -1802,7 +1801,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_param-parameter_value_single = 'VALUE2_1'.
     APPEND ls_param TO lt_params.
 
-    CONCATENATE 'UPDATE ZDBLAYR_FOR_TST'
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
       'SET text_field2 = ''NEW_VAL_FIELD2'''
       'WHERE TEXT_FIELD1 = :TEXT_FIELD1'
       INTO lv_update_statement SEPARATED BY space.
@@ -1811,10 +1810,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                       it_parameters       = lt_params ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1834,12 +1833,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_params_set.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_update TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1849,7 +1848,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_update.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_update.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_update.
 
     " WHEN
     DATA: lt_params TYPE zosql_db_layer_params,
@@ -1859,7 +1858,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_param-parameter_value_single = 'NEW_VAL_FIELD2'.
     APPEND ls_param TO lt_params.
 
-    CONCATENATE 'UPDATE ZDBLAYR_FOR_TST'
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
       'SET text_field2 = :TEXT_FIELD2'
       'WHERE TEXT_FIELD1 = ''VALUE2_1'''
       INTO lv_update_statement SEPARATED BY space.
@@ -1868,10 +1867,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                       it_parameters       = lt_params ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1891,12 +1890,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_new_syntax.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_update TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1906,7 +1905,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_update.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_update.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_update.
 
     " WHEN
     DATA: lt_params TYPE zosql_db_layer_params,
@@ -1920,7 +1919,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_param-parameter_value_single = 'NEW_VAL_FIELD2'.
     APPEND ls_param TO lt_params.
 
-    CONCATENATE 'UPDATE ZDBLAYR_FOR_TST'
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
       'SET text_field2 = @:TEXT_FIELD2'
       'WHERE TEXT_FIELD1 = @:TEXT_FIELD1'
       INTO lv_update_statement SEPARATED BY space.
@@ -1929,10 +1928,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                       it_parameters       = lt_params ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1952,12 +1951,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete_by_sql_no_params.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_delete TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_delete TYPE TABLE OF zosql_for_tst,
           lv_delete_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1967,20 +1966,20 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_delete.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_delete.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_delete.
 
     " WHEN
-    CONCATENATE 'DELETE FROM ZDBLAYR_FOR_TST'
+    CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'
       'WHERE TEXT_FIELD1 = ''VALUE2_1'''
       INTO lv_delete_statement SEPARATED BY space.
 
     f_cut->zif_zosql_db_layer~delete( lv_delete_statement ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
@@ -1994,12 +1993,12 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete_by_sql_with_params.
-    DATA: ls_line                TYPE zdblayr_for_tst,
-          lt_table_before_delete TYPE TABLE OF zdblayr_for_tst,
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_delete TYPE TABLE OF zosql_for_tst,
           lv_delete_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zdblayr_for_tst.
+    DELETE FROM zosql_for_tst.
 
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -2009,7 +2008,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE2_1'.
     APPEND ls_line TO lt_table_before_delete.
 
-    INSERT zdblayr_for_tst FROM TABLE lt_table_before_delete.
+    INSERT zosql_for_tst FROM TABLE lt_table_before_delete.
 
     " WHEN
     DATA: lt_params TYPE zosql_db_layer_params,
@@ -2019,7 +2018,7 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
     ls_param-parameter_value_single = 'VALUE2_1'.
     APPEND ls_param TO lt_params.
 
-    CONCATENATE 'DELETE FROM ZDBLAYR_FOR_TST'
+    CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'
       'WHERE TEXT_FIELD1 = :TEXT_FIELD1'
       INTO lv_delete_statement SEPARATED BY space.
 
@@ -2027,10 +2026,10 @@ CLASS ltc_testable_db_layer IMPLEMENTATION.
                                       it_parameters       = lt_params ).
 
     " THEN
-    DATA: lt_result_table   TYPE TABLE OF zdblayr_for_tst,
-          lt_expected_table TYPE TABLE OF zdblayr_for_tst.
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zdblayr_for_tst'
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).

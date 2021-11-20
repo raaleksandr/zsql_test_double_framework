@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Parser of where condition</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>C_IN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>&apos;IN&apos; keyword in select condition</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>C_NOT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>&apos;NOT&apos; keyword in select condition</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_DATASET_NAME_OR_ALIAS_LEFT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Database name or alias of first (left) operand</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_DATASET_NAME_OR_ALIAS_RIGHT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Database name or alias of second (right) operand</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_EMPTY_CONDITION_FLAG</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Flag if the condition is empty (then it is always true)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_FIELDNAME_LEFT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Field name of first (left) operand</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_FIELDNAME_RIGHT_OR_VALUE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>The right side of expression, it may be fieldname or value</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>M_OPERATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Operation (=, EQ, GE etc)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_CHECK_ELEMENTARY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Perform check for elementary case without nesting</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_CLEAR_QUOTES_FROM_VALUE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Clears quotes from where condition value</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_CONVERT_LIKE_TO_CP</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts mask for LIKE in SQL into mask for CP in ABAP</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_DELETE_BRACKETS_AROUND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Delete brackets around condition if exist</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_GET_REF_TO_CONDITION_OPERAND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns ref to value of operand of a condition</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_GET_REF_TO_LEFT_OPERAND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns reference to value of left operand after all oper..s</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_GET_REF_TO_RIGHT_OPERAND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns reference to value of right operand after all oper.s</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_HAS_BRACKETS_AROUND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks whether there are brackets in where clause or not</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_PARSE_ELEMENTARY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Simple case when there is just elementary condition</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_SPLIT_BY_AND_FILL_CONDITIONS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits statment by &apos;OR&apos; or &apos;AND&apos; and fills conditions</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQLCOND_PARSER</CLSNAME>
+     <CMPNAME>_SPLIT_BY_OR_AND</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits where clause by &apos;OR&apos; or &apos;AND&apos; conditions on top level</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
