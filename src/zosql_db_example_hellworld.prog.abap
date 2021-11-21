@@ -211,7 +211,7 @@ FORM select_for_all_entries CHANGING cd_result TYPE REF TO data
 
   CONCATENATE 'SELECT * FROM sbook'
     'FOR ALL ENTRIES IN itab'
-    'WHERE carrid IN itab-carrid'
+    'WHERE carrid = itab-carrid'
     '  AND fldate >= ''20210101'''
     '  AND luggweight < 20'
     '  AND smoker = ''X'''
@@ -439,73 +439,73 @@ CLASS ltc_unit_tests_on_prog IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_for_all_entries.
-*    DATA: lt_sbook  TYPE TABLE OF sbook,
-*          ls_sbook  TYPE sbook.
-*
-*    " GIVEN
-*    ls_sbook-bookid     = '101'.
-*    ls_sbook-carrid     = 'AA'.
-*    ls_sbook-fldate     = '20211001'.
-*    ls_sbook-luggweight = '15'.
-*    ls_sbook-smoker     = 'X'.
-*    APPEND ls_sbook TO lt_sbook.
-*
-*    ls_sbook-bookid     = '102'.
-*    ls_sbook-carrid     = 'BB'.
-*    ls_sbook-fldate     = '20211002'.
-*    ls_sbook-luggweight = '50'.
-*    ls_sbook-smoker     = 'X'.
-*    APPEND ls_sbook TO lt_sbook.
-*
-*    ls_sbook-bookid     = '103'.
-*    ls_sbook-carrid     = 'LH'.
-*    ls_sbook-fldate     = '20211003'.
-*    ls_sbook-luggweight = '15'.
-*    ls_sbook-smoker     = ' '.
-*    APPEND ls_sbook TO lt_sbook.
-*
-*    ls_sbook-bookid     = '104'.
-*    ls_sbook-carrid     = 'LH'.
-*    ls_sbook-fldate     = '20211005'.
-*    ls_sbook-luggweight = '15'.
-*    ls_sbook-smoker     = 'X'.
-*    APPEND ls_sbook TO lt_sbook.
-*
-*    mo_test_environment->insert_test_data( lt_sbook ).
-*
-*    " WHEN
-*    DATA: ld_data           TYPE REF TO data,
-*          lt_sbook_selected TYPE TABLE OF sbook.
-*
-*    FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
-*
-*    PERFORM select_for_all_entries CHANGING ld_data.
-*    ASSIGN ld_data->* TO <lt_data>.
-*    zcl_testable_db_layer_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_data>
-*                                                           IMPORTING et_table_dest = lt_sbook_selected ).
-*
-*    " THEN
-*    DATA: lt_sbook_expected TYPE TABLE OF sbook,
-*          ls_sbook_expected TYPE sbook.
-*
-*    ls_sbook_expected-mandt      = sy-mandt.
-*    ls_sbook_expected-bookid     = '101'.
-*    ls_sbook_expected-carrid     = 'AA'.
-*    ls_sbook_expected-fldate     = '20211001'.
-*    ls_sbook_expected-luggweight = '15'.
-*    ls_sbook_expected-smoker     = 'X'.
-*    APPEND ls_sbook_expected TO lt_sbook_expected.
-*
-*    ls_sbook_expected-mandt      = sy-mandt.
-*    ls_sbook_expected-bookid     = '104'.
-*    ls_sbook_expected-carrid     = 'LH'.
-*    ls_sbook_expected-fldate     = '20211005'.
-*    ls_sbook_expected-luggweight = '15'.
-*    ls_sbook_expected-smoker     = 'X'.
-*    APPEND ls_sbook_expected TO lt_sbook_expected.
-*
-*    SORT: lt_sbook_selected, lt_sbook_expected.
-*
-*    cl_aunit_assert=>assert_equals( exp = lt_sbook_expected act = lt_sbook_selected ).
+    DATA: lt_sbook  TYPE TABLE OF sbook,
+          ls_sbook  TYPE sbook.
+
+    " GIVEN
+    ls_sbook-bookid     = '101'.
+    ls_sbook-carrid     = 'AA'.
+    ls_sbook-fldate     = '20211001'.
+    ls_sbook-luggweight = '15'.
+    ls_sbook-smoker     = 'X'.
+    APPEND ls_sbook TO lt_sbook.
+
+    ls_sbook-bookid     = '102'.
+    ls_sbook-carrid     = 'BB'.
+    ls_sbook-fldate     = '20211002'.
+    ls_sbook-luggweight = '50'.
+    ls_sbook-smoker     = 'X'.
+    APPEND ls_sbook TO lt_sbook.
+
+    ls_sbook-bookid     = '103'.
+    ls_sbook-carrid     = 'LH'.
+    ls_sbook-fldate     = '20211003'.
+    ls_sbook-luggweight = '15'.
+    ls_sbook-smoker     = ' '.
+    APPEND ls_sbook TO lt_sbook.
+
+    ls_sbook-bookid     = '104'.
+    ls_sbook-carrid     = 'LH'.
+    ls_sbook-fldate     = '20211005'.
+    ls_sbook-luggweight = '15'.
+    ls_sbook-smoker     = 'X'.
+    APPEND ls_sbook TO lt_sbook.
+
+    mo_test_environment->insert_test_data( lt_sbook ).
+
+    " WHEN
+    DATA: ld_data           TYPE REF TO data,
+          lt_sbook_selected TYPE TABLE OF sbook.
+
+    FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
+
+    PERFORM select_for_all_entries CHANGING ld_data.
+    ASSIGN ld_data->* TO <lt_data>.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_data>
+                                               IMPORTING et_table_dest = lt_sbook_selected ).
+
+    " THEN
+    DATA: lt_sbook_expected TYPE TABLE OF sbook,
+          ls_sbook_expected TYPE sbook.
+
+    ls_sbook_expected-mandt      = sy-mandt.
+    ls_sbook_expected-bookid     = '101'.
+    ls_sbook_expected-carrid     = 'AA'.
+    ls_sbook_expected-fldate     = '20211001'.
+    ls_sbook_expected-luggweight = '15'.
+    ls_sbook_expected-smoker     = 'X'.
+    APPEND ls_sbook_expected TO lt_sbook_expected.
+
+    ls_sbook_expected-mandt      = sy-mandt.
+    ls_sbook_expected-bookid     = '104'.
+    ls_sbook_expected-carrid     = 'LH'.
+    ls_sbook_expected-fldate     = '20211005'.
+    ls_sbook_expected-luggweight = '15'.
+    ls_sbook_expected-smoker     = 'X'.
+    APPEND ls_sbook_expected TO lt_sbook_expected.
+
+    SORT: lt_sbook_selected, lt_sbook_expected.
+
+    cl_aunit_assert=>assert_equals( exp = lt_sbook_expected act = lt_sbook_selected ).
   ENDMETHOD.
 ENDCLASS.
