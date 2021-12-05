@@ -19,7 +19,7 @@ private section.
   data MV_SELECT type STRING .
   data MT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS .
   data MR_FOR_ALL_ENTRIES_TABLE type ref to DATA .
-  data MO_TESTABLE_DB_LAYER_FAKE type ref to ZCL_ZOSQL_DB_LAYER_FAKE .
+  data MO_ZOSQL_DB_LAYER_FAKE type ref to ZCL_ZOSQL_DB_LAYER_FAKE .
   data MR_RESULT_OF_QUERY type ref to DATA .
   data MV_CURRENT_RECORD_NUM type INT4 .
 
@@ -59,7 +59,7 @@ CLASS ZCL_ZOSQL_SELECT_ITER IMPLEMENTATION.
       <lt_for_all_entries_table> = it_for_all_entries_table.
     ENDIF.
 
-    CREATE OBJECT mo_testable_db_layer_fake
+    CREATE OBJECT mo_zosql_db_layer_fake
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment.
   endmethod.
@@ -70,7 +70,7 @@ CLASS ZCL_ZOSQL_SELECT_ITER IMPLEMENTATION.
 
     FIELD-SYMBOLS: <lt_empty_table_for_select> TYPE STANDARD TABLE.
 
-    ld_empty_table_for_select = mo_testable_db_layer_fake->create_empty_table_for_select( mv_select ).
+    ld_empty_table_for_select = mo_zosql_db_layer_fake->create_empty_table_for_select( mv_select ).
     ASSIGN ld_empty_table_for_select->* TO <lt_empty_table_for_select>.
 
     CREATE DATA rd_ref_to_empty_record LIKE LINE OF <lt_empty_table_for_select>.
@@ -158,14 +158,14 @@ CLASS ZCL_ZOSQL_SELECT_ITER IMPLEMENTATION.
 
     IF mr_for_all_entries_table IS BOUND.
       ASSIGN mr_for_all_entries_table->* TO <lt_for_all_entries_table>.
-      mo_testable_db_layer_fake->zif_zosql_db_layer~select( EXPORTING iv_select                = mv_select
-                                                                      it_parameters            = mt_parameters
-                                                                      it_for_all_entries_table = <lt_for_all_entries_table>
-                                                            IMPORTING ed_result_as_table       = ld_result_as_table ).
+      mo_zosql_db_layer_fake->zif_zosql_db_layer~select( EXPORTING iv_select                = mv_select
+                                                                   it_parameters            = mt_parameters
+                                                                   it_for_all_entries_table = <lt_for_all_entries_table>
+                                                         IMPORTING ed_result_as_table       = ld_result_as_table ).
     ELSE.
-      mo_testable_db_layer_fake->zif_zosql_db_layer~select( EXPORTING iv_select          = mv_select
-                                                                      it_parameters      = mt_parameters
-                                                            IMPORTING ed_result_as_table = ld_result_as_table ).
+      mo_zosql_db_layer_fake->zif_zosql_db_layer~select( EXPORTING iv_select          = mv_select
+                                                                   it_parameters      = mt_parameters
+                                                         IMPORTING ed_result_as_table = ld_result_as_table ).
     ENDIF.
 
     mr_result_of_query = ld_result_as_table.

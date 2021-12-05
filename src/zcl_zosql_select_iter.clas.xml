@@ -20,7 +20,7 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SELECT_ITER</CLSNAME>
-     <CMPNAME>MO_TESTABLE_DB_LAYER_FAKE</CMPNAME>
+     <CMPNAME>MO_ZOSQL_DB_LAYER_FAKE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fake implementation of reader to select from virtual db</DESCRIPT>
     </SEOCOMPOTX>

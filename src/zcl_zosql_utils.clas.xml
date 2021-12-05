@@ -22,15 +22,15 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>CHECK_ENDS_WITH</CMPNAME>
+     <CMPNAME>CHECK_ENDS_WITH_TOKEN</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Check if select string ends with certain word</DESCRIPT>
+     <DESCRIPT>Check if select string ends with certain token</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>CHECK_STARTS_WITH</CMPNAME>
+     <CMPNAME>CHECK_STARTS_WITH_TOKEN</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Check if select string start with certain word</DESCRIPT>
+     <DESCRIPT>Check if select string start with certain token</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
@@ -52,21 +52,27 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>DELETE_END_WORD_IF_EQUALS</CMPNAME>
+     <CMPNAME>DELETE_END_TOKEN_IF_EQUALS</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Deletes end word from query if it equals to certain string</DESCRIPT>
+     <DESCRIPT>Deletes end token from query if it equals to certain string</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>DELETE_START_WORD</CMPNAME>
+     <CMPNAME>DELETE_N_END_TOKENS</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Deletes the word from query if it is in first place</DESCRIPT>
+     <DESCRIPT>Deletes N tokens at the end of SQL expression</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>DELETE_START_WORD_IF_EQUALS</CMPNAME>
+     <CMPNAME>DELETE_START_TOKEN</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Deletes first word from query if it equals to certain string</DESCRIPT>
+     <DESCRIPT>Deletes the token from query if it is in first place</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>DELETE_START_TOKEN_IF_EQUALS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Deletes first token from query if it equals to a string</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
@@ -76,15 +82,21 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>GET_FIRST_N_CHARS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Get first N characters of string</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>GET_LAST_N_CHARS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Get last N characters of string</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
-     <CMPNAME>GET_START_WORD</CMPNAME>
+     <CMPNAME>GET_START_TOKEN</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Returns first word of SQL expression</DESCRIPT>
+     <DESCRIPT>Returns first token of SQL expression</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
@@ -127,6 +139,12 @@
      <CMPNAME>RAISE_IF_TRANSP_TAB_NOT_EXIST</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Check if there exists transparent table with such name</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>SPLIT_CONDITION_INTO_TOKENS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits any SQL condition into separate tokens</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>

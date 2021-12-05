@@ -826,7 +826,7 @@ endmethod.
     IF iv_new_syntax = abap_true.
 
       " Dynamic call for backward compatibility with older versions
-      CALL METHOD ('ZCL_TESTABLE_DB_LAYER_UTILS_74')=>('EXECUTE_SELECT_740')
+      CALL METHOD ('ZCL_ZOSQL_DB_LAYER_UTILS_74')=>('EXECUTE_SELECT_740')
         EXPORTING
           iv_select                     = iv_select
           iv_from                       = iv_from

@@ -45,28 +45,28 @@ CLASS ZCL_ZOSQL_SET_PARSER IMPLEMENTATION.
 
   METHOD PARSE_SET.
 
-    DATA: ltd_words         TYPE TABLE OF string,
-          lv_word           TYPE string,
+    DATA: lt_tokens         TYPE TABLE OF string,
+          lv_token          TYPE string,
           ls_set_field      TYPE ty_set_field,
           lv_value_expected TYPE abap_bool,
           lV_is_parameter   TYPE abap_bool.
 
     REFRESH mt_set_fields.
 
-    SPLIT iv_set_statement AT space INTO TABLE ltd_words.
+    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_set_statement ).
 
-    LOOP AT ltd_words INTO lv_word.
-      IF lv_word = '='.
+    LOOP AT lt_tokens INTO lv_token.
+      IF lv_token = '='.
         lv_value_expected = abap_true.
         CONTINUE.
       ENDIF.
 
       IF lv_value_expected = abap_true.
-        ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( lv_word ).
+        ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( lv_token ).
         APPEND ls_set_field TO mt_set_fields.
         lv_value_expected = abap_false.
       ELSE.
-        ls_set_field-fieldname = lv_word.
+        ls_set_field-fieldname = lv_token.
       ENDIF.
     ENDLOOP.
 
@@ -76,10 +76,10 @@ CLASS ZCL_ZOSQL_SET_PARSER IMPLEMENTATION.
       IF lv_is_parameter <> abap_true AND mv_new_syntax = abap_true.
         lv_is_parameter =
           mo_parameters->check_parameter_exists(
-            _delete_host_variable_symbol( ls_set_field-value_part ) ).
+            delete_host_variable_symbol( ls_set_field-value_part ) ).
 
         IF lv_is_parameter = abap_true.
-          ls_set_field-value_part = _delete_host_variable_symbol( ls_set_field-value_part ).
+          ls_set_field-value_part = delete_host_variable_symbol( ls_set_field-value_part ).
         ENDIF.
       ENDIF.
 

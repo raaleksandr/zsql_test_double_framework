@@ -1,15 +1,15 @@
-CLASS ltc_testable_db_layer DEFINITION FOR TESTING
+CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS
  INHERITING FROM zcl_zosql_unitbase.
 *?﻿<asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
 *?<asx:values>
 *?<TESTCLASS_OPTIONS>
-*?<TEST_CLASS>ltc_Testable_Db_Layer
+*?<TEST_CLASS>ltc_zosql_db_layer
 *?</TEST_CLASS>
 *?<TEST_MEMBER>f_Cut
 *?</TEST_MEMBER>
-*?<OBJECT_UNDER_TEST>ZCL_TESTABLE_DB_READER
+*?<OBJECT_UNDER_TEST>ZCL_ZOSQL_DB_LAYER
 *?</OBJECT_UNDER_TEST>
 *?<OBJECT_IS_LOCAL/>
 *?<GENERATE_FIXTURE/>
@@ -59,10 +59,10 @@ CLASS ltc_testable_db_layer DEFINITION FOR TESTING
       update_by_sql_new_syntax FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_with_params FOR TESTING RAISING zcx_zosql_error.
-ENDCLASS.       "ltc_Testable_Db_Reader
+ENDCLASS.       "ltc_zosql_db_layer
 
 
-CLASS ltc_testable_db_layer IMPLEMENTATION.
+CLASS ltc_zosql_db_layer IMPLEMENTATION.
 
   METHOD setup.
     f_cut ?= zcl_zosql_test_environment=>get_db_layer_for_production( ).

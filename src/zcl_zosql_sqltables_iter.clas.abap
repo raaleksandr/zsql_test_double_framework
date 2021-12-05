@@ -256,9 +256,9 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
 
   method INIT_BY_FROM.
 
-    DATA: lt_words                 TYPE TABLE OF string,
-          lv_word                  TYPE string,
-          lv_word_upper            TYPE string,
+    DATA: lt_tokens                TYPE TABLE OF string,
+          lv_token                 TYPE string,
+          lv_token_upper           TYPE string,
           ls_dataset_with_position TYPE ty_dataset_with_position.
 
     DATA: lv_table_name_expected  TYPE abap_bool,
@@ -270,19 +270,20 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position.
 
-    SPLIT iv_from AT space INTO TABLE lt_words.
+    "SPLIT iv_from AT space INTO TABLE lt_words.
+    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_from ).
 
     lv_table_name_expected = abap_true.
 
-    LOOP AT lt_words iNTO lv_word.
+    LOOP AT lt_tokens iNTO lv_token.
 
-      lv_word_upper = zcl_zosql_utils=>to_upper_case( lv_word ).
+      lv_token_upper = zcl_zosql_utils=>to_upper_case( lv_token ).
 
-      IF lv_word_upper = 'LEFT'.
+      IF lv_token_upper = 'LEFT'.
         lv_type_of_join = c_left_join.
       ENDIF.
 
-      IF lv_word_upper = 'JOIN'.
+      IF lv_token_upper = 'JOIN'.
         lv_table_name_expected = abap_true.
         lv_conditions_expected = abap_false.
         _add_join_condition( lv_conditions ).
@@ -291,14 +292,14 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
       ENDIF.
 
       IF lv_table_name_expected = abap_true.
-        _add_dataset( iv_dictionary_name = lv_word_upper
+        _add_dataset( iv_dictionary_name = lv_token_upper
                       iv_type_of_join    = lv_type_of_join ).
         lv_table_name_expected = abap_false.
-        lv_current_table_name  = lv_word_upper.
+        lv_current_table_name  = lv_token_upper.
         CONTINUE.
       ENDIF.
 
-      IF lv_word_upper = 'AS'.
+      IF lv_token_upper = 'AS'.
         lv_table_alias_expected = abap_true.
         CONTINUE.
       ENDIF.
@@ -307,13 +308,13 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
         READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_current_table_name
           ASSIGNING <ls_dataset_with_position>.
         IF sy-subrc = 0.
-          <ls_dataset_with_position>-dataset_alias = lv_word_upper.
+          <ls_dataset_with_position>-dataset_alias = lv_token_upper.
         ENDIF.
 
         lv_table_alias_expected = abap_false.
       ENDIF.
 
-      IF lv_word_upper = 'ON'.
+      IF lv_token_upper = 'ON'.
         lv_conditions_expected = abap_true.
         lv_type_of_join = c_inner_join.
         CLEAR lv_conditions.
@@ -321,7 +322,7 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
       ENDIF.
 
       IF lv_conditions_expected = abap_true.
-        CONCATENATE lv_conditions lv_word INTO lv_conditions SEPARATED BY space.
+        CONCATENATE lv_conditions lv_token INTO lv_conditions SEPARATED BY space.
       ENDIF.
     ENDLOOP.
 

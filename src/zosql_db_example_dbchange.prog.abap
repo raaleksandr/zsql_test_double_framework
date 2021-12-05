@@ -527,11 +527,11 @@ CLASS ltc_unit_tests_on_prog DEFINITION FOR TESTING
 *?﻿<asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
 *?<asx:values>
 *?<TESTCLASS_OPTIONS>
-*?<TEST_CLASS>ltc_Testable_Db_Layer
+*?<TEST_CLASS>ltc_unit_tests_on_prog
 *?</TEST_CLASS>
 *?<TEST_MEMBER>f_Cut
 *?</TEST_MEMBER>
-*?<OBJECT_UNDER_TEST>ZCL_TESTABLE_DB_READER
+*?<OBJECT_UNDER_TEST>ZOSQL_DB_EXAMPLE_DBCHANGE
 *?</OBJECT_UNDER_TEST>
 *?<OBJECT_IS_LOCAL/>
 *?<GENERATE_FIXTURE/>
