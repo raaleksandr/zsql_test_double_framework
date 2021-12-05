@@ -81,45 +81,9 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_FIND_WORD</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Finds a word and returns its position info</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_GET_ORDER_BY</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Gets order by from SQL statement if it exists</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
      <CMPNAME>_POP_DELETE_TABLE_NAME</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Takes table name from delete statement and returns rest</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_FIELD_LIST</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Gets SQL field list from Query and deletes it</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_FOR_ALL_ENTRIES_TABNAME</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Gets &apos;FOR ALL ENTRIES&apos; base table name and deletes</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_FROM</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns &apos;FROM&apos; part of SQL statement and deletes it</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_GROUP_BY</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns &apos;GROUP BY&apos; part of SQL statement and deletes it</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
@@ -132,18 +96,6 @@
      <CMPNAME>_POP_UPDATE_TABLE_NAME</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Takes table name from update statement and returns rest</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_UP_TO_N_ROWS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Extracts &apos;UP TO &lt;&gt; ROWS&apos; statement of SQL expression</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_POP_WHERE_SELECT</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns &apos;where&apos; part of SQL statement and deletes it</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>

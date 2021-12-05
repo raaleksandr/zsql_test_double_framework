@@ -184,11 +184,11 @@ CLASS ZCL_ZOSQL_VIEW_ITERATOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    IF zcl_zosql_utils=>check_ends_with( iv_sql       = rv_from_sql_part
-                                         iv_ends_with = 'AND' ) = abap_true.
+    IF zcl_zosql_utils=>check_ends_with_token( iv_sql   = rv_from_sql_part
+                                               iv_token = 'AND' ) = abap_true.
 
-      rv_from_sql_part = zcl_zosql_utils=>delete_end_word_if_equals( iv_sql_source         = rv_from_sql_part
-                                                                     iv_end_word_to_delete = 'AND' ).
+      rv_from_sql_part = zcl_zosql_utils=>delete_end_token_if_equals( iv_sql_source          = rv_from_sql_part
+                                                                      iv_end_token_to_delete = 'AND' ).
     ENDIF.
   ENDMETHOD.
 

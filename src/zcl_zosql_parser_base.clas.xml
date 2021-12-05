@@ -20,15 +20,27 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_BASE</CLSNAME>
-     <CMPNAME>MV_NEW_SYNTAX</CMPNAME>
+     <CMPNAME>DELETE_HOST_VARIABLE_SYMBOL</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>If new syntax since 7.40 or not</DESCRIPT>
+     <DESCRIPT>Deletes new syntax host variable syntax &apos;@&apos;</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_BASE</CLSNAME>
-     <CMPNAME>_DELETE_HOST_VARIABLE_SYMBOL</CMPNAME>
+     <CMPNAME>FILL_TOKENS</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Deletes new syntax host variable syntax &apos;@&apos;</DESCRIPT>
+     <DESCRIPT>Splits any SQL expression into tokens and fills mt_tokens</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_BASE</CLSNAME>
+     <CMPNAME>MT_TOKENS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Table of Tokens of SQL Expression</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_BASE</CLSNAME>
+     <CMPNAME>MV_NEW_SYNTAX</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>If new syntax since 7.40 or not</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

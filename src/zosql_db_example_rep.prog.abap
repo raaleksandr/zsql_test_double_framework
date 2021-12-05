@@ -5,7 +5,7 @@
 *& The program uses Z-SQL Test Double Framework library to make code
 *& isolated from database and therefore testable with unit-tests
 *&---------------------------------------------------------------------*
-REPORT ztestable_db_example_rep_init.
+REPORT zosql_db_example_rep.
 
 CLASS lcl_model DEFINITION DEFERRED.
 
@@ -35,7 +35,7 @@ CLASS lcl_model DEFINITION.
     METHODS: constructor IMPORTING io_db_layer TYPE REF TO zif_zosql_db_layer OPTIONAL.
 
     METHODS: read_data IMPORTING it_customid_range TYPE zosql_db_example_cust_rng
-                       RAISING zcx_zosql_error,
+                       RAISING   zcx_zosql_error,
       get_data RETURNING VALUE(rt_data) TYPE ty_data,
       check_test_tables_filled RETURNING VALUE(rv_filled) TYPE abap_bool.
 
@@ -262,11 +262,11 @@ CLASS ltc_unit_tests_on_prog DEFINITION FOR TESTING
 *?﻿<asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
 *?<asx:values>
 *?<TESTCLASS_OPTIONS>
-*?<TEST_CLASS>ltc_Testable_Db_Layer
+*?<TEST_CLASS>ltc_unit_tests_on_prog
 *?</TEST_CLASS>
 *?<TEST_MEMBER>f_Cut
 *?</TEST_MEMBER>
-*?<OBJECT_UNDER_TEST>ZCL_TESTABLE_DB_READER
+*?<OBJECT_UNDER_TEST>ZOSQL_DB_EXAMPLE_REP
 *?</OBJECT_UNDER_TEST>
 *?<OBJECT_IS_LOCAL/>
 *?<GENERATE_FIXTURE/>

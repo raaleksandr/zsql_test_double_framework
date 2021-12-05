@@ -75,6 +75,16 @@ private section.
   data M_EMPTY_CONDITION_FLAG type ABAP_BOOL .
   constants C_NOT type STRING value 'NOT' ##NO_TEXT.
 
+  methods _GET_FIRST_TOKEN
+    importing
+      !IT_TOKENS type STRING_TABLE
+    returning
+      value(RV_FIRST_TOKEN) type STRING .
+  methods _GET_LAST_TOKEN
+    importing
+      !IT_TOKENS type STRING_TABLE
+    returning
+      value(RV_LAST_TOKEN) type STRING .
   methods _CONVERT_LIKE_TO_CP
     importing
       !IA_MASK_FOR_LIKE type ANY
@@ -100,11 +110,13 @@ private section.
       !ET_CONDITION type TY_BLOCKS
       value(EV_CONDITION_FOUND) type ABAP_BOOL .
   methods _DELETE_BRACKETS_AROUND
-    changing
-      !CV_SQL_CONDITION type STRING .
-  methods _HAS_BRACKETS_AROUND
     importing
       !IV_SQL_CONDITION type STRING
+    returning
+      value(RV_SQL_CONDITION_NO_BRACKETS) type STRING .
+  methods _HAS_BRACKETS_AROUND
+    importing
+      !IV_SQL_CONDITION type CLIKE
     returning
       value(RV_HAS_BRACKETS_AROUND) type ABAP_BOOL .
   methods _SPLIT_BY_OR_AND
@@ -179,6 +191,8 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
       RETURN.
     ENDIF.
 
+    fill_tokens( iv_sql_condition ).
+
     _split_by_and_fill_conditions( EXPORTING iv_condition       = iv_sql_condition
                                              iv_or_or_and       = 'OR'
                                    IMPORTING et_condition       = mt_or_conditions
@@ -197,15 +211,15 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql_condition
-                                           iv_starts_with = c_not ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_sql_condition
+                                                 iv_token = c_not ) = abap_true.
 
       DATA: lv_condition_without_not TYPE string.
 
       ms_not_condition-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
       lv_condition_without_not =
-        zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_condition
-                                                      iv_start_word_to_delete = c_not ).
+        zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_sql_condition
+                                                       iv_start_token_to_delete = c_not ).
 
       ms_not_condition-parser->parse_condition( lv_condition_without_not ).
       RETURN.
@@ -215,8 +229,7 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
 
       DATA: lv_condition_no_brackets TYPE string.
 
-      lv_condition_no_brackets = iv_sql_condition.
-      _delete_brackets_around( CHANGING cv_sql_condition = lv_condition_no_brackets ).
+      lv_condition_no_brackets = _delete_brackets_around( iv_sql_condition ).
       zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition = lv_condition_no_brackets ).
       RETURN.
     ENDIF.
@@ -308,16 +321,40 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
 
   METHOD _DELETE_BRACKETS_AROUND.
 
-    DATA: lv_condition_len TYPE i,
-          lv_new_len       TYPE i.
+    DATA: lv_pre_last TYPE i,
+          lt_tokens   TYPE TABLE OF string,
+          lv_token    TYPE string.
 
-    IF _has_brackets_around( cv_sql_condition ) = abap_true.
-      cv_sql_condition = zcl_zosql_utils=>condense( cv_sql_condition ).
-      lv_condition_len = strlen( cv_sql_condition ).
-      lv_new_len = lv_condition_len - 2.
-      cv_sql_condition = cv_sql_condition+1(lv_new_len).
+    IF _has_brackets_around( iv_sql_condition ) = abap_true.
+
+      lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_sql_condition ).
+
+      lv_pre_last = LINES( lt_tokens ) - 1.
+
+      LOOP AT lt_tokens INTO lv_token
+        FROM 2 TO lv_pre_last.
+
+        CONCATENATE rv_sql_condition_no_brackets lv_token INTO rv_sql_condition_no_brackets SEPARATED BY space.
+      ENDLOOP.
+    ELSE.
+      rv_sql_condition_no_brackets = iv_sql_condition.
     ENDIF.
   ENDMETHOD.
+
+
+  method _GET_FIRST_TOKEN.
+    READ TABLE it_tokens INDEX 1 INTO rv_first_token.
+  endmethod.
+
+
+  method _GET_LAST_TOKEN.
+    DATA: lv_num_of_tokens TYPE i.
+
+    lv_num_of_tokens = LINES( it_tokens ).
+    IF lv_num_of_tokens > 0.
+      READ TABLE it_tokens INDEX lv_num_of_tokens INTO rv_last_token.
+    ENDIF.
+  endmethod.
 
 
   METHOD _GET_REF_TO_CONDITION_OPERAND.
@@ -366,18 +403,13 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
 
   method _HAS_BRACKETS_AROUND.
 
-    DATA: lv_sql_condition TYPE string,
-          lv_condition_len TYPE i.
+    DATA: lt_tokens   TYPE TABLE OF string.
 
-    lv_sql_condition = zcl_zosql_utils=>condense( iv_sql_condition ).
+    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_sql_condition ).
 
-    lv_condition_len = strlen( lv_sql_condition ).
-    IF lv_condition_len <= 1.
-      RETURN.
-    ENDIF.
+    IF _get_first_token( lt_tokens ) = '('
+      AND _get_last_token( lt_tokens ) = ')'.
 
-    IF lv_sql_condition(1) = '(' AND zcl_zosql_utils=>get_last_n_chars( iv_string              = lv_sql_condition
-                                                                        iv_how_many_characters = 1 ) = ')'.
       rv_has_brackets_around = abap_true.
     ENDIF.
   endmethod.
@@ -428,7 +460,7 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
       LOOP AT lt_parts_after_split INTO lv_part.
         APPEND INITIAL LINE TO et_condition ASSIGNING <ls_condition>.
         <ls_condition>-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
-        _delete_brackets_around( CHANGING cv_sql_condition = lv_part ).
+        lv_part = _delete_brackets_around( lv_part ).
         <ls_condition>-parser->parse_condition( iv_sql_condition = lv_part ).
       ENDLOOP.
     ENDIF.
@@ -437,31 +469,28 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
 
   method _SPLIT_BY_OR_AND.
 
-    DATA: ltd_words     TYPE TABLE OF string,
-          lv_word       TYPE string,
-          lv_word_upper TYPE string,
-          lv_where_part TYPE string,
+    DATA: lv_token         TYPE string,
+          lv_token_upper   TYPE string,
+          lv_where_part    TYPE string,
           lv_bracket_depth TYPE i.
 
     CLEAR et_parts_after_split.
 
-    SPLIT iv_condition AT space INTO TABLE ltd_words.
+    LOOP AT mt_tokens INTO lv_token.
+      lv_token_upper = zcl_zosql_utils=>to_upper_case( lv_token ).
 
-    LOOP AT ltd_words INTO lv_word.
-      lv_word_upper = zcl_zosql_utils=>to_upper_case( lv_word ).
-
-      IF lv_word = '('.
+      IF lv_token = '('.
         lv_bracket_depth = lv_bracket_depth + 1.
-      ELSEIF lv_word = ')'.
+      ELSEIF lv_token = ')'.
         lv_bracket_depth = lv_bracket_depth - 1.
       ENDIF.
 
-      IF lv_word_upper = iv_or_or_and AND lv_bracket_depth = 0.
+      IF lv_token_upper = iv_or_or_and AND lv_bracket_depth = 0.
         APPEND lv_where_part TO et_parts_after_split.
         CLEAR lv_where_part.
         ev_condition_found = abap_true.
       ELSE.
-        CONCATENATE lv_where_part lv_word INTO lv_where_part SEPARATED BY space.
+        CONCATENATE lv_where_part lv_token INTO lv_where_part SEPARATED BY space.
       ENDIF.
     ENDLOOP.
 

@@ -78,7 +78,7 @@ private section.
       value(RV_IS_FUNCTION) type ABAP_BOOL .
   methods _IS_FUNCTION_NAME
     importing
-      !IV_WORD type CLIKE
+      !IV_TOKEN type CLIKE
     returning
       value(RV_IS_FUNCTION_NAME) type ABAP_BOOL .
   methods _PARSE_FIELD
@@ -288,8 +288,8 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
     lv_index_of_last_record = LINES( ct_field_list ).
     READ TABLE ct_field_list INDEX lv_index_of_last_record INTO lv_value_of_last_record.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = lv_alias
-                                           iv_starts_with = c_as ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = lv_alias
+                                                 iv_token = c_as ) = abap_true.
 
       CONCATENATE lv_value_of_last_record lv_alias INTO lv_value_of_last_record SEPARATED BY space.
     ELSE.
@@ -499,7 +499,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
 
   method _IS_FUNCTION_NAME.
 
-    IF iv_word CP '*('.
+    IF iv_token CP '*('.
       rv_is_function_name = abap_true.
     ENDIF.
   endmethod.
@@ -593,30 +593,30 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
   endmethod.
 
 
-  method _SEPARATE_ALIAS.
+  METHOD _separate_alias.
 
-    DATA: lt_words TYPE TABLE OF string,
-          lv_word  TYPE string,
+    DATA: lt_tokens        TYPE TABLE OF string,
+          lv_token         TYPE string,
           lv_alias_started TYPE abap_bool.
 
-    SPLIT iv_whole_expression AT space INTO TABLE lt_words.
+    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_whole_expression ).
     CLEAR: ev_expression_without_alias, ev_alias.
 
-    LOOP AT lt_words INTO lv_word.
+    LOOP AT lt_tokens INTO lv_token.
 
-      IF zcl_zosql_utils=>to_upper_case( lv_word ) = 'AS'.
+      IF zcl_zosql_utils=>to_upper_case( lv_token ) = 'AS'.
         lv_alias_started = abap_true.
         CONTINUE.
       ENDIF.
 
       IF lv_alias_started = abap_true.
-        ev_alias = lv_word.
+        ev_alias = lv_token.
       ELSE.
-        CONCATENATE ev_expression_without_alias lv_word INTO ev_expression_without_alias
+        CONCATENATE ev_expression_without_alias lv_token INTO ev_expression_without_alias
           SEPARATED BY space.
       ENDIF.
     ENDLOOP.
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD _SPLIT_SELECT_INTO_FIELDS.
@@ -632,7 +632,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
     IF iv_new_syntax = abap_true.
       SPLIT iv_field_list_from_select AT ',' INTO TABLE rt_fields_in_result_set.
     ELSE.
-      SPLIT iv_field_list_from_select AT space INTO TABLE rt_fields_in_result_set.
+      rt_fields_in_result_set = zcl_zosql_utils=>split_condition_into_tokens( iv_field_list_from_select ).
 
       lt_fields_in_result_set_copy = rt_fields_in_result_set.
       REFRESH rt_fields_in_result_set.

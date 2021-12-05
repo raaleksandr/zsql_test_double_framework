@@ -28,7 +28,7 @@ CLASS ZCL_ZOSQL_GROUPBY_PARSER IMPLEMENTATION.
     REFRESH mt_group_by_fields.
 
     IF iv_group_by_clause IS NOT INITIAL.
-      SPLIT zcl_zosql_utils=>to_upper_case( iv_group_by_clause ) AT space INTO TABLE lt_group_by_fields.
+      lt_group_by_fields = zcl_zosql_utils=>split_condition_into_tokens( zcl_zosql_utils=>to_upper_case( iv_group_by_clause ) ).
     ENDIF.
 
     LOOP AT lt_group_by_fields INTO lv_group_by_field.

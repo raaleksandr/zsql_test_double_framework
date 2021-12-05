@@ -7,6 +7,16 @@ public section.
 
   class-data DUMMY type TEXT255 .
 
+  class-methods SPLIT_CONDITION_INTO_TOKENS
+    importing
+      !IV_SQL_CONDITION type CLIKE
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
+  class-methods DELETE_N_END_TOKENS
+    importing
+      value(IV_N) type I
+    changing
+      !CV_SQL type CLIKE .
   class-methods BOOLEAN_NOT
     importing
       !IV_BOOLEAN type ABAP_BOOL
@@ -33,7 +43,13 @@ public section.
       value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
     returning
       value(RV_LAST_N_CHARACTERS) type STRING .
-  class-methods GET_START_WORD
+  class-methods GET_FIRST_N_CHARS
+    importing
+      !IV_STRING type CLIKE
+      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
+    returning
+      value(RV_FIRST_N_CHARACTERS) type STRING .
+  class-methods GET_START_TOKEN
     importing
       !IV_SQL type CLIKE
     returning
@@ -82,18 +98,18 @@ public section.
       !I_VARIABLE type ANY
     returning
       value(RV_IS_INTERNAL_TABLE) type ABAP_BOOL .
-  class-methods CHECK_ENDS_WITH
+  class-methods CHECK_ENDS_WITH_TOKEN
     importing
       !IV_SQL type CLIKE
-      !IV_ENDS_WITH type CLIKE
+      !IV_TOKEN type CLIKE
     returning
-      value(RV_ENDS_WITH_THE_WORD) type ABAP_BOOL .
-  class-methods CHECK_STARTS_WITH
+      value(RV_ENDS_WITH_THE_TOKEN) type ABAP_BOOL .
+  class-methods CHECK_STARTS_WITH_TOKEN
     importing
       !IV_SQL type CLIKE
-      !IV_STARTS_WITH type CLIKE
+      !IV_TOKEN type CLIKE
     returning
-      value(RV_STARTS_WITH_THE_WORD) type ABAP_BOOL .
+      value(RV_STARTS_WITH_THE_TOKEN) type ABAP_BOOL .
   class-methods RAISE_IF_TRANSP_TAB_NOT_EXIST
     importing
       !IV_TABLE_NAME type CLIKE
@@ -106,23 +122,23 @@ public section.
       !IV_VALUE type CLIKE
     returning
       value(RV_VALUE) type STRING .
-  class-methods DELETE_END_WORD_IF_EQUALS
+  class-methods DELETE_END_TOKEN_IF_EQUALS
     importing
       !IV_SQL_SOURCE type CLIKE
-      !IV_END_WORD_TO_DELETE type CLIKE
+      !IV_END_TOKEN_TO_DELETE type CLIKE
     returning
-      value(RV_SQL_WITHOUT_WORD) type STRING .
-  class-methods DELETE_START_WORD
+      value(RV_SQL_WITHOUT_TOKEN) type STRING .
+  class-methods DELETE_START_TOKEN
     importing
       !IV_SQL_SOURCE type CLIKE
     returning
-      value(RV_SQL_WITHOUT_WORD) type STRING .
-  class-methods DELETE_START_WORD_IF_EQUALS
+      value(RV_SQL_WITHOUT_TOKEN) type STRING .
+  class-methods DELETE_START_TOKEN_IF_EQUALS
     importing
       !IV_SQL_SOURCE type CLIKE
-      !IV_START_WORD_TO_DELETE type CLIKE
+      !IV_START_TOKEN_TO_DELETE type CLIKE
     returning
-      value(RV_SQL_WITHOUT_WORD) type STRING .
+      value(RV_SQL_WITHOUT_TOKEN) type STRING .
 protected section.
 private section.
 ENDCLASS.
@@ -141,7 +157,7 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  METHOD CHECK_ENDS_WITH.
+  METHOD CHECK_ENDS_WITH_TOKEN.
 
     DATA: lv_sql                      TYPE string,
           lv_ends_with                TYPE string,
@@ -155,7 +171,7 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     CONDENSE lv_sql.
     lv_length_of_whole_string = strlen( lv_sql ).
 
-    lv_ends_with = zcl_zosql_utils=>to_upper_case( iv_ends_with ).
+    lv_ends_with = zcl_zosql_utils=>to_upper_case( iv_token ).
     lv_length_of_string_to_find = strlen( lv_ends_with ).
 
     lv_i = lv_length_of_whole_string - lv_length_of_string_to_find.
@@ -163,12 +179,12 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     FIND ALL OCCURRENCES OF lv_ends_with IN lv_sql RESULTS lt_results.
     READ TABLE lt_results INDEX lines( lt_results ) INTO ls_result.
     IF sy-subrc = 0 AND ls_result-offset >= lv_i.
-      rv_ends_with_the_word = abap_true.
+      rv_ends_with_the_token = abap_true.
     ENDIF.
   ENDMETHOD.
 
 
-  method CHECK_STARTS_WITH.
+  method CHECK_STARTS_WITH_TOKEN.
 
     DATA: lv_sql         TYPE string,
           lv_starts_with TYPE string,
@@ -177,11 +193,11 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     lv_sql = zcl_zosql_utils=>to_upper_case( iv_sql ).
     CONDENSE lv_sql.
 
-    lv_starts_with = zcl_zosql_utils=>to_upper_case( iv_starts_with ).
+    lv_starts_with = zcl_zosql_utils=>to_upper_case( iv_token ).
 
     FIND FIRST OCCURRENCE OF lv_starts_with IN lv_sql MATCH OFFSET lv_offset.
     IF sy-subrc = 0 AND lv_offset = 0.
-      rv_starts_with_the_word = abap_true.
+      rv_starts_with_the_token = abap_true.
     ENDIF.
   endmethod.
 
@@ -224,51 +240,86 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method DELETE_END_WORD_IF_EQUALS.
+  method DELETE_END_TOKEN_IF_EQUALS.
 
-    DATA: lv_end_word_len       TYPE i,
-          lv_end_word_to_delete TYPE string,
-          lv_return_len         TYPE i,
-          lv_sql_source         TYPE string,
-          lv_all_sql_len        TYPE i.
+    DATA: lv_end_token_len       TYPE i,
+          lv_end_token_to_delete TYPE string,
+          lv_return_len          TYPE i,
+          lv_sql_source          TYPE string,
+          lv_all_sql_len         TYPE i.
 
-    IF check_ends_with( iv_sql         = iv_sql_source
-                        iv_ends_with = iv_end_word_to_delete ) = abap_true.
+    IF check_ends_with_token( iv_sql   = iv_sql_source
+                              iv_token = iv_end_token_to_delete ) = abap_true.
 
-      lv_end_word_to_delete = iv_end_word_to_delete.
-      lv_end_word_len = strlen( lv_end_word_to_delete ).
+      lv_end_token_to_delete = iv_end_token_to_delete.
+      lv_end_token_len = strlen( lv_end_token_to_delete ).
       lv_sql_source = iv_sql_source.
       lv_all_sql_len = strlen( lv_sql_source ).
-      IF lv_end_word_len < strlen( iv_sql_source ).
-        lv_return_len = lv_all_sql_len - lv_end_word_len.
-        rv_sql_without_word = iv_sql_source(lv_return_len).
-        CONDENSE rv_sql_without_word.
+      IF lv_end_token_len < strlen( iv_sql_source ).
+        lv_return_len = lv_all_sql_len - lv_end_token_len.
+        rv_sql_without_token = iv_sql_source(lv_return_len).
+        CONDENSE rv_sql_without_token.
       ENDIF.
     ELSE.
-      rv_sql_without_word = iv_sql_source.
+      rv_sql_without_token = iv_sql_source.
     ENDIF.
   endmethod.
 
 
-  method DELETE_START_WORD.
-    SPLIT iv_sql_source AT space INTO zcl_zosql_utils=>dummy rv_sql_without_word.
+  method DELETE_N_END_TOKENS.
+    DATA: lt_tokens    TYPE TABLE OF string,
+          lv_end_index TYPE i,
+          lv_token     TYPE string.
+
+    lt_tokens = split_condition_into_tokens( cv_sql ).
+    lv_end_index = LINES( lt_tokens ) - iv_n.
+
+    CLEAR cv_sql.
+
+    LOOP AT lt_tokens INTO lv_token
+      TO lv_end_index.
+
+      CONCATENATE cv_sql lv_token INTO cv_sql SEPARATED BY space.
+    ENDLOOP.
   endmethod.
 
 
-  method DELETE_START_WORD_IF_EQUALS.
+  method DELETE_START_TOKEN.
+    SPLIT iv_sql_source AT space INTO zcl_zosql_utils=>dummy rv_sql_without_token.
+  endmethod.
 
-    DATA: lv_start_word_len TYPE i.
 
-    IF check_starts_with( iv_sql         = iv_sql_source
-                          iv_starts_with = iv_start_word_to_delete ) = abap_true.
+  method DELETE_START_TOKEN_IF_EQUALS.
 
-      lv_start_word_len = strlen( iv_start_word_to_delete ).
-      IF lv_start_word_len < strlen( iv_sql_source ).
-        rv_sql_without_word = iv_sql_source+lv_start_word_len.
-        CONDENSE rv_sql_without_word.
+    DATA: lv_start_token_len TYPE i,
+          lv_sql_source      TYPE string.
+
+    IF check_starts_with_token( iv_sql   = iv_sql_source
+                                iv_token = iv_start_token_to_delete ) = abap_true.
+
+      lv_sql_source = iv_sql_source.
+      SHIFT lv_sql_source LEFT DELETING LEADING space.
+      lv_start_token_len = strlen( iv_start_token_to_delete ).
+      IF lv_start_token_len < strlen( lv_sql_source ).
+        rv_sql_without_token = lv_sql_source+lv_start_token_len.
+        CONDENSE rv_sql_without_token.
       ENDIF.
     ELSE.
-      rv_sql_without_word = iv_sql_source.
+      rv_sql_without_token = iv_sql_source.
+    ENDIF.
+  endmethod.
+
+
+  method GET_FIRST_N_CHARS.
+
+    DATA: lv_string TYPE string.
+
+    lv_string = iv_string.
+
+    IF strlen( lv_string ) >= iv_how_many_characters.
+      rv_first_n_characters = lv_string(iv_how_many_characters).
+    ELSE.
+      rv_first_n_characters = iv_string.
     ENDIF.
   endmethod.
 
@@ -291,7 +342,7 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method GET_START_WORD.
+  method GET_START_TOKEN.
     SPLIT iv_sql AT space INTO rv_first_word zcl_zosql_utils=>dummy.
   endmethod.
 
@@ -403,8 +454,44 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method TO_UPPER_CASE.
+  method SPLIT_CONDITION_INTO_TOKENS.
 
+    CONSTANTS: lc_quote  TYPE char1 VALUE ''''.
+
+    DATA: lt_words        TYPE TABLE OF string,
+          lv_word         TYPE string,
+          lv_inside_quote TYPE abap_bool,
+          lv_new_token    TYPE string,
+          lt_results      TYPE match_result_tab.
+
+    SPLIT iv_sql_condition AT space INTO TABLE lt_words.
+
+    LOOP AT lt_words INTO lv_word.
+
+      REFRESH lt_results.
+      FIND ALL OCCURRENCES OF lc_quote IN lv_word RESULTS lt_results.
+      IF LINES( lt_results ) MOD 2 = 1.
+        lv_inside_quote = zcl_zosql_utils=>boolean_not( lv_inside_quote ).
+      ENDIF.
+
+      IF lv_new_token IS INITIAL.
+        lv_new_token = lv_word.
+      ELSE.
+        CONCATENATE lv_new_token lv_word INTO lv_new_token SEPARATED BY space.
+      ENDIF.
+
+      IF lv_inside_quote <> abap_true.
+        APPEND lv_new_token TO rt_tokens.
+        CLEAR lv_new_token.
+      ENDIF.
+    ENDLOOP.
+
+    DELETE rt_tokens
+      WHERE table_line IS INITIAL.
+  endmethod.
+
+
+  method TO_UPPER_CASE.
     rv_string_in_upper_case = iv_string.
     TRANSLATE rv_string_in_upper_case TO UPPER CASE.
   endmethod.

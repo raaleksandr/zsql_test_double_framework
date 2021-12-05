@@ -97,7 +97,7 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
     IF rv_value_is_parameter <> abap_true AND mv_new_syntax = abap_true.
       rv_value_is_parameter =
         mo_parameters->check_parameter_exists(
-                         _delete_host_variable_symbol( m_fieldname_right_or_value )
+                         delete_host_variable_symbol( m_fieldname_right_or_value )
                        ).
     ENDIF.
   ENDMETHOD.
@@ -124,7 +124,7 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
     IF _check_if_value_is_parameter( ) = abap_true.
 
       IF mv_new_syntax = abap_true.
-        m_fieldname_right_or_value = _delete_host_variable_symbol( m_fieldname_right_or_value ).
+        m_fieldname_right_or_value = delete_host_variable_symbol( m_fieldname_right_or_value ).
       ENDIF.
 
       _fill_parameter_data_for_cond( ).

@@ -86,6 +86,7 @@ protected section.
       value(EV_DISTINCT) type ABAP_BOOL
       value(EV_NEW_SYNTAX) type ABAP_BOOL
       !EV_NUMBER_OF_ROWS_EXPR type CLIKE
+      !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
   methods PREPARE_N_OF_ROWS_FOR_SELECT
@@ -109,29 +110,27 @@ private section.
   constants C_SET type STRING value 'SET' ##NO_TEXT.
   constants C_UP type STRING value 'UP' ##NO_TEXT.
 
-  methods _POP_WHERE_UPDATE_DELETE
+  methods _DETECT_IF_NEW_SYNTAX_SET
     importing
-      !IV_SQL_STATEMENT type CLIKE
+      !IV_SET_STATEMENT type CLIKE
     returning
-      value(RV_WHERE) type STRING .
-  methods _POP_UP_TO_N_ROWS
-    exporting
-      !EV_NUMBER_OF_ROWS_EXPR type CLIKE
-    changing
-      !CV_SQL type CLIKE
-    raising
-      ZCX_ZOSQL_ERROR .
+      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
+  methods _DETECT_IF_NEW_SYNTAX_WHERE
+    importing
+      !IV_WHERE type CLIKE
+    returning
+      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
   methods _POP_SET_STATEMENT
     importing
       !IV_SQL_STATEMENT type CLIKE
     exporting
       !EV_SET_STATEMENT type CLIKE
       !EV_OTHER_SELECT type CLIKE .
-  methods _POP_FOR_ALL_ENTRIES_TABNAME
-    exporting
-      !EV_FOR_ALL_ENTRIES_TABNAME type CLIKE
-    changing
-      !CV_SQL type CLIKE .
+  methods _POP_WHERE_UPDATE_DELETE
+    importing
+      !IV_SQL_STATEMENT type CLIKE
+    returning
+      value(RV_WHERE) type STRING .
   methods _SPLIT_DELETE_INTO_PARTS
     importing
       !IV_DELETE_STATEMENT type CLIKE
@@ -151,57 +150,18 @@ private section.
       !EV_NEW_SYNTAX type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _FIND_WORD
-    importing
-      !IV_SQL type CLIKE
-      !IV_WORD type CLIKE
-    returning
-      value(RS_RESULT) type MATCH_RESULT .
-  methods _DETECT_IF_NEW_SYNTAX_WHERE
-    importing
-      !IV_WHERE type CLIKE
-    returning
-      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
-  methods _DETECT_IF_NEW_SYNTAX_SET
-    importing
-      !IV_SET_STATEMENT type CLIKE
-    returning
-      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
-  methods _GET_ORDER_BY
-    importing
-      !IV_SQL type CLIKE
-    returning
-      value(RV_ORDER_BY) type STRING .
   methods _RETURN_TABLE_TO_RESULT
     importing
       !IT_RESULT_TABLE_PREPARED type STANDARD TABLE
       value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
     exporting
       !ET_RESULT_TABLE type ANY TABLE .
-  methods _POP_GROUP_BY
-    exporting
-      !EV_GROUP_BY type CLIKE
-    changing
-      !CV_SQL type CLIKE .
   methods _RETURN_LINE_TO_RESULT
     importing
       !IS_LINE_OF_RESULT_TABLE type ANY
       value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
     exporting
       !ES_RESULT_LINE type ANY .
-  methods _POP_WHERE_SELECT
-    exporting
-      !EV_WHERE type CLIKE
-    changing
-      !CV_SQL type CLIKE .
-  methods _POP_UPDATE_TABLE_NAME
-    importing
-      !IV_UPDATE_STATEMENT type CLIKE
-    exporting
-      !EV_TABLE_NAME type CLIKE
-      !EV_OTHER_SELECT type CLIKE
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _POP_DELETE_TABLE_NAME
     importing
       !IV_DELETE_STATEMENT type CLIKE
@@ -210,20 +170,12 @@ private section.
       !EV_OTHER_SELECT type CLIKE
     raising
       ZCX_ZOSQL_ERROR .
-  methods _POP_FIELD_LIST
+  methods _POP_UPDATE_TABLE_NAME
+    importing
+      !IV_UPDATE_STATEMENT type CLIKE
     exporting
-      !EV_SELECT_FIELD_LIST type CLIKE
-      !EV_DISTINCT type ABAP_BOOL
-      !EV_SINGLE type ABAP_BOOL
-    changing
-      !CV_SQL type CLIKE
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _POP_FROM
-    exporting
-      !EV_FROM type CLIKE
-    changing
-      !CV_SQL type CLIKE
+      !EV_TABLE_NAME type CLIKE
+      !EV_OTHER_SELECT type CLIKE
     raising
       ZCX_ZOSQL_ERROR .
   methods _REPLACE_SEPARATORS_TO_SPACE
@@ -337,36 +289,108 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   endmethod.
 
 
-  method SPLIT_SELECT_INTO_PARTS.
+  METHOD split_select_into_parts.
 
-    DATA: lv_select  TYPE string,
-          lv_single  TYPE abap_bool.
+    DATA: lv_select                  TYPE string,
+          lv_single                  TYPE abap_bool,
+          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc,
+          ls_top_node                TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_child_nodes             TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lt_for_all_entries_nodes   TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_node_with_tabname       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_up_to_n_rows_nodes      TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_node_with_num_rows      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_child_nodes_of_token    TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lv_end_token_index         TYPE i,
+          lv_select_field_list_start TYPE i,
+          lv_select_field_list_end   TYPE i.
+
+    FIELD-SYMBOLS: <ls_node>                LIKE LINE OF lt_child_nodes,
+                   <ls_child_node_of_token> LIKE LINE OF lt_child_nodes_of_token.
 
     CLEAR: ev_select_field_list, ev_from, ev_where, ev_group_by, ev_order_by, ev_distinct.
 
     lv_select = _replace_separators_to_space( iv_select ).
 
-    _pop_field_list( IMPORTING ev_select_field_list = ev_select_field_list
-                               ev_distinct          = ev_distinct
-                               ev_single            = lv_single
-                     CHANGING  cv_sql               = lv_select ).
+    CREATE OBJECT lo_sql_parser.
+    lo_sql_parser->set_sql( lv_select ).
+    lo_sql_parser->run_recursive_descent_parser( ).
+    eo_sql_parser = lo_sql_parser.
 
-    _pop_from( IMPORTING ev_from = ev_from
-               CHANGING  cv_sql  = lv_select ).
+    ls_top_node = lo_sql_parser->get_top_node( ).
+    lt_child_nodes = lo_sql_parser->get_child_nodes( ls_top_node-id ).
 
-    _pop_up_to_n_rows( IMPORTING ev_number_of_rows_expr = ev_number_of_rows_expr
-                       CHANGING  cv_sql                 = lv_select ).
+    LOOP AT lt_child_nodes ASSIGNING <ls_node>.
+      CASE <ls_node>-token_ucase.
+         WHEN 'DISTINCT'.
+          ev_distinct = abap_true.
+        WHEN 'SINGLE'.
+          lv_single = abap_true.
+        WHEN 'FROM'.
+          ev_from = lo_sql_parser->get_node_sql_without_self( <ls_node>-id ).
+        WHEN 'UP'.
+          lt_up_to_n_rows_nodes = lo_sql_parser->get_child_nodes( <ls_node>-id ).
+          READ TABLE lt_up_to_n_rows_nodes
+            INDEX lines( lt_up_to_n_rows_nodes ) - 1
+            INTO ls_node_with_num_rows.
+          IF sy-subrc = 0.
+            ev_number_of_rows_expr = ls_node_with_num_rows-token.
+          ENDIF.
+        WHEN 'FOR'.
+          lt_for_all_entries_nodes = lo_sql_parser->get_child_nodes( <ls_node>-id ).
+          READ TABLE lt_for_all_entries_nodes
+            INDEX lines( lt_for_all_entries_nodes )
+            INTO ls_node_with_tabname.
+          IF sy-subrc = 0.
+            ev_for_all_entries_tabname = ls_node_with_tabname-token.
+          ENDIF.
+        WHEN 'WHERE'.
+          ev_where = lo_sql_parser->get_node_sql_without_self( <ls_node>-id ).
+        WHEN 'GROUP'.
+          lt_child_nodes_of_token = lo_sql_parser->get_child_nodes( <ls_node>-id ).
+          READ TABLE lt_child_nodes_of_token INDEX 1 ASSIGNING <ls_child_node_of_token>.
+          CHECK sy-subrc = 0.
+          CHECK <ls_child_node_of_token>-token_ucase = 'BY'.
 
-    _pop_for_all_entries_tabname( IMPORTING ev_for_all_entries_tabname = ev_for_all_entries_tabname
-                                  CHANGING  cv_sql                     = lv_select ).
+          READ TABLE lt_child_nodes_of_token INDEX 2 ASSIGNING <ls_child_node_of_token>.
+          CHECK sy-subrc = 0.
 
-    _pop_where_select( IMPORTING ev_where = ev_where
-                       CHANGING  cv_sql   = lv_select ).
+          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
 
-    _pop_group_by( IMPORTING ev_group_by = ev_group_by
-                   CHANGING  cv_sql      = lv_select ).
+          ev_group_by = lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_child_node_of_token>-token_index
+                                                                   iv_end_token_index   = lv_end_token_index ).
 
-    ev_order_by = _get_order_by( lv_select ).
+        WHEN 'ORDER'.
+          lt_child_nodes_of_token = lo_sql_parser->get_child_nodes( <ls_node>-id ).
+          READ TABLE lt_child_nodes_of_token INDEX 1 ASSIGNING <ls_child_node_of_token>.
+          CHECK sy-subrc = 0.
+          CHECK <ls_child_node_of_token>-token_ucase = 'BY'.
+
+          READ TABLE lt_child_nodes_of_token INDEX 2 ASSIGNING <ls_child_node_of_token>.
+          CHECK sy-subrc = 0.
+
+          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
+
+          ev_order_by = lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_child_node_of_token>-token_index
+                                                                   iv_end_token_index   = lv_end_token_index ).
+        WHEN OTHERS.
+          IF lv_select_field_list_start IS INITIAL.
+            lv_select_field_list_start = <ls_node>-token_index.
+          ENDIF.
+
+          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
+
+          IF lv_select_field_list_end < lv_end_token_index.
+            lv_select_field_list_end = lv_end_token_index.
+          ENDIF.
+      ENDCASE.
+    ENDLOOP.
+
+    IF lv_select_field_list_start IS NOT INITIAL AND lv_select_field_list_end IS NOT INITIAL.
+      ev_select_field_list =
+        lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = lv_select_field_list_start
+                                                   iv_end_token_index   = lv_select_field_list_end ).
+    ENDIF.
 
     IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
       MESSAGE e071 INTO zcl_zosql_utils=>dummy.
@@ -376,7 +400,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     ENDIF.
 
     ev_new_syntax = detect_if_new_syntax_select( ev_select_field_list ).
-  endmethod.
+  ENDMETHOD.
 
 
   method ZIF_ZOSQL_DB_LAYER~COMMIT.
@@ -499,60 +523,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   endmethod.
 
 
-  method _FIND_WORD.
-
-    DATA: lv_sql    TYPE string,
-          lv_word   TYPE string,
-          lt_result TYPE match_result_tab,
-          lv_separate_word TYPE abap_bool,
-          lv_offset_before TYPE i,
-          lv_offset_after  TYPE i.
-
-    FIELD-SYMBOLS: <ls_result> LIKE LINE OF lt_Result.
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( iv_sql ).
-    lv_word = zcl_zosql_utils=>to_upper_case( iv_word ).
-
-    FIND ALL OCCURRENCES OF lv_word IN lv_sql RESULTS lt_result.
-
-    LOOP AT lt_result ASSIGNING <ls_result>.
-
-      lv_separate_word = abap_true.
-
-      IF <ls_result>-offset > 0.
-        lv_offset_before = <ls_result>-offset - 1.
-        IF lv_sql+lv_offset_before(1) <> ` `.
-          lv_separate_word = abap_false.
-          CONTINUE.
-        ENDIF.
-      ENDIF.
-
-      IF <ls_result>-offset + <ls_result>-length < strlen( lv_sql ).
-        lv_offset_after = <ls_result>-offset + <ls_result>-length.
-        IF lv_sql+lv_offset_after(1) <> ` `.
-          lv_separate_word = abap_false.
-        ENDIF.
-      ENDIF.
-
-      IF lv_separate_word = abap_true.
-        rs_result = <ls_result>.
-        EXIT.
-      ENDIF.
-    ENDLOOP.
-  endmethod.
-
-
-  method _GET_ORDER_BY.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql
-                                           iv_starts_with = c_order_by ) = abap_true.
-
-      rv_order_by = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql
-                                                                  iv_start_word_to_delete = c_order_by ).
-    ENDIF.
-  endmethod.
-
-
   METHOD _POP_DELETE_TABLE_NAME.
 
     CONSTANTS: c_delete TYPE string VALUE 'DELETE'.
@@ -560,25 +530,25 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_delete_statement
-                                           iv_starts_with = c_delete ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_delete_statement
+                                                 iv_token = c_delete ) <> abap_true.
 
       MESSAGE e055 WITH c_delete INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_delete_statement
-                                                                    iv_start_word_to_delete = c_delete ).
+    ev_other_select = zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_delete_statement
+                                                                     iv_start_token_to_delete = c_delete ).
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = ev_other_select
-                                           iv_starts_with = c_from ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = ev_other_select
+                                                 iv_token = c_from ) <> abap_true.
 
       MESSAGE e064 INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = ev_other_select
-                                                                    iv_start_word_to_delete = c_from ).
+    ev_other_select = zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = ev_other_select
+                                                                     iv_start_token_to_delete = c_from ).
 
     lv_sql = zcl_zosql_utils=>to_upper_case( ev_other_select ).
     FIND FIRST OCCURRENCE OF c_where IN lv_sql
@@ -592,168 +562,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _POP_FIELD_LIST.
-
-    CONSTANTS: lc_single  TYPE string VALUE 'SINGLE'.
-
-    DATA: lv_sql    TYPE string,
-          ls_result TYPE match_result.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_select ) <> abap_true.
-
-      MESSAGE e055 WITH c_select INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_select ).
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_distinct ) = abap_true.
-      ev_distinct = abap_true.
-      cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                             iv_start_word_to_delete = c_distinct ).
-    ELSE.
-      ev_distinct = abap_false.
-    ENDIF.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = lc_single ) = abap_true.
-      ev_single = abap_true.
-      cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                             iv_start_word_to_delete = lc_single ).
-    ENDIF.
-
-    IF ev_single = abap_true AND ev_distinct = abap_true.
-      MESSAGE e070 INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
-    FIND FIRST OCCURRENCE OF c_from IN lv_sql RESULTS ls_result.
-    IF sy-subrc = 0.
-      ev_select_field_list = cv_sql(ls_result-offset).
-      cv_sql = cv_sql+ls_result-offset.
-    ENDIF.
-  ENDMETHOD.
-
-
-  method _POP_FOR_ALL_ENTRIES_TABNAME.
-
-    DATA: lv_sql    TYPE string,
-          ls_result TYPE match_result.
-
-    CLEAR ev_for_all_entries_tabname.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_for_all_entries_in ) <> abap_true.
-
-      RETURN.
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_for_all_entries_in ).
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
-    FIND FIRST OCCURRENCE OF c_where IN lv_sql RESULTS ls_result.
-    IF sy-subrc <> 0.
-      FIND FIRST OCCURRENCE OF c_group_by IN lv_sql RESULTS ls_result.
-      IF sy-subrc <> 0.
-        FIND FIRST OCCURRENCE OF c_order_by IN lv_sql RESULTS ls_result.
-      ENDIF.
-    ENDIF.
-
-    IF sy-subrc = 0.
-      ev_for_all_entries_tabname = cv_sql(ls_result-offset).
-      cv_sql                     = cv_sql+ls_result-offset.
-    ELSE.
-      ev_for_all_entries_tabname = cv_sql.
-      CLEAR cv_sql.
-    ENDIF.
-  endmethod.
-
-
-  METHOD _POP_FROM.
-
-    DATA: lv_sql    TYPE string,
-          ls_result TYPE match_result.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_from ) <> abap_true.
-
-      MESSAGE e056 INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_from ).
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
-    ls_result = _find_word( iv_sql  = lv_sql
-                            iv_word = c_up ).
-    IF ls_result IS INITIAL.
-      FIND FIRST OCCURRENCE OF c_for_all_entries_in IN lv_sql RESULTS ls_result.
-      IF sy-subrc <> 0.
-        FIND FIRST OCCURRENCE OF c_where IN lv_sql RESULTS ls_result.
-        IF sy-subrc <> 0.
-          FIND FIRST OCCURRENCE OF c_group_by IN lv_sql RESULTS ls_result.
-          IF sy-subrc <> 0.
-            FIND FIRST OCCURRENCE OF c_order_by IN lv_sql RESULTS ls_result.
-          ENDIF.
-        ENDIF.
-      ENDIF.
-    ENDIF.
-
-    IF ls_result IS NOT INITIAL.
-      ev_from = cv_sql(ls_result-offset).
-      cv_sql = cv_sql+ls_result-offset.
-    ELSE.
-      ev_from = cv_sql.
-      CLEAR cv_sql.
-    ENDIF.
-  ENDMETHOD.
-
-
-  method _POP_GROUP_BY.
-
-    DATA: lv_sql    TYPE string,
-          ls_result TYPE match_result.
-
-    CLEAR ev_group_by.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_group_by ) <> abap_true.
-
-      RETURN.
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_group_by ).
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
-
-    FIND FIRST OCCURRENCE OF c_order_by IN lv_sql RESULTS ls_result.
-    IF sy-subrc = 0.
-      ev_group_by = cv_sql(ls_result-offset).
-      cv_sql      = cv_sql+ls_result-offset.
-    ELSE.
-      ev_group_by = cv_sql.
-      CLEAR cv_sql.
-    ENDIF.
-  endmethod.
-
-
   method _POP_SET_STATEMENT.
 
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql_statement
-                                           iv_starts_with = c_set ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_sql_statement
+                                                 iv_token = c_set ) = abap_true.
 
-      lv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
-                                                             iv_start_word_to_delete = c_set ).
+      lv_sql = zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_sql_statement
+                                                              iv_start_token_to_delete = c_set ).
 
       FIND FIRST OCCURRENCE OF c_where IN lv_sql RESULTS ls_result.
       IF sy-subrc = 0.
@@ -774,15 +592,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_sql    TYPE string,
           ls_result TYPE match_result.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_update_statement
-                                           iv_starts_with = c_update ) <> abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_update_statement
+                                                 iv_token = c_update ) <> abap_true.
 
       MESSAGE e055 WITH c_update INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    ev_other_select = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_update_statement
-                                                                    iv_start_word_to_delete = c_update ).
+    ev_other_select = zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_update_statement
+                                                                     iv_start_token_to_delete = c_update ).
 
     lv_sql = zcl_zosql_utils=>to_upper_case( ev_other_select ).
     FIND FIRST OCCURRENCE OF c_set IN lv_sql
@@ -800,83 +618,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _POP_UP_TO_N_ROWS.
-
-    CONSTANTS: lc_to   TYPE string VALUE 'TO',
-               lc_rows TYPE string VALUE 'ROWS'.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_up ) <> abap_true.
-      RETURN.
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_up ).
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = lc_to ) <> abap_true.
-      MESSAGE e068 INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = lc_to ).
-
-    ev_number_of_rows_expr = zcl_zosql_utils=>get_start_word( cv_sql ).
-    cv_sql = zcl_zosql_utils=>delete_start_word( cv_sql ).
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = lc_rows ) <> abap_true.
-
-      MESSAGE e069 INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = lc_rows ).
-  endmethod.
-
-
-  method _POP_WHERE_SELECT.
-
-    DATA: lv_sql    TYPE string,
-          ls_result TYPE match_result.
-
-    CLEAR ev_where.
-
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = cv_sql
-                                           iv_starts_with = c_where ) <> abap_true.
-
-      RETURN.
-    ENDIF.
-
-    cv_sql = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = cv_sql
-                                                           iv_start_word_to_delete = c_where ).
-
-    lv_sql = zcl_zosql_utils=>to_upper_case( cv_sql ).
-
-    FIND FIRST OCCURRENCE OF c_group_by IN lv_sql RESULTS ls_result.
-    IF sy-subrc <> 0.
-      FIND FIRST OCCURRENCE OF c_order_by IN lv_sql RESULTS ls_result.
-    ENDIF.
-
-    IF sy-subrc = 0.
-      ev_where = cv_sql(ls_result-offset).
-      cv_sql   = cv_sql+ls_result-offset.
-    ELSE.
-      ev_where = cv_sql.
-      CLEAR cv_sql.
-    ENDIF.
-  endmethod.
-
-
   method _POP_WHERE_UPDATE_DELETE.
 
-    IF zcl_zosql_utils=>check_starts_with( iv_sql         = iv_sql_statement
-                                           iv_starts_with = c_where ) = abap_true.
+    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_sql_statement
+                                                 iv_token = c_where ) = abap_true.
 
-      rv_where = zcl_zosql_utils=>delete_start_word_if_equals( iv_sql_source           = iv_sql_statement
-                                                               iv_start_word_to_delete = c_where ).
+      rv_where = zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_sql_statement
+                                                                iv_start_token_to_delete = c_where ).
     ENDIF.
   endmethod.
 
