@@ -1,4 +1,4 @@
-class ZCL_ZOSQL_SQL_EXEC_SELEC definition
+class ZCL_ZOSQL_SQL_EXEC_SELECT definition
   public
   create public .
 
@@ -8,16 +8,16 @@ public section.
 
   methods CONSTRUCTOR
     importing
-      !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PARSER .
+      !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR .
 protected section.
 private section.
 
-  data MO_SELECT type ref to ZCL_ZOSQL_SELECT_PARSER .
+  data MO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR .
 ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SQL_EXEC_SELEC IMPLEMENTATION.
+CLASS ZCL_ZOSQL_SQL_EXEC_SELECT IMPLEMENTATION.
 
 
   method CONSTRUCTOR.

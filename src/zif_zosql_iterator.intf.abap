@@ -30,6 +30,11 @@ interface ZIF_ZOSQL_ITERATOR
       value(RD_REF_TO_EMPTY_RECORD) type ref to DATA
     raising
       ZCX_ZOSQL_ERROR .
+  methods GET_ITERATOR_POSITION_OBJECT
+    returning
+      value(RO_ITERATOR_POS) type ref to zcl_zosql_iterator_position
+    raising
+      ZCX_ZOSQL_ERROR .
   methods GET_CURRENT_RECORD_UNIQUE_ID
     returning
       value(RV_UNIQUE_ID) type ZOSQL_HASH

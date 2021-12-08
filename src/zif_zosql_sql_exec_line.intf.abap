@@ -4,7 +4,7 @@ interface ZIF_ZOSQL_SQL_EXEC_LINE
 
   methods EXECUTE_SQL_FOR_LINE
     importing
-      !IO_ITERATOR_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATOR_POSITION type ref to zcl_zosql_iterator_position
     raising
       ZCX_ZOSQL_ERROR .
 endinterface.

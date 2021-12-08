@@ -10,7 +10,7 @@ interface ZIF_ZOSQL_SQLCOND_PARSER
       value(RO_PARSER) type ref to ZIF_ZOSQL_SQLCOND_PARSER .
   methods CHECK_CONDITION_FOR_CUR_REC
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
     returning
       value(RV_CONDITION_TRUE) type ABAP_BOOL
     raising

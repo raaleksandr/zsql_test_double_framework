@@ -141,6 +141,19 @@ public section.
       value(RV_SQL_WITHOUT_TOKEN) type STRING .
 protected section.
 private section.
+
+  class-methods _SPLIT_INTO_TOKENS_AT_SEP_ITAB
+    importing
+      !IT_CONDITIONS_TABLE type STRING_TABLE
+      value(IV_SEPARATOR) type CHAR1 optional
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
+  class-methods _SPLIT_INTO_TOKENS_AT_SEP
+    importing
+      !IV_SQL_CONDITION type CLIKE
+      value(IV_SEPARATOR) type CHAR1 optional
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
 ENDCLASS.
 
 
@@ -456,38 +469,11 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
 
   method SPLIT_CONDITION_INTO_TOKENS.
 
-    CONSTANTS: lc_quote  TYPE char1 VALUE ''''.
+    rt_tokens = _split_into_tokens_at_sep( iv_sql_condition = iv_sql_condition
+                                           iv_separator     = space ).
 
-    DATA: lt_words        TYPE TABLE OF string,
-          lv_word         TYPE string,
-          lv_inside_quote TYPE abap_bool,
-          lv_new_token    TYPE string,
-          lt_results      TYPE match_result_tab.
-
-    SPLIT iv_sql_condition AT space INTO TABLE lt_words.
-
-    LOOP AT lt_words INTO lv_word.
-
-      REFRESH lt_results.
-      FIND ALL OCCURRENCES OF lc_quote IN lv_word RESULTS lt_results.
-      IF LINES( lt_results ) MOD 2 = 1.
-        lv_inside_quote = zcl_zosql_utils=>boolean_not( lv_inside_quote ).
-      ENDIF.
-
-      IF lv_new_token IS INITIAL.
-        lv_new_token = lv_word.
-      ELSE.
-        CONCATENATE lv_new_token lv_word INTO lv_new_token SEPARATED BY space.
-      ENDIF.
-
-      IF lv_inside_quote <> abap_true.
-        APPEND lv_new_token TO rt_tokens.
-        CLEAR lv_new_token.
-      ENDIF.
-    ENDLOOP.
-
-    DELETE rt_tokens
-      WHERE table_line IS INITIAL.
+    rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
+                                                iv_separator        = ',' ).
   endmethod.
 
 
@@ -526,5 +512,70 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
         rv_table_name = lv_ddic_type.
       ENDIF.
     ENDIF.
+  endmethod.
+
+
+  method _SPLIT_INTO_TOKENS_AT_SEP.
+
+    CONSTANTS: lc_quote  TYPE char1 VALUE ''''.
+
+    DATA: lt_words        TYPE TABLE OF string,
+          lv_word         TYPE string,
+          lv_inside_quote TYPE abap_bool,
+          lv_new_token    TYPE string,
+          lt_results      TYPE match_result_tab,
+          lv_first        TYPE abap_bool.
+
+    SPLIT iv_sql_condition AT iv_separator INTO TABLE lt_words.
+
+    lv_first = abap_true.
+    LOOP AT lt_words INTO lv_word.
+
+      REFRESH lt_results.
+      FIND ALL OCCURRENCES OF lc_quote IN lv_word RESULTS lt_results.
+      IF LINES( lt_results ) MOD 2 = 1.
+        lv_inside_quote = zcl_zosql_utils=>boolean_not( lv_inside_quote ).
+      ENDIF.
+
+      IF lv_new_token IS INITIAL.
+        lv_new_token = lv_word.
+      ELSE.
+        CONCATENATE lv_new_token lv_word INTO lv_new_token SEPARATED BY space.
+      ENDIF.
+
+      IF lv_inside_quote <> abap_true.
+
+        IF lv_first <> abap_true.
+          APPEND iv_separator TO rt_tokens.
+        ENDIF.
+
+        APPEND lv_new_token TO rt_tokens.
+        CLEAR lv_new_token.
+      ENDIF.
+
+      lv_first = abap_false.
+    ENDLOOP.
+
+    IF get_last_n_chars( iv_string              = iv_sql_condition
+                         iv_how_many_characters = 1 ) = iv_separator.
+
+      APPEND iv_separator TO rt_tokens.
+    ENDIF.
+
+    DELETE rt_tokens
+      WHERE table_line IS INITIAL.
+  endmethod.
+
+
+  method _SPLIT_INTO_TOKENS_AT_SEP_ITAB.
+
+    DATA: lv_sql_condition           TYPE string,
+          lt_tokens_of_one_condition TYPE TABLE OF string.
+
+    LOOP AT it_conditions_table INTO lv_sql_condition.
+      lt_tokens_of_one_condition = _split_into_tokens_at_sep( iv_sql_condition = lv_sql_condition
+                                                              iv_separator     = iv_separator ).
+      APPEND LINES OF lt_tokens_of_one_condition TO rt_tokens.
+    ENDLOOP.
   endmethod.
 ENDCLASS.

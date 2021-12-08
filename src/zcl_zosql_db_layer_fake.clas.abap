@@ -59,7 +59,7 @@ private section.
       !IV_WHERE type STRING
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IO_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       !IO_SQL_EXECUTOR_FOR_LINE type ref to ZIF_ZOSQL_SQL_EXEC_LINE
     raising
       ZCX_ZOSQL_ERROR .
@@ -98,6 +98,7 @@ private section.
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
       !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ET_RESULT_TABLE type ANY TABLE
     raising
@@ -114,6 +115,7 @@ private section.
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
       !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ET_RESULT_TABLE type ANY TABLE
     raising
@@ -145,13 +147,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     DATA: lv_select_field_list TYPE string,
           lv_from              TYPE string,
           lv_new_syntax        TYPE abap_bool,
-          lo_from_iterator     TYPE REF TO zcl_zosql_sqltables_iter,
-          lo_select            TYPE REF TO zcl_zosql_select_parser.
+          lo_from_iterator     TYPE REF TO zcl_zosql_from_iterator,
+          lo_select            TYPE REF TO zcl_zosql_select_processor,
+          lo_sql_parser        TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     split_select_into_parts( EXPORTING iv_select            = iv_select
-                             IMPORTING ev_select_field_list = lv_select_field_list
-                                       ev_from              = lv_from
-                                       ev_new_syntax        = lv_new_syntax ).
+                             IMPORTING ev_from              = lv_from
+                                       eo_sql_parser        = lo_sql_parser ).
 
     CREATE OBJECT lo_from_iterator
       EXPORTING
@@ -161,9 +163,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_select.
 
-    lo_select->parse_field_list_in_select( iv_field_list_from_select = lv_select_field_list
-                                           io_sqltables_iterator     = lo_from_iterator
-                                           iv_new_syntax             = lv_new_syntax ).
+    lo_select->initialize_by_parsed_sql( io_sql_parser    = lo_sql_parser
+                                         io_from_iterator = lo_from_iterator ).
 
     rd_data_set_for_select = lo_select->get_result_as_ref_to_data( ).
   ENDMETHOD.
@@ -171,17 +172,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD DELETE_BY_SQL_PARTS.
 
-    DATA: lo_table_iterator           TYPE REF TO zcl_zosql_sqltables_iter,
+    DATA: lo_table_iterator           TYPE REF TO zcl_zosql_table_iterator,
           ld_ref_to_buffer_for_delete TYPE REF TO data,
-          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_delet.
+          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_delete.
 
     FIELD-SYMBOLS: <lt_buffer> TYPE STANDARD TABLE.
 
     CREATE OBJECT lo_table_iterator
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
-
-    lo_table_iterator->init_by_table( iv_table_name ).
+        io_zosql_test_environment = mo_zosql_test_environment
+        iv_table_name             = iv_table_name.
 
     CREATE OBJECT lo_sql_executor_for_line
       EXPORTING
@@ -203,10 +203,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method SELECT_BY_SQL_PARTS.
+  METHOD select_by_sql_parts.
 
-    DATA: ld_result_table TYPE REF TO data,
-          lv_up_to_n_rows TYPE i,
+    DATA: ld_result_table     TYPE REF TO data,
+          lv_up_to_n_rows     TYPE i,
           lv_delete_from_line TYPE i.
 
     FIELD-SYMBOLS: <lt_result_table>      TYPE STANDARD TABLE,
@@ -218,9 +218,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       iv_new_syntax = detect_if_new_syntax_select( iv_select ).
     ENDIF.
 
-    ld_result_table = create_dynamic_tab_for_result( iv_select_field_list = iv_select
-                                                     iv_from              = iv_from
-                                                     iv_new_syntax        = iv_new_syntax ).
+    ld_result_table = create_dynamic_tab_for_result( iv_from              = iv_from
+                                                     io_sql_parser        = io_sql_parser ).
 
     ASSIGN ld_result_table->* TO <lt_result_table>.
 
@@ -235,6 +234,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                          it_parameters              = it_parameters
                                          it_for_all_entries_table   = it_for_all_entries_table
                                          iv_for_all_entries_tabname = iv_for_all_entries_tabname
+                                         io_sql_parser              = io_sql_parser
                                IMPORTING et_result_table            = <lt_result_table> ).
     ELSE.
       _select( EXPORTING iv_select                  = iv_select
@@ -247,6 +247,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                          it_parameters              = it_parameters
                          it_for_all_entries_table   = it_for_all_entries_table
                          iv_for_all_entries_tabname = iv_for_all_entries_tabname
+                         io_sql_parser              = io_sql_parser
                IMPORTING et_result_table            = <lt_result_table> ).
     ENDIF.
 
@@ -262,16 +263,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                     IMPORTING et_result_table          = et_result_table
                                               es_result_line           = es_result_line
                                               ev_subrc                 = ev_subrc ).
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD update_by_sql_parts.
 
     DATA: lo_parameters               TYPE REF TO zcl_zosql_parameters,
           lo_set                      TYPE REF TO zcl_zosql_set_parser,
-          lo_table_iterator           TYPE REF TO zcl_zosql_sqltables_iter,
+          lo_table_iterator           TYPE REF TO zcl_zosql_table_iterator,
           ld_ref_to_buffer_for_update TYPE REF TO data,
-          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_updat.
+          lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_update.
 
     FIELD-SYMBOLS: <lt_buffer> TYPE STANDARD TABLE.
 
@@ -288,9 +289,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_table_iterator
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
-
-    lo_table_iterator->init_by_table( iv_table_name ).
+        io_zosql_test_environment = mo_zosql_test_environment
+        iv_table_name             = iv_table_name.
 
     CREATE OBJECT lo_sql_executor_for_line
       EXPORTING
@@ -463,7 +463,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     FIELD-SYMBOLS: <ls_result_first_line> TYPE any,
                    <ls_new_result_line>   TYPE any.
 
-    DATA: lo_iter_pos        TYPE REF TO zcl_zosql_sqltab_iterpos,
+    DATA: lo_iter_pos        TYPE REF TO zcl_zosql_iterator_position,
           lo_where           TYPE REF TO zif_zosql_sqlcond_parser,
           lo_parameters      TYPE REF TO zcl_zosql_parameters,
           lv_not_end_of_data TYPE abap_bool.
@@ -479,7 +479,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     lo_where->parse_condition( iv_where ).
 
-    lv_not_end_of_data = io_iterator->zif_zosql_iterator~move_to_first( ).
+    lv_not_end_of_data = io_iterator->move_to_first( ).
 
     WHILE lv_not_end_of_data = abap_true.
 
@@ -489,7 +489,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         io_sql_executor_for_line->execute_sql_for_line( lo_iter_pos ).
       ENDIF.
 
-      lv_not_end_of_data = io_iterator->zif_zosql_iterator~move_to_next( ).
+      lv_not_end_of_data = io_iterator->move_to_next( ).
     ENDWHILE.
   endmethod.
 
@@ -537,8 +537,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD _SELECT.
 
-    DATA: lo_from_iterator         TYPE REF TO zcl_zosql_sqltables_iter,
-          lo_select                TYPE REF TO zcl_zosql_select_parser,
+    DATA: lo_from_iterator         TYPE REF TO zcl_zosql_from_iterator,
+          lo_select                TYPE REF TO zcl_zosql_select_processor,
           lo_group_by              TYPE REF TO zcl_zosql_groupby_parser,
           lo_sql_executor_for_line TYPE REF TO zif_zosql_sql_exec_line.
 
@@ -552,11 +552,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_select.
 
-    lo_select->parse_field_list_in_select( iv_field_list_from_select = iv_select
-                                           io_sqltables_iterator     = lo_from_iterator
-                                           iv_new_syntax             = iv_new_syntax ).
+    lo_select->initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
+                                         io_from_iterator = lo_from_iterator ).
 
-    CREATE OBJECT lo_sql_executor_for_line TYPE zcl_zosql_sql_exec_selec
+    CREATE OBJECT lo_sql_executor_for_line TYPE zcl_zosql_sql_exec_select
       EXPORTING
         io_select = lo_select.
 
@@ -608,6 +607,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                      iv_distinct            = iv_distinct
                                      iv_new_syntax          = iv_new_syntax
                                      it_parameters          = lt_parameters
+                                     io_sql_parser          = io_sql_parser
                            IMPORTING et_result_table        = <lt_result_one_fae_line> ).
 
       INSERT LINES OF <lt_result_one_fae_line> INTO TABLE et_result_table.

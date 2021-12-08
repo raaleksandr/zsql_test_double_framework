@@ -1,4 +1,4 @@
-class ZCL_ZOSQL_SQLTAB_ITERPOS definition
+class ZCL_ZOSQL_ITERATOR_POSITION definition
   public
   create public .
 
@@ -34,9 +34,9 @@ public section.
       value(RD_REF_TO_FIELD_VALUE) type ref to DATA .
   methods ADD_DATA_SET_DATA
     importing
-      !IV_DATASET_NAME type CLIKE
-      !IV_DATASET_ALIAS type CLIKE
-      !IV_REF_TO_CURRENT_LINE type ref to DATA .
+      !IV_DATASET_NAME type CLIKE optional
+      !IV_DATASET_ALIAS type CLIKE optional
+      !ID_REF_TO_CURRENT_LINE type ref to DATA .
 protected section.
 private section.
 
@@ -51,7 +51,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SQLTAB_ITERPOS IMPLEMENTATION.
+CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
 
 
   method ADD_DATA_SET_DATA.
@@ -63,11 +63,11 @@ CLASS ZCL_ZOSQL_SQLTAB_ITERPOS IMPLEMENTATION.
                                           ASSIGNING <ls_data_set_data>.
     IF sy-subrc <> 0.
       APPEND INITIAL LINE TO mt_data_sets_data ASSIGNING <ls_data_set_data>.
-      <ls_data_set_data>-dataset_name = iv_dataset_name.
+      <ls_data_set_data>-dataset_name  = iv_dataset_name.
       <ls_data_set_data>-dataset_alias = iv_dataset_alias.
     ENDIF.
 
-    <ls_data_set_data>-ref_to_data = iv_ref_to_current_line.
+    <ls_data_set_data>-ref_to_data = id_ref_to_current_line.
   endmethod.
 
 
