@@ -1,4 +1,4 @@
-class ZCL_ZOSQL_SQLTABLES_ITER definition
+class ZCL_ZOSQL_FROM_ITERATOR definition
   public
   create public .
 
@@ -32,16 +32,6 @@ public section.
       value(RD_REF_TO_LINE) type ref to DATA
     raising
       ZCX_ZOSQL_ERROR .
-  methods INIT_BY_TABLE
-    importing
-      !IV_TABLE_NAME type CLIKE
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods GET_ITERATOR_POSITION_OBJECT
-    returning
-      value(RO_ITERATOR_POS) type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
-    raising
-      ZCX_ZOSQL_ERROR .
   methods GET_COMPONENTS_OF_DATA_SET
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
@@ -50,18 +40,18 @@ public section.
     raising
       ZCX_ZOSQL_ERROR .
 protected section.
-private section.
+PRIVATE SECTION.
 
-  types:
+  TYPES:
     BEGIN OF ty_record_statistic,
-           record_unique_id      TYPE zosql_hash,
-           was_inner_join_right  TYPE abap_bool,
-           was_inner_joined_left TYPE abap_bool,
-           was_empty_record_added TYPE abap_bool,
-         END OF ty_record_statistic .
-  types:
+      record_unique_id       TYPE zosql_hash,
+      was_inner_join_right   TYPE abap_bool,
+      was_inner_joined_left  TYPE abap_bool,
+      was_empty_record_added TYPE abap_bool,
+    END OF ty_record_statistic .
+  TYPES:
     ty_records_statistic TYPE STANDARD TABLE OF ty_record_statistic WITH KEY record_unique_id .
-  types:
+  TYPES:
     BEGIN OF ty_dataset_with_position,
       dataset_name      TYPE string,
       dataset_alias     TYPE string,
@@ -69,98 +59,98 @@ private section.
       iterator          TYPE REF TO zif_zosql_iterator,
       records_statistic TYPE ty_records_statistic,
     END OF ty_dataset_with_position .
-  types:
+  TYPES:
     ty_datasets_with_position TYPE STANDARD TABLE OF ty_dataset_with_position
     WITH KEY dataset_name dataset_alias .
-  types:
+  TYPES:
     BEGIN OF ty_join_condition,
-      left_dataset_name TYPE string,
-      left_dataset_alias TYPE string,
-      right_dataset_name TYPE string,
+      left_dataset_name   TYPE string,
+      left_dataset_alias  TYPE string,
+      right_dataset_name  TYPE string,
       right_dataset_alias TYPE string,
       type_of_join        TYPE i,
-      parser TYPE REF TO zif_zosql_sqlcond_parser,
+      parser              TYPE REF TO zif_zosql_sqlcond_parser,
     END OF ty_join_condition .
-  types:
+  TYPES:
     ty_join_conditions TYPE STANDARD TABLE OF ty_join_condition .
-  types:
-    BEGIN OF TY_OUTER_JOIN_ADD_ITER,
-           sqltables_iter  TYPE REF TO zcl_zosql_sqltables_iter,
-         END OF ty_outer_join_add_iter .
+  TYPES:
+    BEGIN OF ty_outer_join_add_iter,
+      from_iterator TYPE REF TO zif_zosql_iterator,
+    END OF ty_outer_join_add_iter .
 
-  data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
-  data MT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION .
-  data MT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
-  constants C_INNER_JOIN type I value 0 ##NO_TEXT.
-  constants C_LEFT_JOIN type I value 1 ##NO_TEXT.
-  constants C_RIGHT_JOIN type I value 2 ##NO_TEXT.
-  data MV_OUTER_JOIN_ADD_MODE type ABAP_BOOL .
-  data:
-    MT_OUTER_JOIN_ADD_CHAIN type STANDARD TABLE OF ty_outer_join_add_iter WITH DEFAULT KEY .
-  data MV_OUTER_JOIN_ADD_MODE_INDEX type I .
+  DATA mo_zosql_test_environment TYPE REF TO zif_zosql_test_environment .
+  DATA mt_datasets_with_position TYPE ty_datasets_with_position .
+  DATA mt_join_conditions TYPE ty_join_conditions .
+  CONSTANTS c_inner_join TYPE i VALUE 0 ##NO_TEXT.
+  CONSTANTS c_left_join TYPE i VALUE 1 ##NO_TEXT.
+  CONSTANTS c_right_join TYPE i VALUE 2 ##NO_TEXT.
+  DATA mv_outer_join_add_mode TYPE abap_bool .
+  DATA:
+    mt_outer_join_add_chain TYPE STANDARD TABLE OF ty_outer_join_add_iter WITH DEFAULT KEY .
+  DATA mv_outer_join_add_mode_index TYPE i .
 
-  methods _ADD_LEFT_JOIN_ITER
-    importing
-      !IS_JOIN_CONDITION type TY_JOIN_CONDITION .
-  methods _CHECK_CONDITIONS_CURRENT_POS
-    returning
-      value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _INIT_BY_ATTRIBUTES
-    importing
-      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
-      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
-  methods _INIT_OUTER_JOIN_ADD_MODE
-    returning
-      value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _FILL_RECORD_STATISTIC
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _CONSIDER_TYPE_OF_JOIN
-    importing
-      value(IV_TYPE_OF_JOIN) type I .
-  methods _ADD_JOIN_CONDITION
-    importing
-      !IV_JOIN_CONDITION_STRING type STRING .
-  methods _CONDITIONS_FAIL_FOR_ALL_LINES
-    returning
-      value(RV_COND_FAIL_ALL_LINES) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _FIND_NEXT_POSITION_FOR_CONDIT
-    returning
-      value(RV_NEXT_POSITION_FOUND) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _NEXT_POS_OUTER_JOIN_ADD_MODE
-    returning
-      value(RV_NEXT_POSITION_FOUND) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _ADD_DATASET
-    importing
-      !IV_DICTIONARY_NAME type CLIKE
-      value(IV_TYPE_OF_JOIN) type I
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _MOVE_TO_NEXT_POSITION
-    returning
-      value(RV_MOVE_SUCCESSFUL) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _RESET_POSITION
-    returning
-      value(RV_FIRST_RECORD_SELECT_SUCCESS) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
+  METHODS _add_left_join_iter
+    IMPORTING
+      !is_join_condition TYPE ty_join_condition .
+  METHODS _check_conditions_current_pos
+    RETURNING
+      VALUE(rv_conditions_are_true) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _init_by_attributes
+    IMPORTING
+      !it_datasets_with_position TYPE ty_datasets_with_position
+      !it_join_conditions        TYPE ty_join_conditions .
+  METHODS _init_outer_join_add_mode
+    RETURNING
+      VALUE(rv_outer_join_found) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _fill_record_statistic
+    RAISING
+      zcx_zosql_error .
+  METHODS _consider_type_of_join
+    IMPORTING
+      VALUE(iv_type_of_join) TYPE i .
+  METHODS _add_join_condition
+    IMPORTING
+      !iv_join_condition_string TYPE string .
+  METHODS _conditions_fail_for_all_lines
+    RETURNING
+      VALUE(rv_cond_fail_all_lines) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _find_next_position_for_condit
+    RETURNING
+      VALUE(rv_next_position_found) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _next_pos_outer_join_add_mode
+    RETURNING
+      VALUE(rv_next_position_found) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _add_dataset
+    IMPORTING
+      !iv_dictionary_name    TYPE clike
+      VALUE(iv_type_of_join) TYPE i
+    RAISING
+      zcx_zosql_error .
+  METHODS _move_to_next_position
+    RETURNING
+      VALUE(rv_move_successful) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
+  METHODS _reset_position
+    RETURNING
+      VALUE(rv_first_record_select_success) TYPE abap_bool
+    RAISING
+      zcx_zosql_error .
 ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
+CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
@@ -195,49 +185,6 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
   endmethod.
 
 
-  METHOD get_iterator_position_object.
-
-    DATA: ld_ref_to_line          TYPE REF TO data,
-          ls_outer_join_add_elem  LIKE LINE OF mt_outer_join_add_chain,
-          lt_data_sets_outer_join TYPE zcl_zosql_sqltab_iterpos=>ty_data_sets.
-
-    FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position,
-                   <lt_data_lines>            TYPE STANDARD TABLE.
-
-    CREATE OBJECT ro_iterator_pos.
-
-    IF mv_outer_join_add_mode = abap_true.
-
-      READ TABLE mt_outer_join_add_chain INDEX mv_outer_join_add_mode_index INTO ls_outer_join_add_elem.
-      ro_iterator_pos = ls_outer_join_add_elem-sqltables_iter->get_iterator_position_object( ).
-      lt_data_sets_outer_join = ro_iterator_pos->get_data_set_list( ).
-
-      LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset_with_position>.
-        READ TABLE lt_data_sets_outer_join WITH KEY dataset_name  = <ls_dataset_with_position>-dataset_name
-                                                    dataset_alias = <ls_dataset_with_position>-dataset_alias
-                                                    TRANSPORTING NO FIELDS.
-        IF sy-subrc <> 0.
-          ld_ref_to_line = <ls_dataset_with_position>-iterator->create_empty_record_as_ref( ).
-          ro_iterator_pos->add_data_set_data( iv_dataset_name        = <ls_dataset_with_position>-dataset_name
-                                              iv_dataset_alias       = <ls_dataset_with_position>-dataset_alias
-                                              iv_ref_to_current_line = ld_ref_to_line ).
-        ENDIF.
-      ENDLOOP.
-
-
-    ELSE.
-      LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset_with_position>.
-
-        ld_ref_to_line = <ls_dataset_with_position>-iterator->get_current_record_ref( ).
-
-        ro_iterator_pos->add_data_set_data( iv_dataset_name        = <ls_dataset_with_position>-dataset_name
-                                            iv_dataset_alias       = <ls_dataset_with_position>-dataset_alias
-                                            iv_ref_to_current_line = ld_ref_to_line ).
-      ENDLOOP.
-    ENDIF.
-  ENDMETHOD.
-
-
   method GET_LINE_FOR_DATA_SET_REF.
 
     FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position,
@@ -270,7 +217,6 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position.
 
-    "SPLIT iv_from AT space INTO TABLE lt_words.
     lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_from ).
 
     lv_table_name_expected = abap_true.
@@ -332,15 +278,6 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
   endmethod.
 
 
-  method INIT_BY_TABLE.
-
-    DATA: lv_from TYPE string.
-
-    lv_from = iv_table_name.
-    init_by_from( lv_from ).
-  endmethod.
-
-
   method ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_UNIQUE_ID.
     DATA: lv_unique_id               TYPE zosql_hash,
           lv_unique_ids_concatenated TYPE string.
@@ -372,6 +309,48 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
       ENDIF.
     ELSE.
       rv_unique_id = lv_unique_ids_concatenated.
+    ENDIF.
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT.
+    DATA: ld_ref_to_line          TYPE REF TO data,
+          ls_outer_join_add_elem  LIKE LINE OF mt_outer_join_add_chain,
+          lt_data_sets_outer_join TYPE zcl_zosql_iterator_position=>ty_data_sets.
+
+    FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position,
+                   <lt_data_lines>            TYPE STANDARD TABLE.
+
+    CREATE OBJECT ro_iterator_pos.
+
+    IF mv_outer_join_add_mode = abap_true.
+
+      READ TABLE mt_outer_join_add_chain INDEX mv_outer_join_add_mode_index INTO ls_outer_join_add_elem.
+      ro_iterator_pos = ls_outer_join_add_elem-from_iterator->get_iterator_position_object( ).
+      lt_data_sets_outer_join = ro_iterator_pos->get_data_set_list( ).
+
+      LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset_with_position>.
+        READ TABLE lt_data_sets_outer_join WITH KEY dataset_name  = <ls_dataset_with_position>-dataset_name
+                                                    dataset_alias = <ls_dataset_with_position>-dataset_alias
+                                                    TRANSPORTING NO FIELDS.
+        IF sy-subrc <> 0.
+          ld_ref_to_line = <ls_dataset_with_position>-iterator->create_empty_record_as_ref( ).
+          ro_iterator_pos->add_data_set_data( iv_dataset_name        = <ls_dataset_with_position>-dataset_name
+                                              iv_dataset_alias       = <ls_dataset_with_position>-dataset_alias
+                                              id_ref_to_current_line = ld_ref_to_line ).
+        ENDIF.
+      ENDLOOP.
+
+
+    ELSE.
+      LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset_with_position>.
+
+        ld_ref_to_line = <ls_dataset_with_position>-iterator->get_current_record_ref( ).
+
+        ro_iterator_pos->add_data_set_data( iv_dataset_name        = <ls_dataset_with_position>-dataset_name
+                                            iv_dataset_alias       = <ls_dataset_with_position>-dataset_alias
+                                            id_ref_to_current_line = ld_ref_to_line ).
+      ENDLOOP.
     ENDIF.
   endmethod.
 
@@ -477,7 +456,7 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
     DATA: lt_datasets_with_records  LIKE mt_datasets_with_position,
           lt_join_conditions_needed TYPE ty_join_conditions,
           lt_records_that_joined    TYPE TABLE OF zosql_db_rec_unique_id,
-          lo_next_sqltable_iter     TYPE REF TO zcl_zosql_sqltables_iter,
+          lo_next_from_iter         TYPE REF TO zcl_zosql_from_iterator,
           ls_outer_join_add_iter    TYPE ty_outer_join_add_iter.
 
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position,
@@ -511,26 +490,26 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
 
     <ls_last_dataset>-iterator = <ls_last_dataset>-iterator->clone( it_records_to_delete = lt_records_that_joined ).
 
-    CREATE OBJECT lo_next_sqltable_iter
+    CREATE OBJECT lo_next_from_iter
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment.
 
-    lo_next_sqltable_iter->_init_by_attributes( it_datasets_with_position = lt_datasets_with_records
-                                                it_join_conditions        = lt_join_conditions_needed ).
+    lo_next_from_iter->_init_by_attributes( it_datasets_with_position = lt_datasets_with_records
+                                            it_join_conditions        = lt_join_conditions_needed ).
 
-    ls_outer_join_add_iter-sqltables_iter = lo_next_sqltable_iter.
+    ls_outer_join_add_iter-from_iterator = lo_next_from_iter.
     APPEND ls_outer_join_add_iter TO mt_outer_join_add_chain.
   ENDMETHOD.
 
 
   method _CHECK_CONDITIONS_CURRENT_POS.
 
-    DATA: lo_current_iterator_pos TYPE REF TO zcl_zosql_sqltab_iterpos,
+    DATA: lo_current_iterator_pos TYPE REF TO zcl_zosql_iterator_position,
           lv_all_conditions_true  TYPE abap_bool.
 
     FIELD-SYMBOLS: <ls_join_condition> LIKE LINE OF mt_join_conditions.
 
-    lo_current_iterator_pos = get_iterator_position_object( ).
+    lo_current_iterator_pos = zif_zosql_iterator~get_iterator_position_object( ).
 
     lv_all_conditions_true = abap_true.
     LOOP AT mt_join_conditions ASSIGNING <ls_join_condition>.
@@ -672,7 +651,7 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT mt_outer_join_add_chain ASSIGNING <ls_outer_join_add_elem>.
-      IF <ls_outer_join_add_elem>-sqltables_iter->zif_zosql_iterator~move_to_first( ) <> abap_true.
+      IF <ls_outer_join_add_elem>-from_iterator->move_to_first( ) <> abap_true.
         DELETE mt_outer_join_add_chain.
       ENDIF.
     ENDLOOP.
@@ -720,7 +699,7 @@ CLASS ZCL_ZOSQL_SQLTABLES_ITER IMPLEMENTATION.
     ENDIF.
 
     READ TABLE mt_outer_join_add_chain INDEX mv_outer_join_add_mode_index INTO ls_outer_join_add_iter.
-    rv_next_position_found = ls_outer_join_add_iter-sqltables_iter->zif_zosql_iterator~move_to_next( ).
+    rv_next_position_found = ls_outer_join_add_iter-from_iterator->move_to_next( ).
 
     IF rv_next_position_found <> abap_true AND mv_outer_join_add_mode_index <= LINES( mt_outer_join_add_chain ).
       mv_outer_join_add_mode_index = mv_outer_join_add_mode_index + 1.

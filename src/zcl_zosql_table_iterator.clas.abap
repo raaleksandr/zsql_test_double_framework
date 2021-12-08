@@ -115,6 +115,12 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT.
+    CREATE OBJECT ro_iterator_pos.
+    ro_iterator_pos->add_data_set_data( id_ref_to_current_line = zif_zosql_iterator~get_current_record_ref( ) ).
+  endmethod.
+
+
   method ZIF_ZOSQL_ITERATOR~IS_EMPTY.
     IF mv_num_lines = 0.
       rv_is_empty = abap_true.

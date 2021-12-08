@@ -456,7 +456,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
           lv_number_of_rows_to_select TYPE i,
-          ls_cursor_parameters        TYPE ty_database_cursor_parameters.
+          ls_cursor_parameters        TYPE ty_database_cursor_parameters,
+          lo_sql_parser               TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     FIELD-SYMBOLS: <ls_result_first_line>  TYPE any,
                    <ls_struct_with_params> TYPE any,
@@ -471,7 +472,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                            ev_order_by                = lv_order_by
                                            ev_distinct                = lv_distinct
                                            ev_new_syntax              = lv_new_syntax
-                                           ev_number_of_rows_expr     = lv_number_of_rows_expr ).
+                                           ev_number_of_rows_expr     = lv_number_of_rows_expr
+                                           eo_sql_parser              = lo_sql_parser ).
 
     lv_where_ready_for_select = lv_where.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
@@ -500,9 +502,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
     ls_cursor_parameters-cursor = rv_cursor.
     ls_cursor_parameters-ref_to_result_dataset =
-      create_dynamic_tab_for_result( iv_select_field_list = lv_select_field_list
-                                     iv_from              = lv_from
-                                     iv_new_syntax        = lv_new_syntax ).
+      create_dynamic_tab_for_result( iv_from              = lv_from
+                                     io_sql_parser        = lo_sql_parser ).
     APPEND ls_cursor_parameters TO mt_database_cursor_parameters.
   endmethod.
 

@@ -1,6 +1,6 @@
-class ZCL_ZOSQL_SQL_EXEC_UPDAT definition
+class ZCL_ZOSQL_SQL_EXEC_UPDATE definition
   public
-  inheriting from ZCL_ZOSQL_SQL_EXEC_DELET
+  inheriting from ZCL_ZOSQL_SQL_EXEC_DELETE
   create public .
 
 public section.
@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SQL_EXEC_UPDAT IMPLEMENTATION.
+CLASS ZCL_ZOSQL_SQL_EXEC_UPDATE IMPLEMENTATION.
 
 
   method CONSTRUCTOR.

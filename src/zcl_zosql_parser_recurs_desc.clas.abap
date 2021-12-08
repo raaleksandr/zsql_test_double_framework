@@ -1,6 +1,5 @@
 class ZCL_ZOSQL_PARSER_RECURS_DESC definition
   public
-  final
   create public .
 
 public section.
@@ -37,6 +36,12 @@ public section.
       !IV_NODE_ID type I
     returning
       value(RV_SQL_PART) type STRING .
+  methods GET_NODE_SQL_START_AT_OFFSET
+    importing
+      !IV_NODE_ID type I
+      value(IV_NUMBER_OF_TOKENS_OFFSET) type I
+    returning
+      value(RV_SQL_PART) type STRING .
   methods GET_NODE_SQL_WITHOUT_SELF
     importing
       !IV_NODE_ID type I
@@ -53,6 +58,12 @@ public section.
       value(IV_END_TOKEN_INDEX) type I
     returning
       value(RV_SQL_PART) type STRING .
+  methods GET_TOKEN_OF_NTH_CHILD_NODE
+    importing
+      value(IV_MAIN_NODE_ID) type I
+      value(IV_N) type I
+    returning
+      value(RV_TOKEN) type STRING .
   methods GET_TOP_NODE
     returning
       value(RS_TOP_NODE) type TY_NODE .
@@ -74,12 +85,6 @@ private section.
   methods _UP_TO_N_ROWS
     importing
       !IV_PARENT_ID type I .
-  methods _GET_NODE_SQL
-    importing
-      !IV_NODE_ID type I
-      value(IV_INCLUDE_SELF) type ABAP_BOOL optional
-    returning
-      value(RV_SQL_PART) type STRING .
   methods _WHERE
     importing
       !IV_PARENT_ID type I .
@@ -228,15 +233,35 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
 
   method GET_NODE_SQL.
-    rv_sql_part = _get_node_sql( iv_node_id      = iv_node_id
-                                 iv_include_self = abap_true ).
+    rv_sql_part = get_node_sql_start_at_offset( iv_node_id                 = iv_node_id
+                                                iv_number_of_tokens_offset = 0 ).
+  endmethod.
+
+
+  method GET_NODE_SQL_START_AT_OFFSET.
+    DATA: lv_start_token_index TYPE i,
+          lv_end_token_index   TYPE i,
+          lv_token             TYPE string.
+
+    FIELD-SYMBOLS: <ls_node> LIKE LINE OF mt_parsed_tree.
+
+    READ TABLE mt_parsed_tree WITH KEY id = iv_node_id ASSIGNING <ls_node>.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    lv_start_token_index = <ls_node>-token_index + iv_number_of_tokens_offset.
+    lv_end_token_index   = get_node_end_token_index( iv_node_id ).
+
+    rv_sql_part = get_sql_as_range_of_tokens( iv_start_token_index = lv_start_token_index
+                                              iv_end_token_index   = lv_end_token_index ).
   endmethod.
 
 
   method GET_NODE_SQL_WITHOUT_SELF.
 
-    rv_sql_part = _get_node_sql( iv_node_id      = iv_node_id
-                                 iv_include_self = abap_false ).
+    rv_sql_part = get_node_sql_start_at_offset( iv_node_id                 = iv_node_id
+                                                iv_number_of_tokens_offset = 1 ).
   endmethod.
 
 
@@ -262,6 +287,20 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
+  method GET_TOKEN_OF_NTH_CHILD_NODE.
+
+    DATA: lt_child_nodes    TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_nth_child_node TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    lt_child_nodes = get_child_nodes( iv_main_node_id ).
+
+    READ TABLE lt_child_nodes INDEX iv_n INTO ls_nth_child_node.
+    IF sy-subrc = 0.
+      rv_token = ls_nth_child_node-token.
+    ENDIF.
+  endmethod.
+
+
   method GET_TOP_NODE.
     READ TABLE mt_parsed_tree WITH KEY parent_id = 0 INTO rs_top_node.
   endmethod.
@@ -271,7 +310,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     " Backus–Naur Form for supported SQL
     " <SELECT> ::= SELECT <SELECT_FIELDS> <FROM> <UP_TO_N_ROWS> <FOR_ALL_ENTRIES> <WHERE> <GROUP_BY>
-    " <SELECT_FIELDS> ::= * | <SELECT_FIELD> {<SELECT_FIELD>}
+    " <SELECT_FIELDS> ::= * | <SELECT_FIELD> {<SELECT_FIELD>} | <SELECT_FIELD>,{<SELECT_FIELD>}
     " <SELECT_FIELD> ::= data_source~* | <FUNCTION> [<ALIAS>] | <COL_SPEC> [<ALIAS>]
     " <FUNCTION> ::= function_name( col_name )
     " <COL_SPEC> ::= col_name | data_source~col_name
@@ -665,32 +704,6 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     _alias( lv_function_field_node_id ).
   endmethod.
-
-
-  METHOD _get_node_sql.
-
-    DATA: lv_start_token_index TYPE i,
-          lv_end_token_index   TYPE i,
-          lv_token             TYPE string.
-
-    FIELD-SYMBOLS: <ls_node> LIKE LINE OF mt_parsed_tree.
-
-    READ TABLE mt_parsed_tree WITH KEY id = iv_node_id ASSIGNING <ls_node>.
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
-
-    IF iv_include_self = abap_true.
-      lv_start_token_index = <ls_node>-token_index.
-    ELSE.
-      lv_start_token_index = <ls_node>-token_index + 1.
-    ENDIF.
-
-    lv_end_token_index   = get_node_end_token_index( iv_node_id ).
-
-    rv_sql_part = get_sql_as_range_of_tokens( iv_start_token_index = lv_start_token_index
-                                              iv_end_token_index   = lv_end_token_index ).
-  ENDMETHOD.
 
 
   method _GROUP_BY.

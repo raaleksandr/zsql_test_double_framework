@@ -37,13 +37,13 @@ protected section.
 
   methods _GET_REF_TO_RIGHT_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
     returning
       value(RD_REF_TO_RIGHT_OPERAND) type ref to DATA .
   methods _CLEAR_QUOTES_FROM_VALUE .
   methods _CHECK_ELEMENTARY
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
     returning
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
@@ -92,14 +92,14 @@ private section.
       value(RV_MASK_FOR_CP) type STRING .
   methods _GET_REF_TO_CONDITION_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
       !IV_DATASET_NAME_OR_ALIAS type STRING
       !IV_FIELDNAME_OR_VALUE type CLIKE
     returning
       value(RD_REF_TO_OPERAND) type ref to DATA .
   methods _GET_REF_TO_LEFT_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
     returning
       value(RD_REF_TO_LEFT_OPERAND) type ref to DATA .
   methods _SPLIT_BY_AND_FILL_CONDITIONS
@@ -359,7 +359,7 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
 
   METHOD _GET_REF_TO_CONDITION_OPERAND.
 
-    DATA: ls_data_set            TYPE zcl_zosql_sqltab_iterpos=>ty_data_set,
+    DATA: ls_data_set            TYPE zcl_zosql_iterator_position=>ty_data_set,
           lv_dataset_name        LIKE m_dataset_name_or_alias_left.
 
     IF iv_dataset_name_or_alias IS INITIAL.
@@ -367,10 +367,6 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
       lv_dataset_name = ls_data_set-dataset_name.
     ELSE.
       lv_dataset_name = iv_dataset_name_or_alias.
-    ENDIF.
-
-    IF lv_dataset_name IS INITIAL.
-      RETURN.
     ENDIF.
 
     rd_ref_to_operand = io_iteration_position->get_field_ref_of_data_set( iv_dataset_name_or_alias = lv_dataset_name

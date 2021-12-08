@@ -1,4 +1,4 @@
-class ZCL_ZOSQL_SELECT_PARSER definition
+class ZCL_ZOSQL_SELECT_PROCESSOR definition
   public
   create public .
 
@@ -24,14 +24,13 @@ public section.
       !CT_RESULT_TABLE type ANY TABLE .
   methods ADD_LINE_TO_RESULT
     importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_SQLTAB_ITERPOS
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     raising
       ZCX_ZOSQL_ERROR .
-  methods PARSE_FIELD_LIST_IN_SELECT
+  methods INITIALIZE_BY_PARSED_SQL
     importing
-      !IV_FIELD_LIST_FROM_SELECT type STRING
-      !IO_SQLTABLES_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
-      value(IV_NEW_SYNTAX) type ABAP_BOOL
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
 protected section.
@@ -56,7 +55,7 @@ private section.
   methods _GET_COMPONENT_FOR_FIELD
     importing
       !IS_SELECT_PARAMETER type TY_SELECT_PARAMETER
-      !IO_SQLTABLES_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
     returning
       value(RS_COMPONENT) type ABAP_COMPONENTDESCR
     raising
@@ -127,24 +126,24 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _FILL_DATASET_WHERE_EMPTY
     importing
-      !IO_SQLTABLES_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
     raising
       ZCX_ZOSQL_ERROR .
   methods _STAR_TO_FIELD_LIST
     importing
-      !IO_SQLTABLES_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
     raising
       ZCX_ZOSQL_ERROR .
   methods _CREATE_DATA_SET_FOR_SELECT
     importing
-      !IO_SQLTABLES_ITERATOR type ref to ZCL_ZOSQL_SQLTABLES_ITER
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
     raising
       ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
+CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
 
   METHOD ADD_LINE_TO_RESULT.
@@ -236,40 +235,72 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
   endmethod.
 
 
-  METHOD PARSE_FIELD_LIST_IN_SELECT.
+  METHOD INITIALIZE_BY_PARSED_SQL.
 
-    DATA: lt_fields              TYPE TABLE OF string,
-          lv_field               TYPE string,
-          lv_field_without_alias TYPE string,
-          ls_parameter           TYPE ty_select_parameter,
-          lv_alias_expected      TYPE abap_bool.
+    CONSTANTS: lc_state_fieldname    TYPE i VALUE 0,
+               lc_state_in_function  TYPE i VALUE 1,
+               lc_state_expect_alias TYPE i VALUE 2.
 
-    FIELD-SYMBOLS: <ls_select_parameter> LIKE LINE OF mt_select_parameters.
+    DATA: lo_sql_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
+          lt_nodes_with_select_fields TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lt_nodes_of_field           TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lv_state                    TYPE i,
+          ls_parameter                TYPE ty_select_parameter.
 
-    lt_fields = _split_select_into_fields( iv_field_list_from_select = iv_field_list_from_select
-                                           iv_new_syntax             = iv_new_syntax ).
+    FIELD-SYMBOLS: <ls_node_select_field> TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+                   <ls_node_of_field>     TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    LOOP AT lt_fields INTO lv_field.
+    CREATE OBJECT lo_sql_parser_helper.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = io_sql_parser
+                                                       IMPORTING et_nodes_of_select_field_list = lt_nodes_with_select_fields ).
 
-      _separate_alias( EXPORTING iv_whole_expression         = lv_field
-                       IMPORTING ev_expression_without_alias = lv_field_without_alias
-                                 ev_alias                    = ls_parameter-field_alias ).
+    LOOP AT lt_nodes_with_select_fields ASSIGNING <ls_node_select_field>.
 
-      IF _is_function( lv_field_without_alias ) = abap_true.
-        _parse_function( EXPORTING iv_field     = lv_field_without_alias
-                         CHANGING  cs_parameter = ls_parameter ).
-      ELSE.
-        _parse_field( EXPORTING iv_field     = lv_field_without_alias
-                      CHANGING  cs_parameter = ls_parameter ).
-        ls_parameter-parameter_type = parameter_type-field.
-      ENDIF.
+      CLEAR ls_parameter.
+      lt_nodes_of_field = io_sql_parser->get_child_nodes( <ls_node_select_field>-id ).
+      INSERT <ls_node_select_field> INTO lt_nodes_of_field INDEX 1.
+
+      lv_state = lc_state_fieldname.
+      LOOP AT lt_nodes_of_field ASSIGNING <ls_node_of_field>.
+        IF <ls_node_of_field>-token CP '*(*'.
+          lv_state = lc_state_in_function.
+
+          ls_parameter-function_name = <ls_node_of_field>-token.
+          REPLACE FIRST OCCURRENCE OF '(' IN ls_parameter-function_name WITH space.
+          CONDENSE ls_parameter-function_name.
+          ls_parameter-function_name = zcl_zosql_utils=>to_upper_case( ls_parameter-function_name ).
+          ls_parameter-parameter_type = parameter_type-groupby_function.
+
+          CONTINUE.
+        ELSEIF <ls_node_of_field>-token = ')'.
+          lv_state = lc_state_fieldname.
+          CONTINUE.
+        ELSEIF <ls_node_of_field>-token_ucase = 'AS'.
+          lv_state = lc_state_expect_alias.
+          CONTINUE.
+        ENDIF.
+
+        CASE lv_state.
+          WHEN lc_state_in_function
+            OR lc_state_fieldname.
+
+            _parse_field( EXPORTING iv_field     = <ls_node_of_field>-token
+                          CHANGING  cs_parameter = ls_parameter ).
+
+            IF lv_state = lc_state_fieldname.
+              ls_parameter-parameter_type = parameter_type-field.
+            ENDIF.
+          WHEN lc_state_expect_alias.
+            ls_parameter-field_alias = <ls_node_of_field>-token.
+        ENDCASE.
+      ENDLOOP.
 
       APPEND ls_parameter TO mt_select_parameters.
     ENDLOOP.
 
-    _star_to_field_list( io_sqltables_iterator ).
-    _fill_dataset_where_empty( io_sqltables_iterator ).
-    _create_data_set_for_select( io_sqltables_iterator ).
+    _star_to_field_list( io_from_iterator ).
+    _fill_dataset_where_empty( io_from_iterator ).
+    _create_data_set_for_select( io_from_iterator ).
   ENDMETHOD.
 
 
@@ -315,8 +346,8 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
         ls_new_component = _get_component_for_count( <ls_select_parameter>-field_alias ).
       ELSE.
 
-        ls_new_component = _get_component_for_field( is_select_parameter   = <ls_select_parameter>
-                                                     io_sqltables_iterator = io_sqltables_iterator ).
+        ls_new_component = _get_component_for_field( is_select_parameter = <ls_select_parameter>
+                                                     io_from_iterator    = io_from_iterator ).
       ENDIF.
       APPEND ls_new_component TO lt_target_set_components.
     ENDLOOP.
@@ -357,19 +388,19 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
 
   METHOD _FILL_DATASET_WHERE_EMPTY.
 
-    DATA: lt_data_set_list          TYPE zcl_zosql_sqltab_iterpos=>ty_data_sets,
+    DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ls_data_set               LIKE LINE OF lt_data_set_list,
           lt_components_of_data_set TYPE cl_abap_structdescr=>component_table.
 
     FIELD-SYMBOLS: <ls_select_parameter> LIKE LINE OF mt_select_parameters.
 
-    lt_data_set_list = io_sqltables_iterator->get_data_set_list( ).
+    lt_data_set_list = io_from_iterator->get_data_set_list( ).
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
       WHERE dataset_name IS INITIAL.
 
       LOOP AT lt_data_set_list INTO ls_data_set.
-        lt_components_of_data_set = io_sqltables_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
+        lt_components_of_data_set = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
         READ TABLE lt_components_of_data_set WITH KEY name = <ls_select_parameter>-field_name TRANSPORTING NO FIELDS.
         IF sy-subrc = 0.
           <ls_select_parameter>-dataset_name = ls_data_set-dataset_name.
@@ -417,7 +448,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_dataset_components.
 
-    ld_ref_to_dataset_data = io_sqltables_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name ).
+    ld_ref_to_dataset_data = io_from_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name ).
 
     lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
     lt_dataset_components = lo_struct->get_components( ).
@@ -573,7 +604,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
 
   method _RUN_GROUP_BY_FUNCTION.
 
-    CASE iv_group_by_function.
+    CASE zcl_zosql_utils=>to_upper_case( iv_group_by_function ).
       WHEN 'SUM'.
         cv_grouped_value = cv_grouped_value + iv_new_value.
       WHEN 'MIN'.
@@ -593,7 +624,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _separate_alias.
+  METHOD _SEPARATE_ALIAS.
 
     DATA: lt_tokens        TYPE TABLE OF string,
           lv_token         TYPE string,
@@ -684,7 +715,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
            END OF ty_field.
 
     DATA: lt_new_select_parameters LIKE mt_select_parameters,
-          lt_data_set_list         TYPE zcl_zosql_sqltab_iterpos=>ty_data_sets,
+          lt_data_set_list         TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ls_data_set              LIKE LINE OF lt_data_set_list,
           lt_components            TYPE cl_abap_structdescr=>component_table,
           lv_dataset_index         TYPE i,
@@ -695,7 +726,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
                    <ls_component>        LIKE LINE OF lt_components,
                    <ls_new_select_parameter> LIKE LINE OF mt_select_parameters.
 
-    lt_data_set_list = io_sqltables_iterator->get_data_set_list( ).
+    lt_data_set_list = io_from_iterator->get_data_set_list( ).
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
 
@@ -712,7 +743,7 @@ CLASS ZCL_ZOSQL_SELECT_PARSER IMPLEMENTATION.
             CONTINUE.
           ENDIF.
 
-          lt_components = io_sqltables_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
+          lt_components = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
 
           LOOP AT lt_components ASSIGNING <ls_component>.
             ls_field-fieldname = <ls_component>-name.

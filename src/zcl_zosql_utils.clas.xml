@@ -164,6 +164,18 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Tries to guess which table it is by data</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>_SPLIT_INTO_TOKENS_AT_SEP</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits any SQL condition into separate tokens</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>_SPLIT_INTO_TOKENS_AT_SEP_ITAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Splits table of SQL conditions into separate tokens</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>

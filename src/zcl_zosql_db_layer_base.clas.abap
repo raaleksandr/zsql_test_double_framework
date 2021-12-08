@@ -13,9 +13,8 @@ protected section.
 
   methods CREATE_DYNAMIC_TAB_FOR_RESULT
     importing
-      !IV_SELECT_FIELD_LIST type CLIKE
       !IV_FROM type CLIKE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     returning
       value(RD_DYNAMIC_TABLE_SELECT_RESULT) type ref to DATA
     raising
@@ -67,6 +66,7 @@ protected section.
       !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE optional
       value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
       !IV_NUMBER_OF_ROWS_EXPR type CLIKE optional
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ET_RESULT_TABLE type ANY TABLE
       !ES_RESULT_LINE type ANY
@@ -190,22 +190,21 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
 
-  METHOD CREATE_DYNAMIC_TAB_FOR_RESULT.
-    DATA: lo_select_parser TYPE REF TO zcl_zosql_select_parser,
-          lo_from_iter     TYPE REF TO zcl_zosql_sqltables_iter,
-          lo_iter_pos      TYPE REF TO zcl_zosql_sqltab_iterpos.
+  METHOD create_dynamic_tab_for_result.
+    DATA: lo_select    TYPE REF TO zcl_zosql_select_processor,
+          lo_from_iter TYPE REF TO zcl_zosql_from_iterator,
+          lo_iter_pos  TYPE REF TO zcl_zosql_iterator_position.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
     CREATE OBJECT lo_from_iter.
     lo_from_iter->init_by_from( iv_from ).
 
-    CREATE OBJECT lo_select_parser.
-    lo_select_parser->parse_field_list_in_select( iv_field_list_from_select = iv_select_field_list
-                                                  io_sqltables_iterator     = lo_from_iter
-                                                  iv_new_syntax             = iv_new_syntax ).
+    CREATE OBJECT lo_select.
+    lo_select->initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
+                                         io_from_iterator = lo_from_iter ).
 
-    rd_dynamic_table_select_result = lo_select_parser->get_result_as_ref_to_data( ).
+    rd_dynamic_table_select_result = lo_select->get_result_as_ref_to_data( ).
 
     ASSIGN rd_dynamic_table_select_result->* TO <lt_select_result>.
     REFRESH <lt_select_result>.
@@ -294,19 +293,21 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     DATA: lv_select                  TYPE string,
           lv_single                  TYPE abap_bool,
           lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc,
-          ls_top_node                TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_child_nodes             TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          lt_for_all_entries_nodes   TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_node_with_tabname       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_up_to_n_rows_nodes      TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_node_with_num_rows      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_child_nodes_of_token    TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
           lv_end_token_index         TYPE i,
           lv_select_field_list_start TYPE i,
-          lv_select_field_list_end   TYPE i.
+          lv_select_field_list_end   TYPE i,
+          lo_sql_parser_helper       TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_distinct           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_single             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_nodes_select_field_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_node_up_to_n_rows       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_from               TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_for_all_entries    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_group_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_order_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    FIELD-SYMBOLS: <ls_node>                LIKE LINE OF lt_child_nodes,
-                   <ls_child_node_of_token> LIKE LINE OF lt_child_nodes_of_token.
+    FIELD-SYMBOLS: <ls_node>                TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     CLEAR: ev_select_field_list, ev_from, ev_where, ev_group_by, ev_order_by, ev_distinct.
 
@@ -317,79 +318,72 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     lo_sql_parser->run_recursive_descent_parser( ).
     eo_sql_parser = lo_sql_parser.
 
-    ls_top_node = lo_sql_parser->get_top_node( ).
-    lt_child_nodes = lo_sql_parser->get_child_nodes( ls_top_node-id ).
+    CREATE OBJECT lo_sql_parser_helper.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = lo_sql_parser
+                                                       IMPORTING es_node_distinct              = ls_node_distinct
+                                                                 es_node_single                = ls_node_single
+                                                                 et_nodes_of_select_field_list = lt_nodes_select_field_list
+                                                                 es_node_up_to_n_rows          = ls_node_up_to_n_rows
+                                                                 es_node_from                  = ls_node_from
+                                                                 es_node_for_all_entries       = ls_node_for_all_entries
+                                                                 es_node_where                 = ls_node_where
+                                                                 es_node_group_by              = ls_node_group_by
+                                                                 es_node_order_by              = ls_node_order_by
+                                                                 ev_new_syntax                 = ev_new_syntax ).
 
-    LOOP AT lt_child_nodes ASSIGNING <ls_node>.
-      CASE <ls_node>-token_ucase.
-         WHEN 'DISTINCT'.
-          ev_distinct = abap_true.
-        WHEN 'SINGLE'.
-          lv_single = abap_true.
-        WHEN 'FROM'.
-          ev_from = lo_sql_parser->get_node_sql_without_self( <ls_node>-id ).
-        WHEN 'UP'.
-          lt_up_to_n_rows_nodes = lo_sql_parser->get_child_nodes( <ls_node>-id ).
-          READ TABLE lt_up_to_n_rows_nodes
-            INDEX lines( lt_up_to_n_rows_nodes ) - 1
-            INTO ls_node_with_num_rows.
-          IF sy-subrc = 0.
-            ev_number_of_rows_expr = ls_node_with_num_rows-token.
-          ENDIF.
-        WHEN 'FOR'.
-          lt_for_all_entries_nodes = lo_sql_parser->get_child_nodes( <ls_node>-id ).
-          READ TABLE lt_for_all_entries_nodes
-            INDEX lines( lt_for_all_entries_nodes )
-            INTO ls_node_with_tabname.
-          IF sy-subrc = 0.
-            ev_for_all_entries_tabname = ls_node_with_tabname-token.
-          ENDIF.
-        WHEN 'WHERE'.
-          ev_where = lo_sql_parser->get_node_sql_without_self( <ls_node>-id ).
-        WHEN 'GROUP'.
-          lt_child_nodes_of_token = lo_sql_parser->get_child_nodes( <ls_node>-id ).
-          READ TABLE lt_child_nodes_of_token INDEX 1 ASSIGNING <ls_child_node_of_token>.
-          CHECK sy-subrc = 0.
-          CHECK <ls_child_node_of_token>-token_ucase = 'BY'.
+    IF ls_node_distinct IS NOT INITIAL.
+      ev_distinct = abap_true.
+    ENDIF.
 
-          READ TABLE lt_child_nodes_of_token INDEX 2 ASSIGNING <ls_child_node_of_token>.
-          CHECK sy-subrc = 0.
+    IF ls_node_single IS NOT INITIAL.
+      lv_single = abap_true.
+    ENDIF.
 
-          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
+    LOOP AT lt_nodes_select_field_list ASSIGNING <ls_node>.
+      IF lv_select_field_list_start IS INITIAL.
+        lv_select_field_list_start = <ls_node>-token_index.
+      ELSEIF lv_select_field_list_start > <ls_node>-token_index.
+        lv_select_field_list_start = <ls_node>-token_index.
+      ENDIF.
 
-          ev_group_by = lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_child_node_of_token>-token_index
-                                                                   iv_end_token_index   = lv_end_token_index ).
+      lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
 
-        WHEN 'ORDER'.
-          lt_child_nodes_of_token = lo_sql_parser->get_child_nodes( <ls_node>-id ).
-          READ TABLE lt_child_nodes_of_token INDEX 1 ASSIGNING <ls_child_node_of_token>.
-          CHECK sy-subrc = 0.
-          CHECK <ls_child_node_of_token>-token_ucase = 'BY'.
-
-          READ TABLE lt_child_nodes_of_token INDEX 2 ASSIGNING <ls_child_node_of_token>.
-          CHECK sy-subrc = 0.
-
-          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
-
-          ev_order_by = lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_child_node_of_token>-token_index
-                                                                   iv_end_token_index   = lv_end_token_index ).
-        WHEN OTHERS.
-          IF lv_select_field_list_start IS INITIAL.
-            lv_select_field_list_start = <ls_node>-token_index.
-          ENDIF.
-
-          lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
-
-          IF lv_select_field_list_end < lv_end_token_index.
-            lv_select_field_list_end = lv_end_token_index.
-          ENDIF.
-      ENDCASE.
+      IF lv_end_token_index > lv_select_field_list_end.
+        lv_select_field_list_end = lv_end_token_index.
+      ENDIF.
     ENDLOOP.
 
     IF lv_select_field_list_start IS NOT INITIAL AND lv_select_field_list_end IS NOT INITIAL.
       ev_select_field_list =
         lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = lv_select_field_list_start
                                                    iv_end_token_index   = lv_select_field_list_end ).
+    ENDIF.
+
+    IF ls_node_up_to_n_rows IS NOT INITIAL.
+      ev_number_of_rows_expr = lo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_up_to_n_rows-id
+                                                                           iv_n            = 2 ).
+    ENDIF.
+
+    ev_from = lo_sql_parser->get_node_sql_without_self( ls_node_from-id ).
+
+    IF ls_node_for_all_entries IS NOT INITIAL.
+      ev_for_all_entries_tabname =
+        lo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_for_all_entries-id
+                                                    iv_n            = 4 ).
+    ENDIF.
+
+    IF ls_node_where IS NOT INITIAL.
+      ev_where = lo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+    ENDIF.
+
+    IF ls_node_group_by IS NOT INITIAL.
+      ev_group_by = lo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_group_by-id
+                                                                 iv_number_of_tokens_offset = 2 ).
+    ENDIF.
+
+    IF ls_node_order_by IS NOT INITIAL.
+      ev_order_by = lo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_order_by-id
+                                                                 iv_number_of_tokens_offset = 2 ).
     ENDIF.
 
     IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
@@ -399,7 +393,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
       ev_number_of_rows_expr = '1'.
     ENDIF.
 
-    ev_new_syntax = detect_if_new_syntax_select( ev_select_field_list ).
+    "ev_new_syntax = detect_if_new_syntax_select( ev_select_field_list ).
   ENDMETHOD.
 
 
@@ -427,18 +421,19 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   method ZIF_ZOSQL_DB_LAYER~SELECT.
     DATA: lv_select_field_list       TYPE string,
           lv_from                    TYPE string,
-          lv_new_syntax              TYPE abap_bool.
+          lv_new_syntax              TYPE abap_bool,
+          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
     me->split_select_into_parts( EXPORTING iv_select                  = iv_select
                                  IMPORTING ev_select_field_list       = lv_select_field_list
                                            ev_from                    = lv_from
-                                           ev_new_syntax              = lv_new_syntax ).
+                                           ev_new_syntax              = lv_new_syntax
+                                           eo_sql_parser              = lo_sql_parser ).
 
-    ed_result_as_table = create_dynamic_tab_for_result( iv_select_field_list = lv_select_field_list
-                                                        iv_from              = lv_from
-                                                        iv_new_syntax        = lv_new_syntax ).
+    ed_result_as_table = create_dynamic_tab_for_result( iv_from       = lv_from
+                                                        io_sql_parser = lo_sql_parser ).
     ASSIGN ed_result_as_table->* TO <lt_select_result>.
 
     zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                = iv_select
@@ -458,7 +453,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
           lv_order_by                TYPE string,
           lv_distinct                TYPE abap_bool,
           lv_new_syntax              TYPE abap_bool,
-          lv_number_of_rows_expr     TYPE string.
+          lv_number_of_rows_expr     TYPE string,
+          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     me->split_select_into_parts( EXPORTING iv_select                  = iv_select
                                  IMPORTING ev_select_field_list       = lv_select_field_list
@@ -469,7 +465,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                                            ev_order_by                = lv_order_by
                                            ev_distinct                = lv_distinct
                                            ev_new_syntax              = lv_new_syntax
-                                           ev_number_of_rows_expr     = lv_number_of_rows_expr ).
+                                           ev_number_of_rows_expr     = lv_number_of_rows_expr
+                                           eo_sql_parser              = lo_sql_parser ).
 
     select_by_sql_parts( EXPORTING iv_select                  = lv_select_field_list
                                    iv_from                    = lv_from
@@ -483,6 +480,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                                    iv_for_all_entries_tabname = lv_for_all_entries_tabname
                                    iv_do_into_corresponding   = iv_do_into_corresponding
                                    iv_number_of_rows_expr     = lv_number_of_rows_expr
+                                   io_sql_parser              = lo_sql_parser
                          IMPORTING et_result_table            = et_result_table
                                    es_result_line             = es_result_line
                                    ev_subrc                   = ev_subrc ).

@@ -43,6 +43,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZIF_ZOSQL_ITERATOR</CLSNAME>
+     <CMPNAME>GET_ITERATOR_POSITION_OBJECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data at current iterator position</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_ITERATOR</CLSNAME>
      <CMPNAME>IS_EMPTY</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns true if iterator is empty (has 0 records)</DESCRIPT>

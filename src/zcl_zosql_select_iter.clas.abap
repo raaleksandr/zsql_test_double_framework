@@ -112,6 +112,12 @@ CLASS ZCL_ZOSQL_SELECT_ITER IMPLEMENTATION.
   endmethod.
 
 
+  METHOD zif_zosql_iterator~get_iterator_position_object.
+    CREATE OBJECT ro_iterator_pos.
+    ro_iterator_pos->add_data_set_data( id_ref_to_current_line = zif_zosql_iterator~get_current_record_ref( ) ).
+  ENDMETHOD.
+
+
   method ZIF_ZOSQL_ITERATOR~IS_EMPTY.
     IF _is_sql_query_executed( ) <> abap_true.
       _execute_sql_query( ).

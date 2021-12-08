@@ -61,7 +61,10 @@ CLASS ltc_split_cond_into_tokens DEFINITION FOR TESTING
       f_cut TYPE REF TO zcl_zosql_utils.  "class under test
 
     METHODS: base_case FOR TESTING,
-             values_in_quotes_with_spaces FOR TESTING.
+             values_in_quotes_with_spaces FOR TESTING,
+             split_by_comma FOR TESTING,
+             split_by_space_and_comma FOR TESTING,
+             split_when_comma_at_end FOR TESTING.
 ENDCLASS.       "ltc_split_cond_into_tokens
 
 CLASS ltc_zosql_utils IMPLEMENTATION.
@@ -176,6 +179,47 @@ CLASS ltc_split_cond_into_tokens IMPLEMENTATION.
     APPEND 'FIELD1' TO lt_expected_tokens.
     APPEND '=' TO lt_expected_tokens.
     APPEND '''text with space''' TO lt_expected_tokens.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
+  ENDMETHOD.
+
+  METHOD split_by_comma.
+    DATA: lt_result_tokens TYPE TABLE OF string.
+
+    lt_result_tokens = zcl_zosql_utils=>split_condition_into_tokens( 'field1,field2' ).
+
+    DATA: lt_expected_tokens TYPE TABLE OF string.
+
+    APPEND 'field1' TO lt_expected_tokens.
+    APPEND ','      TO lt_expected_tokens.
+    APPEND 'field2' TO lt_expected_tokens.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
+  ENDMETHOD.
+
+  METHOD split_by_space_and_comma.
+    DATA: lt_result_tokens TYPE TABLE OF string.
+
+    lt_result_tokens = zcl_zosql_utils=>split_condition_into_tokens( 'field1, field2' ).
+
+    DATA: lt_expected_tokens TYPE TABLE OF string.
+
+    APPEND 'field1' TO lt_expected_tokens.
+    APPEND ','      TO lt_expected_tokens.
+    APPEND 'field2' TO lt_expected_tokens.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
+  ENDMETHOD.
+
+  METHOD split_when_comma_at_end.
+    DATA: lt_result_tokens TYPE TABLE OF string.
+
+    lt_result_tokens = zcl_zosql_utils=>split_condition_into_tokens( 'field1,' ).
+
+    DATA: lt_expected_tokens TYPE TABLE OF string.
+
+    APPEND 'field1' TO lt_expected_tokens.
+    APPEND ','      TO lt_expected_tokens.
 
     cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
   ENDMETHOD.

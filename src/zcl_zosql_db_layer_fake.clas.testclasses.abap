@@ -54,6 +54,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       left_join FOR TESTING RAISING zcx_zosql_error,
       new_syntax FOR TESTING RAISING zcx_zosql_error,
       new_syntax_no_host_var FOR TESTING RAISING zcx_zosql_error,
+      new_syntax_no_space_selfld FOR TESTING RAISING zcx_zosql_error,
       view_no_conditions FOR TESTING RAISING zcx_zosql_error,
       view_with_condition FOR TESTING RAISING zcx_zosql_error,
       view_with_several_conditions FOR TESTING RAISING zcx_zosql_error,
@@ -1038,6 +1039,56 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     CONCATENATE 'SELECT key_field, text_field1'
       'FROM zosql_for_tst'
       'WHERE KEY_FIELD = :KEY_FIELD'
+      INTO lv_select SEPARATED BY space.
+
+    ls_param-param_name_in_select   = ':KEY_FIELD'.
+    ls_param-parameter_value_single = 'KEY2'.
+    APPEND ls_param TO lt_params.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_params
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD new_syntax_no_space_selfld.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " Case of new syntax when there is no spaces between fields in select
+
+    " GIVEN
+    DELETE FROM zosql_for_tst.
+
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          lv_select TYPE string.
+
+    CONCATENATE 'SELECT key_field,text_field1'
+      'FROM zosql_for_tst'
+      'WHERE KEY_FIELD = @:KEY_FIELD'
       INTO lv_select SEPARATED BY space.
 
     ls_param-param_name_in_select   = ':KEY_FIELD'.
