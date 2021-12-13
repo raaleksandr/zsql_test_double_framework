@@ -85,6 +85,10 @@ private section.
   methods _UP_TO_N_ROWS
     importing
       !IV_PARENT_ID type I .
+  methods _MINIMIZE_NESTED_NODE_CHAINS .
+  methods _DELETE_NODE
+    importing
+      !IV_NODE_ID type I .
   methods _WHERE
     importing
       !IV_PARENT_ID type I .
@@ -344,15 +348,19 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     _step_forward( ).
 
-    IF _select( ) = abap_true.
-      RETURN.
-    ENDIF.
+    DO 1 TIMES.
+      IF _select( ) = abap_true.
+        EXIT.
+      ENDIF.
 
-    IF _update( ) = abap_true.
-      RETURN.
-    ENDIF.
+      IF _update( ) = abap_true.
+        EXIT.
+      ENDIF.
 
-    _delete( ).
+      _delete( ).
+    ENDDO.
+
+    _minimize_nested_node_chains( ).
   endmethod.
 
 
@@ -449,6 +457,25 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
+  method _DELETE_NODE.
+
+    DATA: ls_node_to_delete TYPE ty_node.
+
+    FIELD-SYMBOLS: <ls_child_node> TYPE ty_node.
+
+    ls_node_to_delete = get_node_info( iv_node_id ).
+
+    LOOP AT mt_parsed_tree ASSIGNING <ls_child_node>
+      WHERE parent_id = iv_node_id.
+
+      <ls_child_node>-parent_id = ls_node_to_delete-parent_id.
+    ENDLOOP.
+
+    DELETE mt_parsed_tree
+      WHERE id = iv_node_id.
+  endmethod.
+
+
   method _EXPRESSION.
 
     DATA: lv_left_from_or_node_id TYPE i.
@@ -461,12 +488,12 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( lv_left_from_or_node_id ).
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _expression( iv_parent_id ).
+    _expression( lv_left_from_or_node_id ).
   endmethod.
 
 
@@ -592,12 +619,12 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( lv_left_from_and_node_id ).
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _expression_or( iv_parent_id ).
+    _expression_or( lv_left_from_and_node_id ).
   endmethod.
 
 
@@ -781,6 +808,26 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     _on_expression( lv_join_node_id ).
 
     rv_it_was_join = abap_true.
+  endmethod.
+
+
+  method _MINIMIZE_NESTED_NODE_CHAINS.
+
+    DATA: lt_child_nodes TYPE ty_tree,
+          ls_child_node  TYPE ty_node.
+
+    FIELD-SYMBOLS: <ls_node> TYPE ty_node.
+
+    LOOP AT mt_parsed_tree ASSIGNING <ls_node>.
+      lt_child_nodes = get_child_nodes( <ls_node>-id ).
+
+      CHECK LINES( lt_child_nodes ) = 1.
+      READ TABLE lt_child_nodes INDEX 1 INTO ls_child_node.
+
+      IF ls_child_node-token_index = <ls_node>-token_index.
+        _delete_node( <ls_node>-id ).
+      ENDIF.
+    ENDLOOP.
   endmethod.
 
 

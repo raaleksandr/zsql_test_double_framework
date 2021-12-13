@@ -227,7 +227,10 @@ CLASS ZCL_ZOSQL_VIEW_ITERATOR IMPLEMENTATION.
     lv_from   = _get_from_sql_part( iv_view_name ).
     lv_where  = _get_where_sql_part( iv_view_name ).
 
-    CONCATENATE 'SELECT' lv_select 'FROM' lv_from 'WHERE' lv_where INTO rv_view_sql SEPARATED BY space.
+    CONCATENATE 'SELECT' lv_select 'FROM' lv_from INTO rv_view_sql SEPARATED BY space.
+    IF lv_where IS NOT INITIAL.
+      CONCATENATE rv_view_sql 'WHERE' lv_where INTO rv_view_sql SEPARATED BY space.
+    ENDIF.
   ENDMETHOD.
 
 

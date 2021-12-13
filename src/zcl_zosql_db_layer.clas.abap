@@ -115,6 +115,7 @@ private section.
     importing
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
       !IV_WHERE type CLIKE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
     returning
       value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA .
   methods _CREATE_TYPE_FOR_PARAMETER
@@ -195,6 +196,7 @@ private section.
       !IV_NAME_OF_FOR_ALL_ENT_VAR type FIELDNAME
       !IV_NEW_SYNTAX type ABAP_BOOL
       !IV_NUMBER_OF_ROWS_EXPR type CLIKE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ED_DYNAMIC_STRUCT_WITH_PARAMS type ref to DATA
       value(EV_NUMBER_OF_ROWS_TO_SELECT) type I
@@ -259,6 +261,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                    iv_name_of_for_all_ent_var    = 'IT_FOR_ALL_ENTRIES_TABLE'
                                    iv_new_syntax                 = iv_new_syntax
                                    iv_number_of_rows_expr        = iv_number_of_rows_expr
+                                   io_sql_parser                 = io_sql_parser
                          IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
                          CHANGING  cv_where                      = lv_where_ready_for_select
@@ -482,6 +485,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                    iv_name_of_for_all_ent_var    = 'IT_FOR_ALL_ENTRIES_TABLE'
                                    iv_new_syntax                 = lv_new_syntax
                                    iv_number_of_rows_expr        = lv_number_of_rows_expr
+                                   io_sql_parser                 = lo_sql_parser
                          IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
                          CHANGING  cv_where                      = lv_where_ready_for_select
@@ -502,8 +506,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
     ls_cursor_parameters-cursor = rv_cursor.
     ls_cursor_parameters-ref_to_result_dataset =
-      create_dynamic_tab_for_result( iv_from              = lv_from
-                                     io_sql_parser        = lo_sql_parser ).
+      create_dynamic_tab_for_result( lo_sql_parser ).
     APPEND ls_cursor_parameters TO mt_database_cursor_parameters.
   endmethod.
 
@@ -595,14 +598,16 @@ endmethod.
   ENDMETHOD.
 
 
-  METHOD _CREATE_DYNAMIC_STRUCT_FORPARS.
+  METHOD _create_dynamic_struct_forpars.
 
     DATA: lt_dynamic_components         TYPE cl_abap_structdescr=>component_table,
           ls_dynamic_component          LIKE LINE OF lt_dynamic_components,
           lo_dynamic_struct_with_params TYPE REF TO cl_abap_structdescr,
           lt_parameters                 TYPE zosql_db_layer_params,
           lo_where_parser               TYPE REF TO zcl_zosql_where_parser,
-          lo_parameters                 TYPE REF TO zcl_zosql_parameters.
+          lo_parameters                 TYPE REF TO zcl_zosql_parameters,
+          lo_parser_helper              TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_where                 TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     FIELD-SYMBOLS: <ls_parameter_with_name>      LIKE LINE OF it_parameters_with_name,
                    <ls_dynamic_struct_with_pars> TYPE any,
@@ -623,7 +628,15 @@ endmethod.
       EXPORTING
         io_parameters = lo_parameters.
 
-    lo_where_parser->zif_zosql_sqlcond_parser~parse_condition( iv_where ).
+    IF io_sql_parser IS BOUND.
+      CREATE OBJECT lo_parser_helper.
+      lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
+                                                     IMPORTING es_node_where = ls_node_where ).
+    ENDIF.
+
+    lo_where_parser->zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition       = iv_where
+                                                               io_sql_parser          = io_sql_parser
+                                                               iv_id_of_node_to_parse = ls_node_where-id ).
 
     LOOP AT it_parameters_with_name ASSIGNING <ls_parameter_with_name>.
       ls_dynamic_component-name = <ls_parameter_with_name>-param_name.
@@ -908,7 +921,8 @@ METHOD _PREPARE_FOR_SELECT.
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
 
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  iv_where                = cv_where ).
+                                                                  iv_where                = cv_where
+                                                                  io_sql_parser           = io_sql_parser ).
 
   _prepare_where_for_select( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                        iv_name_of_struct_with_params = iv_name_of_struct_with_params

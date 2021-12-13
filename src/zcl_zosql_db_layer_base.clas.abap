@@ -13,7 +13,6 @@ protected section.
 
   methods CREATE_DYNAMIC_TAB_FOR_RESULT
     importing
-      !IV_FROM type CLIKE
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     returning
       value(RD_DYNAMIC_TABLE_SELECT_RESULT) type ref to DATA
@@ -198,7 +197,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
     CREATE OBJECT lo_from_iter.
-    lo_from_iter->init_by_from( iv_from ).
+    lo_from_iter->init_by_sql_parser( io_sql_parser ).
 
     CREATE OBJECT lo_select.
     lo_select->initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
@@ -418,11 +417,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   endmethod.
 
 
-  method ZIF_ZOSQL_DB_LAYER~SELECT.
-    DATA: lv_select_field_list       TYPE string,
-          lv_from                    TYPE string,
-          lv_new_syntax              TYPE abap_bool,
-          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc.
+  METHOD zif_zosql_db_layer~select.
+    DATA: lv_select_field_list TYPE string,
+          lv_from              TYPE string,
+          lv_new_syntax        TYPE abap_bool,
+          lo_sql_parser        TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
@@ -432,8 +431,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                                            ev_new_syntax              = lv_new_syntax
                                            eo_sql_parser              = lo_sql_parser ).
 
-    ed_result_as_table = create_dynamic_tab_for_result( iv_from       = lv_from
-                                                        io_sql_parser = lo_sql_parser ).
+    ed_result_as_table = create_dynamic_tab_for_result( lo_sql_parser ).
     ASSIGN ed_result_as_table->* TO <lt_select_result>.
 
     zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                = iv_select
@@ -441,7 +439,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                                                  it_for_all_entries_table = it_for_all_entries_table
                                        IMPORTING et_result_table          = <lt_select_result>
                                                  ev_subrc                 = ev_subrc ).
-  endmethod.
+  ENDMETHOD.
 
 
   method ZIF_ZOSQL_DB_LAYER~SELECT_TO_ITAB.

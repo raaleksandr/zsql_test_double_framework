@@ -37,20 +37,22 @@ protected section.
 
   methods _GET_REF_TO_RIGHT_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RD_REF_TO_RIGHT_OPERAND) type ref to DATA .
   methods _CLEAR_QUOTES_FROM_VALUE .
   methods _CHECK_ELEMENTARY
     importing
-      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
   methods _PARSE_ELEMENTARY
     importing
-      !IV_SQL_CONDITION type STRING .
+      !IV_SQL_CONDITION type STRING
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IV_ID_OF_NODE_ELEMENTARY_COND type I .
 private section.
 
   types:
@@ -75,6 +77,12 @@ private section.
   data M_EMPTY_CONDITION_FLAG type ABAP_BOOL .
   constants C_NOT type STRING value 'NOT' ##NO_TEXT.
 
+  methods _PARSE_BINARY_CONDITION
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IV_LEFT_OPERAND_NODE_ID type I
+      !IV_OPERATOR_NODE_ID type I
+      !IV_RIGHT_OPERAND_NODE_ID type I .
   methods _GET_FIRST_TOKEN
     importing
       !IT_TOKENS type STRING_TABLE
@@ -92,14 +100,14 @@ private section.
       value(RV_MASK_FOR_CP) type STRING .
   methods _GET_REF_TO_CONDITION_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
       !IV_DATASET_NAME_OR_ALIAS type STRING
       !IV_FIELDNAME_OR_VALUE type CLIKE
     returning
       value(RD_REF_TO_OPERAND) type ref to DATA .
   methods _GET_REF_TO_LEFT_OPERAND
     importing
-      !IO_ITERATION_POSITION type ref to zcl_zosql_iterator_position
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RD_REF_TO_LEFT_OPERAND) type ref to DATA .
   methods _SPLIT_BY_AND_FILL_CONDITIONS
@@ -179,63 +187,116 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
   endmethod.
 
 
-  method ZIF_ZOSQL_SQLCOND_PARSER~PARSE_CONDITION.
-    DATA: lv_condition_or_found  TYPE abap_bool,
-          lv_condition_and_found TYPE abap_bool.
+  METHOD zif_zosql_sqlcond_parser~parse_condition.
 
-    FIELD-SYMBOLS: <ls_or_condition>  LIKE LINE OF mt_or_conditions,
-                   <ls_and_condition> LIKE LINE OF mt_and_conditions.
 
-    IF iv_sql_condition IS INITIAL.
-      m_empty_condition_flag = abap_true.
-      RETURN.
+    IF io_sql_parser IS BOUND.
+
+      DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+            ls_first_node             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+            ls_second_node            TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+            ls_third_node             TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+      IF iv_id_of_node_to_parse IS INITIAL.
+        m_empty_condition_flag = abap_true.
+        RETURN.
+      ENDIF.
+
+      lt_child_nodes_next_level = io_sql_parser->get_child_nodes( iv_id_of_node_to_parse ).
+      READ TABLE lt_child_nodes_next_level INDEX 1 INTO ls_first_node.
+      IF sy-subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      READ TABLE lt_child_nodes_next_level INDEX 2 INTO ls_second_node.
+      READ TABLE lt_child_nodes_next_level INDEX 3 INTO ls_third_node.
+
+      IF ls_first_node-token_ucase = 'NOT'.
+
+        ms_not_condition-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
+        ms_not_condition-parser->parse_condition( iv_sql_condition       = iv_sql_condition
+                                                  io_sql_parser          = io_sql_parser
+                                                  iv_id_of_node_to_parse = ls_first_node-id ).
+
+      ELSEIF lines( lt_child_nodes_next_level ) = 1
+          OR ( ls_second_node-token = ')' AND ls_third_node IS INITIAL ).
+
+        zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition       = iv_sql_condition
+                                                  io_sql_parser          = io_sql_parser
+                                                  iv_id_of_node_to_parse = ls_first_node-id ).
+
+      ELSEIF ls_second_node-token_ucase = 'OR' OR ls_second_node-token_ucase = 'AND'.
+
+        _parse_binary_condition( io_sql_parser            = io_sql_parser
+                                 iv_left_operand_node_id  = ls_first_node-id
+                                 iv_operator_node_id      = ls_second_node-id
+                                 iv_right_operand_node_id = ls_third_node-id ).
+      ELSE.
+        _parse_elementary( iv_sql_condition              = iv_sql_condition
+                           io_sql_parser                 = io_sql_parser
+                           iv_id_of_node_elementary_cond = iv_id_of_node_to_parse ).
+      ENDIF.
+    ELSE.
+
+      DATA: lv_condition_or_found  TYPE abap_bool,
+            lv_condition_and_found TYPE abap_bool.
+
+      FIELD-SYMBOLS: <ls_or_condition>  LIKE LINE OF mt_or_conditions,
+                     <ls_and_condition> LIKE LINE OF mt_and_conditions.
+
+      IF iv_sql_condition IS INITIAL.
+        m_empty_condition_flag = abap_true.
+        RETURN.
+      ENDIF.
+
+      fill_tokens( iv_sql_condition ).
+
+      _split_by_and_fill_conditions( EXPORTING iv_condition       = iv_sql_condition
+                                               iv_or_or_and       = 'OR'
+                                     IMPORTING et_condition       = mt_or_conditions
+                                               ev_condition_found = lv_condition_or_found ).
+
+      IF lv_condition_or_found = abap_true.
+        RETURN.
+      ENDIF.
+
+      _split_by_and_fill_conditions( EXPORTING iv_condition       = iv_sql_condition
+                                               iv_or_or_and       = 'AND'
+                                     IMPORTING et_condition       = mt_and_conditions
+                                               ev_condition_found = lv_condition_and_found ).
+
+      IF lv_condition_and_found = abap_true.
+        RETURN.
+      ENDIF.
+
+      IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_sql_condition
+                                                   iv_token = c_not ) = abap_true.
+
+        DATA: lv_condition_without_not TYPE string.
+
+        ms_not_condition-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
+        lv_condition_without_not =
+          zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_sql_condition
+                                                         iv_start_token_to_delete = c_not ).
+
+        ms_not_condition-parser->parse_condition( lv_condition_without_not ).
+        RETURN.
+      ENDIF.
+
+      IF _has_brackets_around( iv_sql_condition ) = abap_true.
+
+        DATA: lv_condition_no_brackets TYPE string.
+
+        lv_condition_no_brackets = _delete_brackets_around( iv_sql_condition ).
+        zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition = lv_condition_no_brackets ).
+        RETURN.
+      ENDIF.
+
+      _parse_elementary( iv_sql_condition              = iv_sql_condition
+                         io_sql_parser                 = io_sql_parser
+                         iv_id_of_node_elementary_cond = -1 ).
     ENDIF.
-
-    fill_tokens( iv_sql_condition ).
-
-    _split_by_and_fill_conditions( EXPORTING iv_condition       = iv_sql_condition
-                                             iv_or_or_and       = 'OR'
-                                   IMPORTING et_condition       = mt_or_conditions
-                                             ev_condition_found = lv_condition_or_found ).
-
-    IF lv_condition_or_found = abap_true.
-      RETURN.
-    ENDIF.
-
-    _split_by_and_fill_conditions( EXPORTING iv_condition       = iv_sql_condition
-                                             iv_or_or_and       = 'AND'
-                                   IMPORTING et_condition       = mt_and_conditions
-                                             ev_condition_found = lv_condition_and_found ).
-
-    IF lv_condition_and_found = abap_true.
-      RETURN.
-    ENDIF.
-
-    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = iv_sql_condition
-                                                 iv_token = c_not ) = abap_true.
-
-      DATA: lv_condition_without_not TYPE string.
-
-      ms_not_condition-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
-      lv_condition_without_not =
-        zcl_zosql_utils=>delete_start_token_if_equals( iv_sql_source            = iv_sql_condition
-                                                       iv_start_token_to_delete = c_not ).
-
-      ms_not_condition-parser->parse_condition( lv_condition_without_not ).
-      RETURN.
-    ENDIF.
-
-    IF _has_brackets_around( iv_sql_condition ) = abap_true.
-
-      DATA: lv_condition_no_brackets TYPE string.
-
-      lv_condition_no_brackets = _delete_brackets_around( iv_sql_condition ).
-      zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition = lv_condition_no_brackets ).
-      RETURN.
-    ENDIF.
-
-    _parse_elementary( iv_sql_condition ).
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD _CHECK_ELEMENTARY.
@@ -411,29 +472,88 @@ CLASS ZCL_ZOSQL_SQLCOND_PARSER IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _PARSE_ELEMENTARY.
+  method _PARSE_BINARY_CONDITION.
 
-    DATA: lv_condition     TYPE string,
-          lv_operand_left  TYPE string,
-          lv_operation     TYPE string,
-          lv_operand_right TYPE string.
+    DATA: ls_node_operator  TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    lv_condition = zcl_zosql_utils=>to_upper_case( iv_sql_condition ).
-    CONDENSE lv_condition.
-    SPLIT lv_condition AT space INTO lv_operand_left m_operation lv_operand_right.
+    FIELD-SYMBOLS: <lt_conditions> TYPE TY_BLOCKS,
+                   <ls_condition>  TYPE ty_block.
 
-    SPLIT lv_operand_left AT '~' INTO m_dataset_name_or_alias_left m_fieldname_left.
+    ls_node_operator = io_sql_parser->get_node_info( iv_operator_node_id ).
 
-    IF m_fieldname_left IS INITIAL.
-      m_fieldname_left = m_dataset_name_or_alias_left.
-      CLEAR m_dataset_name_or_alias_left.
-    ENDIF.
+    CASE ls_node_operator-token_ucase.
+      WHEN 'OR'.
+        ASSIGN mt_or_conditions TO <lt_conditions>.
+      WHEN 'AND'.
+        ASSIGN mt_and_conditions TO <lt_conditions>.
+    ENDCASE.
 
-    SPLIT lv_operand_right AT '~' INTO m_dataset_name_or_alias_right m_fieldname_right_or_value.
+    APPEND INITIAL LINE TO <lt_conditions> ASSIGNING <ls_condition>.
+    <ls_condition>-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
+    <ls_condition>-parser->parse_condition( iv_sql_condition       = 'DUMMY'
+                                            io_sql_parser          = io_sql_parser
+                                            iv_id_of_node_to_parse = iv_left_operand_node_id ).
 
-    IF m_fieldname_right_or_value IS INITIAL.
-      m_fieldname_right_or_value = m_dataset_name_or_alias_right.
-      CLEAR m_dataset_name_or_alias_right.
+    APPEND INITIAL LINE TO <lt_conditions> ASSIGNING <ls_condition>.
+    <ls_condition>-parser = zif_zosql_sqlcond_parser~get_parser_instance( ).
+    <ls_condition>-parser->parse_condition( iv_sql_condition       = 'DUMMY'
+                                            io_sql_parser          = io_sql_parser
+                                            iv_id_of_node_to_parse = iv_right_operand_node_id ).
+  endmethod.
+
+
+  METHOD _parse_elementary.
+
+    IF io_sql_parser IS BOUND.
+
+      DATA: ls_node_left_operand  TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+            ls_node_operator      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+            ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+            lt_child_nodes        TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+
+      ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
+
+      lt_child_nodes = io_sql_parser->get_child_nodes( iv_id_of_node_elementary_cond ).
+      READ TABLE lt_child_nodes INDEX 1 INTO ls_node_operator.
+      READ TABLE lt_child_nodes INDEX 2 INTO ls_node_right_operand.
+
+      SPLIT ls_node_left_operand-token AT '~' INTO m_dataset_name_or_alias_left m_fieldname_left.
+      IF m_fieldname_left IS INITIAL.
+        m_fieldname_left = m_dataset_name_or_alias_left.
+        CLEAR m_dataset_name_or_alias_left.
+      ENDIF.
+
+      m_operation = ls_node_operator-token_ucase.
+
+      SPLIT ls_node_right_operand-token AT '~' INTO m_dataset_name_or_alias_right m_fieldname_right_or_value.
+      IF m_fieldname_right_or_value IS INITIAL.
+        m_fieldname_right_or_value = m_dataset_name_or_alias_right.
+        CLEAR m_dataset_name_or_alias_right.
+      ENDIF.
+    ELSE.
+
+      DATA: lv_condition     TYPE string,
+            lv_operand_left  TYPE string,
+            lv_operation     TYPE string,
+            lv_operand_right TYPE string.
+
+      lv_condition = zcl_zosql_utils=>to_upper_case( iv_sql_condition ).
+      CONDENSE lv_condition.
+      SPLIT lv_condition AT space INTO lv_operand_left m_operation lv_operand_right.
+
+      SPLIT lv_operand_left AT '~' INTO m_dataset_name_or_alias_left m_fieldname_left.
+
+      IF m_fieldname_left IS INITIAL.
+        m_fieldname_left = m_dataset_name_or_alias_left.
+        CLEAR m_dataset_name_or_alias_left.
+      ENDIF.
+
+      SPLIT lv_operand_right AT '~' INTO m_dataset_name_or_alias_right m_fieldname_right_or_value.
+
+      IF m_fieldname_right_or_value IS INITIAL.
+        m_fieldname_right_or_value = m_dataset_name_or_alias_right.
+        CLEAR m_dataset_name_or_alias_right.
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 
