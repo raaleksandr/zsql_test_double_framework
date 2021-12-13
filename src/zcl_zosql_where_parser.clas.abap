@@ -119,7 +119,9 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
 
   method _PARSE_ELEMENTARY.
 
-    super->_parse_elementary( iv_sql_condition ).
+    super->_parse_elementary( iv_sql_condition              = iv_sql_condition
+                              io_sql_parser                 = io_sql_parser
+                              iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
     IF _check_if_value_is_parameter( ) = abap_true.
 

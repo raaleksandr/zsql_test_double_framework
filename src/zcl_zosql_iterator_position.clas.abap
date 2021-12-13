@@ -120,12 +120,16 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
 
   method GET_LINE_FOR_DATA_SET_REF.
 
+    DATA: lv_dataset_name_or_alias_ucase TYPE string.
+
     FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_data_sets_data,
                    <ls_data_set_line> TYPE any.
 
-    READ TABLE mt_data_sets_data WITH KEY dataset_name = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    lv_dataset_name_or_alias_ucase = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+
+    READ TABLE mt_data_sets_data WITH KEY dataset_name = lv_dataset_name_or_alias_ucase ASSIGNING <ls_data_set_data>.
     IF sy-subrc <> 0.
-      READ TABLE mt_data_sets_data WITH KEY dataset_alias = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+      READ TABLE mt_data_sets_data WITH KEY dataset_alias = lv_dataset_name_or_alias_ucase ASSIGNING <ls_data_set_data>.
     ENDIF.
 
     IF <ls_data_set_data> IS ASSIGNED.

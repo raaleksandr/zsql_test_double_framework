@@ -61,6 +61,7 @@ private section.
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       !IO_SQL_EXECUTOR_FOR_LINE type ref to ZIF_ZOSQL_SQL_EXEC_LINE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
     raising
       ZCX_ZOSQL_ERROR .
   methods _PARSE_CONDITION_AS_PARAM
@@ -159,7 +160,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment.
 
-    lo_from_iterator->init_by_from( lv_from ).
+    lo_from_iterator->init_by_sql_parser( lo_sql_parser ).
 
     CREATE OBJECT lo_select.
 
@@ -218,8 +219,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       iv_new_syntax = detect_if_new_syntax_select( iv_select ).
     ENDIF.
 
-    ld_result_table = create_dynamic_tab_for_result( iv_from              = iv_from
-                                                     io_sql_parser        = io_sql_parser ).
+    ld_result_table = create_dynamic_tab_for_result( io_sql_parser ).
 
     ASSIGN ld_result_table->* TO <lt_result_table>.
 
@@ -458,15 +458,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
-  method _EXECUTE_SQL.
+  METHOD _execute_sql.
 
-    FIELD-SYMBOLS: <ls_result_first_line> TYPE any,
-                   <ls_new_result_line>   TYPE any.
-
-    DATA: lo_iter_pos        TYPE REF TO zcl_zosql_iterator_position,
-          lo_where           TYPE REF TO zif_zosql_sqlcond_parser,
-          lo_parameters      TYPE REF TO zcl_zosql_parameters,
-          lv_not_end_of_data TYPE abap_bool.
+    DATA: lo_iter_pos            TYPE REF TO zcl_zosql_iterator_position,
+          lo_where               TYPE REF TO zif_zosql_sqlcond_parser,
+          lo_parameters          TYPE REF TO zcl_zosql_parameters,
+          lv_not_end_of_data     TYPE abap_bool,
+          lo_zosql_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_where          TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     CREATE OBJECT lo_parameters
       EXPORTING
@@ -477,7 +476,17 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         io_parameters = lo_parameters
         iv_new_syntax = iv_new_syntax.
 
-    lo_where->parse_condition( iv_where ).
+    IF io_sql_parser IS BOUND.
+      CREATE OBJECT lo_zosql_parser_helper.
+      lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
+                                                           IMPORTING es_node_where = ls_node_where ).
+
+      lo_where->parse_condition( iv_sql_condition       = iv_where
+                                 io_sql_parser          = io_sql_parser
+                                 iv_id_of_node_to_parse = ls_node_where-id ).
+    ELSE.
+      lo_where->parse_condition( iv_where ).
+    ENDIF.
 
     lv_not_end_of_data = io_iterator->move_to_first( ).
 
@@ -491,7 +500,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
       lv_not_end_of_data = io_iterator->move_to_next( ).
     ENDWHILE.
-  endmethod.
+  ENDMETHOD.
 
 
   method _FIND_FOR_ALL_ENTRIES_CONDS.
@@ -548,7 +557,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment.
 
-    lo_from_iterator->init_by_from( iv_from ).
+    lo_from_iterator->init_by_sql_parser( io_sql_parser ).
 
     CREATE OBJECT lo_select.
 
@@ -563,7 +572,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                   it_parameters            = it_parameters
                   iv_new_syntax            = iv_new_syntax
                   io_iterator              = lo_from_iterator
-                  io_sql_executor_for_line = lo_sql_executor_for_line ).
+                  io_sql_executor_for_line = lo_sql_executor_for_line
+                  io_sql_parser            = io_sql_parser ).
 
     IF iv_group_by IS NOT INITIAL.
       CREATE OBJECT lo_group_by.

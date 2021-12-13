@@ -68,7 +68,12 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
     FIELD-SYMBOLS: <lt_table_data>   TYPE INDEX TABLE.
 
     ASSIGN mr_table_data_ref->* TO <lt_table_data>.
-    CREATE DATA rd_ref_to_empty_record LIKE LINE OF <lt_table_data>.
+    IF <lt_table_data> IS ASSIGNED.
+      CREATE DATA rd_ref_to_empty_record LIKE LINE OF <lt_table_data>.
+    ELSE.
+      MESSAGE e074 WITH mv_table_name INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
   endmethod.
 
 

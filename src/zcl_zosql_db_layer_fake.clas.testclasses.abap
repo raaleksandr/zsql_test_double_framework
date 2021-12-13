@@ -71,6 +71,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
       where_with_brackets FOR TESTING RAISING zcx_zosql_error,
       where_or_inside_brackets FOR TESTING RAISING zcx_zosql_error,
+      where_with_3_and_in_a_row FOR TESTING RAISING zcx_zosql_error,
       not_simple FOR TESTING RAISING zcx_zosql_error,
       not_and_brackets FOR TESTING RAISING zcx_zosql_error,
       bug_join_07_10_2021 FOR TESTING RAISING zcx_zosql_error,
@@ -1211,6 +1212,55 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-mandt       = sy-mandt.
     ls_expected_line-key_field   = 'KEY3'.
     ls_expected_line-text_field1 = 'SOME_TEXT1'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD where_with_3_and_in_a_row.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'SOME_TEXT1'.
+    ls_line-text_field2 = 'SOME_TEXT1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'SOME_TEXT1'.
+    ls_line-text_field2 = 'SOME_TEXT1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'SOME_TEXT2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE TEXT_FIELD1 = ''SOME_TEXT1'''
+      '  AND TEXT_FIELD2 = ''SOME_TEXT1_2'''
+      '  AND KEY_FIELD = ''KEY1'''
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'SOME_TEXT1'.
+    ls_expected_line-text_field2 = 'SOME_TEXT1_2'.
     APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).

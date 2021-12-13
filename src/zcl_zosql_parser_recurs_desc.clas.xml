@@ -146,6 +146,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_DELETE_NODE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Deletes node from tree attaching children to it&apos;s parent</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
      <CMPNAME>_EXPRESSION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parses SQL expression (in where or JOIN)</DESCRIPT>
@@ -215,6 +221,12 @@
      <CMPNAME>_JOIN</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parses join in &apos;FROM&apos; part of select</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_MINIMIZE_NESTED_NODE_CHAINS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Minimizes chains of nested nodes when node is nested to self</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
