@@ -1,4 +1,4 @@
-class ZCL_ZOSQL_PARSER_BASE definition
+class ZCL_ZOSQL_PROCESSOR_BASE definition
   public
   create public .
 
@@ -12,9 +12,6 @@ protected section.
   data MV_NEW_SYNTAX type ABAP_BOOL .
   data MT_TOKENS type STRING_TABLE .
 
-  methods FILL_TOKENS
-    importing
-      !IV_SQL_EXPRESSION type CLIKE .
   methods DELETE_HOST_VARIABLE_SYMBOL
     importing
       !IV_VARIABLE_IN_SQL type CLIKE
@@ -25,7 +22,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_PARSER_BASE IMPLEMENTATION.
+CLASS ZCL_ZOSQL_PROCESSOR_BASE IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
@@ -43,10 +40,5 @@ CLASS ZCL_ZOSQL_PARSER_BASE IMPLEMENTATION.
     IF rv_variable_in_sql(1) = '@'.
       rv_variable_in_sql = rv_variable_in_sql+1.
     ENDIF.
-  endmethod.
-
-
-  method FILL_TOKENS.
-    mt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_sql_expression ).
   endmethod.
 ENDCLASS.

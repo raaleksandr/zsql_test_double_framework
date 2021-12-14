@@ -22,7 +22,7 @@
      <CLSNAME>ZCL_ZOSQL_SQL_EXEC_UPDATE</CLSNAME>
      <CMPNAME>MO_SET_IN_UPDATE_SQL</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Parses and processor of &apos;SET&apos; condition of &apos;UPDATE&apos; statemen</DESCRIPT>
+     <DESCRIPT>Class to process &apos;SET&apos; condition of &apos;UPDATE&apos; statement</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

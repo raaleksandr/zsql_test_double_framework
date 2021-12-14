@@ -21,6 +21,11 @@ public section.
       !IV_NODE_ID type I
     returning
       value(RT_CHILD_NODES_TREE) type TY_TREE .
+  methods GET_CHILD_NODES_RECURSIVE
+    importing
+      !IV_NODE_ID type I
+    returning
+      value(RT_CHILD_NODES_TREE) type TY_TREE .
   methods GET_NODE_END_TOKEN_INDEX
     importing
       !IV_NODE_ID type I
@@ -201,6 +206,23 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       WHERE parent_id = iv_node_id.
 
       APPEND <ls_node> TO rt_child_nodes_tree.
+    ENDLOOP.
+  endmethod.
+
+
+  method GET_CHILD_NODES_RECURSIVE.
+
+    DATA: lt_child_nodes TYPE ty_tree.
+
+    FIELD-SYMBOLS: <ls_node> LIKE LINE OF mt_parsed_tree.
+
+    LOOP AT mt_parsed_tree ASSIGNING <ls_node>
+      WHERE parent_id = iv_node_id.
+
+      APPEND <ls_node> TO rt_child_nodes_tree.
+
+      lt_child_nodes = get_child_nodes_recursive( <ls_node>-id ).
+      APPEND LINES OF lt_child_nodes TO rt_child_nodes_tree.
     ENDLOOP.
   endmethod.
 

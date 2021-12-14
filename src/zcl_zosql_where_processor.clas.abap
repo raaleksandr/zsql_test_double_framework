@@ -1,6 +1,6 @@
-class ZCL_ZOSQL_WHERE_PARSER definition
+class ZCL_ZOSQL_WHERE_PROCESSOR definition
   public
-  inheriting from ZCL_ZOSQL_SQLCOND_PARSER
+  inheriting from ZCL_ZOSQL_EXPRESSION_PROCESSOR
   create public .
 
 public section.
@@ -15,7 +15,7 @@ public section.
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE .
 
-  methods ZIF_ZOSQL_SQLCOND_PARSER~GET_PARSER_INSTANCE
+  methods ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE
     redefinition .
 protected section.
 
@@ -36,7 +36,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
+CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
@@ -47,12 +47,12 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
 
   METHOD IS_PARAMETER_COMPARED_AS_RANGE.
 
-    DATA: lo_where_parser TYPE REF TO zcl_zosql_where_parser.
+    DATA: lo_where_parser TYPE REF TO zcl_zosql_where_processor.
 
     FIELD-SYMBOLS: <ls_condition> LIKE LINE OF mt_or_conditions.
 
     LOOP AT mt_or_conditions ASSIGNING <ls_condition>.
-      lo_where_parser ?= <ls_condition>-parser.
+      lo_where_parser ?= <ls_condition>-processor.
       IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
         rv_is_compared_as_range = abap_true.
         RETURN.
@@ -60,15 +60,15 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
     ENDLOOP.
 
     LOOP AT mt_and_conditions ASSIGNING <ls_condition>.
-      lo_where_parser ?= <ls_condition>-parser.
+      lo_where_parser ?= <ls_condition>-processor.
       IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
         rv_is_compared_as_range = abap_true.
         RETURN.
       ENDIF.
     ENDLOOP.
 
-    IF ms_not_condition-parser IS BOUND.
-      lo_where_parser ?= ms_not_condition-parser.
+    IF ms_not_condition-processor IS BOUND.
+      lo_where_parser ?= ms_not_condition-processor.
       IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
         rv_is_compared_as_range = abap_true.
         RETURN.
@@ -84,8 +84,8 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method ZIF_ZOSQL_SQLCOND_PARSER~GET_PARSER_INSTANCE.
-    CREATE OBJECT ro_parser TYPE zcl_zosql_where_parser
+  method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
+    CREATE OBJECT ro_processor TYPE zcl_zosql_where_processor
       EXPORTING
         io_parameters = mo_parameters.
   endmethod.
@@ -119,8 +119,7 @@ CLASS ZCL_ZOSQL_WHERE_PARSER IMPLEMENTATION.
 
   method _PARSE_ELEMENTARY.
 
-    super->_parse_elementary( iv_sql_condition              = iv_sql_condition
-                              io_sql_parser                 = io_sql_parser
+    super->_parse_elementary( io_sql_parser                 = io_sql_parser
                               iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
     IF _check_if_value_is_parameter( ) = abap_true.

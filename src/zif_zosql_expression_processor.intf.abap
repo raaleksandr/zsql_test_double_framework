@@ -1,15 +1,14 @@
-interface ZIF_ZOSQL_SQLCOND_PARSER
+interface ZIF_ZOSQL_EXPRESSION_PROCESSOR
   public .
 
 
-  methods PARSE_CONDITION
+  methods INITIALIZE_BY_PARSED_SQL
     importing
-      !IV_SQL_CONDITION type CLIKE
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
       value(IV_ID_OF_NODE_TO_PARSE) type I optional .
-  methods GET_PARSER_INSTANCE
+  methods CREATE_NEW_INSTANCE
     returning
-      value(RO_PARSER) type ref to ZIF_ZOSQL_SQLCOND_PARSER .
+      value(RO_PROCESSOR) type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR .
   methods CHECK_CONDITION_FOR_CUR_REC
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION

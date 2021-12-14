@@ -18,15 +18,11 @@ protected section.
       value(RD_DYNAMIC_TABLE_SELECT_RESULT) type ref to DATA
     raising
       ZCX_ZOSQL_ERROR .
-  methods DELETE_BY_SQL_PARTS
-  abstract
+  methods PARSE_SQL
     importing
-      !IV_TABLE_NAME type CLIKE
-      !IV_WHERE type CLIKE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
-    raising
-      ZCX_ZOSQL_ERROR .
+      !IV_SQL type STRING
+    returning
+      value(RO_SQL_PARSER) type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
   methods RETURN_RESULT_OF_SELECT_TOITAB
     importing
       !IT_RESULT_TABLE type STANDARD TABLE
@@ -35,59 +31,6 @@ protected section.
       !ET_RESULT_TABLE type ANY TABLE
       !ES_RESULT_LINE type ANY
       value(EV_SUBRC) type SYSUBRC .
-  methods UPDATE_BY_SQL_PARTS
-  abstract
-    importing
-      !IV_TABLE_NAME type CLIKE
-      !IV_SET_STATEMENT type CLIKE
-      !IV_WHERE type CLIKE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods DETECT_IF_NEW_SYNTAX_SELECT
-    importing
-      !IV_SELECT type STRING
-    returning
-      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
-  methods SELECT_BY_SQL_PARTS
-  abstract
-    importing
-      !IV_SELECT type STRING default '*'
-      !IV_FROM type STRING
-      !IV_WHERE type STRING optional
-      !IV_GROUP_BY type STRING optional
-      !IV_ORDER_BY type STRING optional
-      value(IV_DISTINCT) type ABAP_BOOL default ABAP_FALSE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS optional
-      !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE optional
-      !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE optional
-      value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
-      !IV_NUMBER_OF_ROWS_EXPR type CLIKE optional
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-    exporting
-      !ET_RESULT_TABLE type ANY TABLE
-      !ES_RESULT_LINE type ANY
-      !EV_SUBRC type SYSUBRC
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods SPLIT_SELECT_INTO_PARTS
-    importing
-      !IV_SELECT type CLIKE
-    exporting
-      !EV_SELECT_FIELD_LIST type CLIKE
-      !EV_FROM type CLIKE
-      !EV_FOR_ALL_ENTRIES_TABNAME type CLIKE
-      !EV_WHERE type CLIKE
-      !EV_GROUP_BY type CLIKE
-      !EV_ORDER_BY type CLIKE
-      value(EV_DISTINCT) type ABAP_BOOL
-      value(EV_NEW_SYNTAX) type ABAP_BOOL
-      !EV_NUMBER_OF_ROWS_EXPR type CLIKE
-      !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-    raising
-      ZCX_ZOSQL_ERROR .
   methods PREPARE_N_OF_ROWS_FOR_SELECT
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -119,6 +62,12 @@ private section.
       !IV_WHERE type CLIKE
     returning
       value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
+  methods _NEW_SYNTAX_HOST_CHAR_EXISTS
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IV_TOP_NODE_ID_TO_START_SEARCH type I
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
   methods _POP_SET_STATEMENT
     importing
       !IV_SQL_STATEMENT type CLIKE
@@ -130,25 +79,6 @@ private section.
       !IV_SQL_STATEMENT type CLIKE
     returning
       value(RV_WHERE) type STRING .
-  methods _SPLIT_DELETE_INTO_PARTS
-    importing
-      !IV_DELETE_STATEMENT type CLIKE
-    exporting
-      !EV_TABLE_NAME type CLIKE
-      !EV_WHERE type CLIKE
-      !EV_NEW_SYNTAX type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _SPLIT_UPDATE_INTO_PARTS
-    importing
-      !IV_UPDATE_STATEMENT type CLIKE
-    exporting
-      !EV_TABLE_NAME type CLIKE
-      !EV_SET_STATEMENT type CLIKE
-      !EV_WHERE type CLIKE
-      !EV_NEW_SYNTAX type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _RETURN_TABLE_TO_RESULT
     importing
       !IT_RESULT_TABLE_PREPARED type STANDARD TABLE
@@ -210,15 +140,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD DETECT_IF_NEW_SYNTAX_SELECT.
-
-    FIND FIRST OCCURRENCE OF ',' IN iv_select.
-    IF sy-subrc = 0.
-      rv_is_new_syntax = abap_true.
-    ENDIF.
-  ENDMETHOD.
-
-
   method IF_TABLE_CONSISTS_OF_STRUCTS.
 
     DATA: ld_line TYPE REF TO data.
@@ -231,6 +152,18 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     IF zcl_zosql_utils=>is_structure( <ls_line> ) = abap_true.
       rv_table_consists_of_structs = abap_true.
     ENDIF.
+  endmethod.
+
+
+  method PARSE_SQL.
+
+    DATA: lv_sql TYPE string.
+
+    lv_sql = _replace_separators_to_space( iv_sql ).
+
+    CREATE OBJECT ro_sql_parser.
+    ro_sql_parser->set_sql( lv_sql ).
+    ro_sql_parser->run_recursive_descent_parser( ).
   endmethod.
 
 
@@ -287,133 +220,12 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   endmethod.
 
 
-  METHOD split_select_into_parts.
-
-    DATA: lv_select                  TYPE string,
-          lv_single                  TYPE abap_bool,
-          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc,
-          lv_end_token_index         TYPE i,
-          lv_select_field_list_start TYPE i,
-          lv_select_field_list_end   TYPE i,
-          lo_sql_parser_helper       TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_distinct           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_single             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_nodes_select_field_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_node_up_to_n_rows       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_from               TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_for_all_entries    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_group_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_order_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    FIELD-SYMBOLS: <ls_node>                TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    CLEAR: ev_select_field_list, ev_from, ev_where, ev_group_by, ev_order_by, ev_distinct.
-
-    lv_select = _replace_separators_to_space( iv_select ).
-
-    CREATE OBJECT lo_sql_parser.
-    lo_sql_parser->set_sql( lv_select ).
-    lo_sql_parser->run_recursive_descent_parser( ).
-    eo_sql_parser = lo_sql_parser.
-
-    CREATE OBJECT lo_sql_parser_helper.
-    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = lo_sql_parser
-                                                       IMPORTING es_node_distinct              = ls_node_distinct
-                                                                 es_node_single                = ls_node_single
-                                                                 et_nodes_of_select_field_list = lt_nodes_select_field_list
-                                                                 es_node_up_to_n_rows          = ls_node_up_to_n_rows
-                                                                 es_node_from                  = ls_node_from
-                                                                 es_node_for_all_entries       = ls_node_for_all_entries
-                                                                 es_node_where                 = ls_node_where
-                                                                 es_node_group_by              = ls_node_group_by
-                                                                 es_node_order_by              = ls_node_order_by
-                                                                 ev_new_syntax                 = ev_new_syntax ).
-
-    IF ls_node_distinct IS NOT INITIAL.
-      ev_distinct = abap_true.
-    ENDIF.
-
-    IF ls_node_single IS NOT INITIAL.
-      lv_single = abap_true.
-    ENDIF.
-
-    LOOP AT lt_nodes_select_field_list ASSIGNING <ls_node>.
-      IF lv_select_field_list_start IS INITIAL.
-        lv_select_field_list_start = <ls_node>-token_index.
-      ELSEIF lv_select_field_list_start > <ls_node>-token_index.
-        lv_select_field_list_start = <ls_node>-token_index.
-      ENDIF.
-
-      lv_end_token_index = lo_sql_parser->get_node_end_token_index( <ls_node>-id ).
-
-      IF lv_end_token_index > lv_select_field_list_end.
-        lv_select_field_list_end = lv_end_token_index.
-      ENDIF.
-    ENDLOOP.
-
-    IF lv_select_field_list_start IS NOT INITIAL AND lv_select_field_list_end IS NOT INITIAL.
-      ev_select_field_list =
-        lo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = lv_select_field_list_start
-                                                   iv_end_token_index   = lv_select_field_list_end ).
-    ENDIF.
-
-    IF ls_node_up_to_n_rows IS NOT INITIAL.
-      ev_number_of_rows_expr = lo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_up_to_n_rows-id
-                                                                           iv_n            = 2 ).
-    ENDIF.
-
-    ev_from = lo_sql_parser->get_node_sql_without_self( ls_node_from-id ).
-
-    IF ls_node_for_all_entries IS NOT INITIAL.
-      ev_for_all_entries_tabname =
-        lo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_for_all_entries-id
-                                                    iv_n            = 4 ).
-    ENDIF.
-
-    IF ls_node_where IS NOT INITIAL.
-      ev_where = lo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
-    ENDIF.
-
-    IF ls_node_group_by IS NOT INITIAL.
-      ev_group_by = lo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_group_by-id
-                                                                 iv_number_of_tokens_offset = 2 ).
-    ENDIF.
-
-    IF ls_node_order_by IS NOT INITIAL.
-      ev_order_by = lo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_order_by-id
-                                                                 iv_number_of_tokens_offset = 2 ).
-    ENDIF.
-
-    IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
-      MESSAGE e071 INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ELSEIF lv_single = abap_true.
-      ev_number_of_rows_expr = '1'.
-    ENDIF.
-
-    "ev_new_syntax = detect_if_new_syntax_select( ev_select_field_list ).
-  ENDMETHOD.
-
-
   method ZIF_ZOSQL_DB_LAYER~COMMIT.
   endmethod.
 
 
   method ZIF_ZOSQL_DB_LAYER~DELETE.
-    DATA: lv_table_name    TYPE string,
-          lv_where         TYPE string,
-          lv_new_syntax    TYPE abap_bool.
 
-    _split_delete_into_parts( EXPORTING iv_delete_statement = iv_delete_statement
-                              IMPORTING ev_table_name       = lv_table_name
-                                        ev_where            = lv_where
-                                        ev_new_syntax       = lv_new_syntax ).
-
-    delete_by_sql_parts( iv_table_name = lv_table_name
-                         iv_where      = lv_where
-                         iv_new_syntax = lv_new_syntax
-                         it_parameters = it_parameters ).
   endmethod.
 
 
@@ -425,11 +237,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
-    me->split_select_into_parts( EXPORTING iv_select                  = iv_select
-                                 IMPORTING ev_select_field_list       = lv_select_field_list
-                                           ev_from                    = lv_from
-                                           ev_new_syntax              = lv_new_syntax
-                                           eo_sql_parser              = lo_sql_parser ).
+    CREATE OBJECT lo_sql_parser.
+    lo_sql_parser->set_sql( iv_select ).
+    lo_sql_parser->run_recursive_descent_parser( ).
 
     ed_result_as_table = create_dynamic_tab_for_result( lo_sql_parser ).
     ASSIGN ed_result_as_table->* TO <lt_select_result>.
@@ -443,65 +253,12 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~SELECT_TO_ITAB.
-    DATA: lv_select_field_list       TYPE string,
-          lv_from                    TYPE string,
-          lv_for_all_entries_tabname TYPE string,
-          lv_where                   TYPE string,
-          lv_group_by                TYPE string,
-          lv_order_by                TYPE string,
-          lv_distinct                TYPE abap_bool,
-          lv_new_syntax              TYPE abap_bool,
-          lv_number_of_rows_expr     TYPE string,
-          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc.
 
-    me->split_select_into_parts( EXPORTING iv_select                  = iv_select
-                                 IMPORTING ev_select_field_list       = lv_select_field_list
-                                           ev_from                    = lv_from
-                                           ev_for_all_entries_tabname = lv_for_all_entries_tabname
-                                           ev_where                   = lv_where
-                                           ev_group_by                = lv_group_by
-                                           ev_order_by                = lv_order_by
-                                           ev_distinct                = lv_distinct
-                                           ev_new_syntax              = lv_new_syntax
-                                           ev_number_of_rows_expr     = lv_number_of_rows_expr
-                                           eo_sql_parser              = lo_sql_parser ).
-
-    select_by_sql_parts( EXPORTING iv_select                  = lv_select_field_list
-                                   iv_from                    = lv_from
-                                   iv_where                   = lv_where
-                                   iv_group_by                = lv_group_by
-                                   iv_order_by                = lv_order_by
-                                   iv_distinct                = lv_distinct
-                                   iv_new_syntax              = lv_new_syntax
-                                   it_parameters              = it_parameters
-                                   it_for_all_entries_table   = it_for_all_entries_table
-                                   iv_for_all_entries_tabname = lv_for_all_entries_tabname
-                                   iv_do_into_corresponding   = iv_do_into_corresponding
-                                   iv_number_of_rows_expr     = lv_number_of_rows_expr
-                                   io_sql_parser              = lo_sql_parser
-                         IMPORTING et_result_table            = et_result_table
-                                   es_result_line             = es_result_line
-                                   ev_subrc                   = ev_subrc ).
   endmethod.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE.
-    DATA: lv_table_name    TYPE string,
-          lv_set_statement TYPE string,
-          lv_where         TYPE string,
-          lv_new_syntax    TYPE abap_bool.
 
-    _split_update_into_parts( EXPORTING iv_update_statement   = iv_update_statement
-                              IMPORTING ev_table_name         = lv_table_name
-                                        ev_set_statement      = lv_set_statement
-                                        ev_where              = lv_where
-                                        ev_new_syntax         = lv_new_syntax ).
-
-    update_by_sql_parts( iv_table_name    = lv_table_name
-                         iv_set_statement = lv_set_statement
-                         iv_where         = lv_where
-                         iv_new_syntax    = lv_new_syntax
-                         it_parameters    = it_parameters ).
   endmethod.
 
 
@@ -516,6 +273,23 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
   method _DETECT_IF_NEW_SYNTAX_WHERE.
     rv_is_new_syntax = _detect_if_new_syntax_set( iv_where ).
+  endmethod.
+
+
+  method _NEW_SYNTAX_HOST_CHAR_EXISTS.
+
+    DATA: lt_child_nodes TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+
+    FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    lt_child_nodes = io_sql_parser->get_child_nodes_recursive( iv_top_node_id_to_start_search ).
+
+    LOOP AT lt_child_nodes ASSIGNING <ls_node>.
+      IF <ls_node>-token(1) = '@'.
+        rv_exists = abap_true.
+        EXIT.
+      ENDIF.
+    ENDLOOP.
   endmethod.
 
 
@@ -704,46 +478,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
         INSERT <ls_line_of_result_table> INTO TABLE et_result_table.
       ENDLOOP.
-    ENDIF.
-  endmethod.
-
-
-  method _SPLIT_DELETE_INTO_PARTS.
-
-    DATA: lv_sql        TYPE string.
-
-    _pop_delete_table_name( EXPORTING iv_delete_statement   = iv_delete_statement
-                            IMPORTING ev_table_name         = ev_table_name
-                                      ev_other_select       = lv_sql ).
-
-    zcl_zosql_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
-
-    ev_where = _pop_where_update_delete( lv_sql ).
-
-    ev_new_syntax = _detect_if_new_syntax_where( ev_where ).
-  endmethod.
-
-
-  method _SPLIT_UPDATE_INTO_PARTS.
-
-    DATA: lv_sql        TYPE string.
-
-    _pop_update_table_name( EXPORTING iv_update_statement   = iv_update_statement
-                            IMPORTING ev_table_name         = ev_table_name
-                                      ev_other_select       = lv_sql ).
-
-    zcl_zosql_utils=>raise_if_transp_tab_not_exist( ev_table_name ).
-
-    _pop_set_statement( EXPORTING iv_sql_statement = lv_sql
-                        IMPORTING ev_set_statement = ev_set_statement
-                                  ev_other_select  = lv_sql ).
-
-    ev_where = _pop_where_update_delete( lv_sql ).
-
-    IF _detect_if_new_syntax_set( ev_set_statement ) = abap_true
-      OR _detect_if_new_syntax_where( ev_where ) = abap_true.
-
-      ev_new_syntax = abap_true.
     ENDIF.
   endmethod.
 ENDCLASS.

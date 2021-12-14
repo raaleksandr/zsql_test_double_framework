@@ -1,17 +1,16 @@
-class ZCL_ZOSQL_SET_PARSER definition
+class ZCL_ZOSQL_SET_PROCESSOR definition
   public
-  inheriting from ZCL_ZOSQL_PARSER_BASE
+  inheriting from ZCL_ZOSQL_PROCESSOR_BASE
   create public .
 
 public section.
 
   methods CONSTRUCTOR
     importing
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
-  methods PARSE_SET
+  methods INITIALIZE_BY_PARSED_SQL
     importing
-      !IV_SET_STATEMENT type CLIKE .
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
   methods UPDATE_RECORD
     importing
       !ID_REF_TO_RECORD type ref to DATA
@@ -34,40 +33,49 @@ ENDCLASS.
 
 
 
-CLASS ZCL_ZOSQL_SET_PARSER IMPLEMENTATION.
+CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
-    super->constructor( iv_new_syntax ).
+    super->constructor( ).
     mo_parameters = io_parameters.
   endmethod.
 
 
-  METHOD PARSE_SET.
+  METHOD INITIALIZE_BY_PARSED_SQL.
 
-    DATA: lt_tokens         TYPE TABLE OF string,
-          lv_token          TYPE string,
-          ls_set_field      TYPE ty_set_field,
-          lv_value_expected TYPE abap_bool,
-          lV_is_parameter   TYPE abap_bool.
+    DATA: lo_sql_parser_helper    TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_set             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_nodes_set_fields     TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_set_field            TYPE ty_set_field,
+          lt_child_nodes_of_field TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_node_equation        TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_new_value       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lV_is_parameter         TYPE abap_bool.
 
-    REFRESH mt_set_fields.
+    FIELD-SYMBOLS: <ls_node_set_field> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_set_statement ).
+    CREATE OBJECT lo_sql_parser_helper.
+    lo_sql_parser_helper->get_key_nodes_of_sql_update( EXPORTING io_sql_parser = io_sql_parser
+                                                       IMPORTING es_node_set   = ls_node_set
+                                                                 ev_new_syntax = mv_new_syntax ).
 
-    LOOP AT lt_tokens INTO lv_token.
-      IF lv_token = '='.
-        lv_value_expected = abap_true.
-        CONTINUE.
-      ENDIF.
+    lt_nodes_set_fields = io_sql_parser->get_child_nodes( ls_node_set-id ).
 
-      IF lv_value_expected = abap_true.
-        ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( lv_token ).
-        APPEND ls_set_field TO mt_set_fields.
-        lv_value_expected = abap_false.
-      ELSE.
-        ls_set_field-fieldname = lv_token.
-      ENDIF.
+    LOOP AT lt_nodes_set_fields ASSIGNING <ls_node_set_field>.
+      CLEAR ls_set_field.
+      ls_set_field-fieldname = <ls_node_set_field>-token_ucase.
+
+      lt_child_nodes_of_field = io_sql_parser->get_child_nodes( <ls_node_set_field>-id ).
+      READ TABLE lt_child_nodes_of_field INDEX 1 INTO ls_node_equation.
+      CHECK sy-subrc = 0.
+      CHECK ls_node_equation-token = '='.
+
+      READ TABLE lt_child_nodes_of_field INDEX 2 INTO ls_node_new_value.
+      CHECK sy-subrc = 0.
+
+      ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( ls_node_new_value-token ).
+      APPEND ls_set_field TO mt_set_fields.
     ENDLOOP.
 
     LOOP AT mt_set_fields INTO ls_set_field.
