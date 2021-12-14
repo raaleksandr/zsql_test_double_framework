@@ -69,12 +69,12 @@ private section.
     WITH KEY dataset_name dataset_alias .
   types:
     BEGIN OF ty_join_condition,
-      left_dataset_name   TYPE string,
-      left_dataset_alias  TYPE string,
-      right_dataset_name  TYPE string,
-      right_dataset_alias TYPE string,
-      type_of_join        TYPE i,
-      parser              TYPE REF TO zif_zosql_sqlcond_parser,
+      left_dataset_name    TYPE string,
+      left_dataset_alias   TYPE string,
+      right_dataset_name   TYPE string,
+      right_dataset_alias  TYPE string,
+      type_of_join         TYPE i,
+      expression_processor TYPE REF TO zif_zosql_expression_processor,
     END OF ty_join_condition .
   types:
     ty_join_conditions TYPE STANDARD TABLE OF ty_join_condition .
@@ -568,14 +568,10 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
           ls_pre_last_dataset LIKE LINE OF mt_datasets_with_position,
           ls_last_dataset     LIKE LINE OF mt_datasets_with_position.
 
-    CREATE OBJECT ls_join_condition-parser TYPE zcl_zosql_join_cond_parser.
+    CREATE OBJECT ls_join_condition-expression_processor TYPE zcl_zosql_join_processor.
 
-    DATA: lv_sql TYPE string.
-
-    lv_sql = io_sql_parser->get_node_sql_without_self( iv_id_of_expression_parent ).
-    ls_join_condition-parser->parse_condition( iv_sql_condition       = lv_sql
-                                               io_sql_parser          = io_sql_parser
-                                               iv_id_of_node_to_parse = iv_id_of_expression_parent ).
+    ls_join_condition-expression_processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
+                                                                      iv_id_of_node_to_parse = iv_id_of_expression_parent ).
 
     lv_index = LINES( mt_datasets_with_position ) - 1.
     READ TABLE mt_datasets_with_position INDEX lv_index INTO ls_pre_last_dataset.
@@ -657,7 +653,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     lv_all_conditions_true = abap_true.
     LOOP AT mt_join_conditions ASSIGNING <ls_join_condition>.
-      IF <ls_join_condition>-parser->check_condition_for_cur_rec( lo_current_iterator_pos ) <> abap_true.
+      IF <ls_join_condition>-expression_processor->check_condition_for_cur_rec( lo_current_iterator_pos ) <> abap_true.
         lv_all_conditions_true = abap_false.
         EXIT.
       ENDIF.

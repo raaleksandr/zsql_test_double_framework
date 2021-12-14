@@ -7,6 +7,8 @@ public section.
 
   methods ZIF_ZOSQL_DB_LAYER~COMMIT
     redefinition .
+  methods ZIF_ZOSQL_DB_LAYER~DELETE
+    redefinition .
   methods ZIF_ZOSQL_DB_LAYER~DELETE_BY_ITAB
     redefinition .
   methods ZIF_ZOSQL_DB_LAYER~FETCH_NEXT_CURSOR
@@ -19,16 +21,13 @@ public section.
     redefinition .
   methods ZIF_ZOSQL_DB_LAYER~OPEN_CURSOR
     redefinition .
+  methods ZIF_ZOSQL_DB_LAYER~SELECT_TO_ITAB
+    redefinition .
+  methods ZIF_ZOSQL_DB_LAYER~UPDATE
+    redefinition .
   methods ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB
     redefinition .
 protected section.
-
-  methods DELETE_BY_SQL_PARTS
-    redefinition .
-  methods SELECT_BY_SQL_PARTS
-    redefinition .
-  methods UPDATE_BY_SQL_PARTS
-    redefinition .
 private section.
 
   types:
@@ -48,6 +47,83 @@ private section.
     MT_DATABASE_CURSOR_PARAMETERS   TYPE STANDARD TABLE OF ty_database_cursor_parameters
                                             WITH KEY cursor .
 
+  methods _UPDATE_BY_SQL_PARTS
+    importing
+      !IV_TABLE_NAME type CLIKE
+      !IV_SET_STATEMENT type CLIKE
+      !IV_WHERE type CLIKE
+      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SPLIT_UPDATE_INTO_PARTS
+    importing
+      !IV_UPDATE_STATEMENT type CLIKE
+    exporting
+      !EV_TABLE_NAME type CLIKE
+      !EV_SET_STATEMENT type CLIKE
+      !EV_WHERE type CLIKE
+      !EV_NEW_SYNTAX type ABAP_BOOL
+      !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SPLIT_DELETE_INTO_PARTS
+    importing
+      !IV_DELETE_STATEMENT type CLIKE
+    exporting
+      !EV_TABLE_NAME type CLIKE
+      !EV_WHERE type CLIKE
+      !EV_NEW_SYNTAX type ABAP_BOOL
+      !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _DELETE_BY_SQL_PARTS
+    importing
+      !IV_TABLE_NAME type CLIKE
+      !IV_WHERE type CLIKE
+      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SPLIT_SELECT_INTO_PARTS
+    importing
+      !IV_SELECT type CLIKE
+    exporting
+      !EV_SELECT_FIELD_LIST type CLIKE
+      !EV_FROM type CLIKE
+      !EV_FOR_ALL_ENTRIES_TABNAME type CLIKE
+      !EV_WHERE type CLIKE
+      !EV_GROUP_BY type CLIKE
+      !EV_ORDER_BY type CLIKE
+      value(EV_DISTINCT) type ABAP_BOOL
+      value(EV_NEW_SYNTAX) type ABAP_BOOL
+      !EV_NUMBER_OF_ROWS_EXPR type CLIKE
+      !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SELECT_BY_SQL_PARTS
+    importing
+      !IV_SELECT type STRING default '*'
+      !IV_FROM type STRING
+      !IV_WHERE type STRING optional
+      !IV_GROUP_BY type STRING optional
+      !IV_ORDER_BY type STRING optional
+      value(IV_DISTINCT) type ABAP_BOOL default ABAP_FALSE
+      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS optional
+      !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE optional
+      !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE optional
+      value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
+      !IV_NUMBER_OF_ROWS_EXPR type CLIKE optional
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    exporting
+      !ET_RESULT_TABLE type ANY TABLE
+      !ES_RESULT_LINE type ANY
+      !EV_SUBRC type SYSUBRC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CREATE_STANDARD_LIKE_ANY_TAB
     importing
       !IT_ANY_TABLE type ANY TABLE
@@ -114,14 +190,13 @@ private section.
   methods _CREATE_DYNAMIC_STRUCT_FORPARS
     importing
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
-      !IV_WHERE type CLIKE
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
     returning
       value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA .
   methods _CREATE_TYPE_FOR_PARAMETER
     importing
       !IS_PARAMETER type TY_PARAMETER_WITH_NAME
-      !IO_WHERE_PARSER type ref to ZCL_ZOSQL_WHERE_PARSER
+      !IO_WHERE_PROCESSOR type ref to ZCL_ZOSQL_WHERE_PROCESSOR
     returning
       value(RO_TYPE) type ref to CL_ABAP_DATADESCR .
   methods _EXECUTE_SELECT
@@ -206,6 +281,7 @@ private section.
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       !IV_NAME_OF_STRUCT_WITH_PARAMS type FIELDNAME
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ED_DYNAMIC_STRUCT_WITH_PARAMS type ref to DATA
     changing
@@ -217,119 +293,32 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
 
-  METHOD DELETE_BY_SQL_PARTS.
-
-    DATA: lv_where                      TYPE string,
-          ld_dynamic_struct_with_params TYPE REF TO data.
-
-    FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
-
-    lv_where = iv_where.
-    _prepare_for_update_delete( EXPORTING it_parameters                 = it_parameters
-                                          iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
-                                IMPORTING ed_dynamic_struct_with_params = ld_dynamic_struct_with_params
-                                CHANGING  cv_where                      = lv_where ).
-
-    ASSIGN ld_dynamic_struct_with_params->* TO <ls_dynamic_struct_with_pars>.
-
-    _execute_delete( iv_table_name                 = iv_table_name
-                     iv_where                      = lv_where
-                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
-  ENDMETHOD.
-
-
-  METHOD SELECT_BY_SQL_PARTS.
-    DATA: lv_where_ready_for_select   TYPE string,
-          ld_struct_with_params       TYPE REF TO data,
-          ld_result_table_prepared    TYPE REF TO data,
-          lv_number_of_rows_to_select TYPE i.
-
-    FIELD-SYMBOLS: <ls_result_first_line>  TYPE any,
-                   <ls_struct_with_params> TYPE any,
-                   <lt_result_table>       TYPE ANY TABLE.
-
-    CLEAR: et_result_table, es_result_line, ev_subrc.
-
-    IF iv_new_syntax <> abap_true.
-      iv_new_syntax = detect_if_new_syntax_select( iv_select ).
-    ENDIF.
-
-    lv_where_ready_for_select = iv_where.
-    _prepare_for_select( EXPORTING it_parameters                 = it_parameters
-                                   iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
-                                   iv_name_of_for_all_ent_in_sel = iv_for_all_entries_tabname
-                                   iv_name_of_for_all_ent_var    = 'IT_FOR_ALL_ENTRIES_TABLE'
-                                   iv_new_syntax                 = iv_new_syntax
-                                   iv_number_of_rows_expr        = iv_number_of_rows_expr
-                                   io_sql_parser                 = io_sql_parser
-                         IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
-                                   ev_number_of_rows_to_select   = lv_number_of_rows_to_select
-                         CHANGING  cv_where                      = lv_where_ready_for_select
-                         ).
-
-    ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
-
-    ld_result_table_prepared = _prepare_result_table_for_sel( it_result_table = et_result_table
-                                                              is_result_line  = es_result_line ).
-
-    ASSIGN ld_result_table_prepared->* TO <lt_result_table>.
-
-    _execute_select( EXPORTING iv_select                     = iv_select
-                               iv_from                       = iv_from
-                               iv_where                      = lv_where_ready_for_select
-                               iv_group_by                   = iv_group_by
-                               iv_order_by                   = iv_order_by
-                               iv_distinct                   = iv_distinct
-                               iv_new_syntax                 = iv_new_syntax
-                               it_for_all_entries_table      = it_for_all_entries_table
-                               is_dynamic_struct_with_params = <ls_struct_with_params>
-                               iv_do_into_corresponding      = iv_do_into_corresponding
-                               iv_number_of_rows_to_select   = lv_number_of_rows_to_select
-                     IMPORTING et_result_table               = <lt_result_table> ).
-
-    return_result_of_select_toitab( EXPORTING it_result_table          = <lt_result_table>
-                                              iv_do_into_corresponding = iv_do_into_corresponding
-                                    IMPORTING et_result_table          = et_result_table
-                                              es_result_line           = es_result_line
-                                              ev_subrc                 = ev_subrc ).
-  ENDMETHOD.
-
-
-  method UPDATE_BY_SQL_PARTS.
-    DATA: lt_parameters_with_name       TYPE ty_parameters_with_name,
-          ld_dynamic_struct_with_params TYPE REF TO data,
-          lv_set_statement              TYPE string,
-          lv_where                      TYPE string.
-
-    FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
-
-    lv_set_statement = iv_set_statement.
-    lv_where         = iv_where.
-
-    _prepare_for_update_delete( EXPORTING it_parameters                 = it_parameters
-                                          iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
-                                IMPORTING ed_dynamic_struct_with_params = ld_dynamic_struct_with_params
-                                CHANGING  cv_where                      = lv_where ).
-
-    ASSIGN ld_dynamic_struct_with_params->* TO <ls_dynamic_struct_with_pars>.
-
-    _prepare_set_for_update( EXPORTING it_parameters                 = it_parameters
-                                       iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
-                             CHANGING  cv_set_statement              = lv_set_statement ).
-
-    _execute_update( iv_table_name                 = iv_table_name
-                     iv_set_statement              = lv_set_statement
-                     iv_where                      = lv_where
-                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
-  endmethod.
-
-
   method ZIF_ZOSQL_DB_LAYER~COMMIT.
     IF iv_wait = abap_true.
       COMMIT WORK AND WAIT.
     ELSE.
       COMMIT WORK.
     ENDIF.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~DELETE.
+    DATA: lv_table_name    TYPE string,
+          lv_where         TYPE string,
+          lv_new_syntax    TYPE abap_bool,
+          lo_sql_parser    TYPE REF TO zcl_zosql_parser_recurs_desc.
+
+    _split_delete_into_parts( EXPORTING iv_delete_statement = iv_delete_statement
+                              IMPORTING ev_table_name       = lv_table_name
+                                        ev_where            = lv_where
+                                        ev_new_syntax       = lv_new_syntax
+                                        eo_sql_parser       = lo_sql_parser ).
+
+    _delete_by_sql_parts( iv_table_name = lv_table_name
+                          iv_where      = lv_where
+                          iv_new_syntax = lv_new_syntax
+                          it_parameters = it_parameters
+                          io_sql_parser = lo_sql_parser ).
   endmethod.
 
 
@@ -466,17 +455,17 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                    <ls_struct_with_params> TYPE any,
                    <lt_result_table>       TYPE ANY TABLE.
 
-    me->split_select_into_parts( EXPORTING iv_select                  = iv_select
-                                 IMPORTING ev_select_field_list       = lv_select_field_list
-                                           ev_from                    = lv_from
-                                           ev_for_all_entries_tabname = lv_for_all_entries_tabname
-                                           ev_where                   = lv_where
-                                           ev_group_by                = lv_group_by
-                                           ev_order_by                = lv_order_by
-                                           ev_distinct                = lv_distinct
-                                           ev_new_syntax              = lv_new_syntax
-                                           ev_number_of_rows_expr     = lv_number_of_rows_expr
-                                           eo_sql_parser              = lo_sql_parser ).
+    _split_select_into_parts( EXPORTING iv_select                  = iv_select
+                              IMPORTING ev_select_field_list       = lv_select_field_list
+                                        ev_from                    = lv_from
+                                        ev_for_all_entries_tabname = lv_for_all_entries_tabname
+                                        ev_where                   = lv_where
+                                        ev_group_by                = lv_group_by
+                                        ev_order_by                = lv_order_by
+                                        ev_distinct                = lv_distinct
+                                        ev_new_syntax              = lv_new_syntax
+                                        ev_number_of_rows_expr     = lv_number_of_rows_expr
+                                        eo_sql_parser              = lo_sql_parser ).
 
     lv_where_ready_for_select = lv_where.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
@@ -509,6 +498,73 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
       create_dynamic_tab_for_result( lo_sql_parser ).
     APPEND ls_cursor_parameters TO mt_database_cursor_parameters.
   endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~SELECT_TO_ITAB.
+
+    DATA: lv_select_field_list       TYPE string,
+          lv_from                    TYPE string,
+          lv_for_all_entries_tabname TYPE string,
+          lv_where                   TYPE string,
+          lv_group_by                TYPE string,
+          lv_order_by                TYPE string,
+          lv_distinct                TYPE abap_bool,
+          lv_new_syntax              TYPE abap_bool,
+          lv_number_of_rows_expr     TYPE string,
+          lo_sql_parser              TYPE REF TO zcl_zosql_parser_recurs_desc.
+
+    _split_select_into_parts( EXPORTING iv_select                  = iv_select
+                              IMPORTING ev_select_field_list       = lv_select_field_list
+                                        ev_from                    = lv_from
+                                        ev_for_all_entries_tabname = lv_for_all_entries_tabname
+                                        ev_where                   = lv_where
+                                        ev_group_by                = lv_group_by
+                                        ev_order_by                = lv_order_by
+                                        ev_distinct                = lv_distinct
+                                        ev_new_syntax              = lv_new_syntax
+                                        ev_number_of_rows_expr     = lv_number_of_rows_expr
+                                        eo_sql_parser              = lo_sql_parser ).
+
+    _select_by_sql_parts( EXPORTING iv_select                  = lv_select_field_list
+                                    iv_from                    = lv_from
+                                    iv_where                   = lv_where
+                                    iv_group_by                = lv_group_by
+                                    iv_order_by                = lv_order_by
+                                    iv_distinct                = lv_distinct
+                                    iv_new_syntax              = lv_new_syntax
+                                    it_parameters              = it_parameters
+                                    it_for_all_entries_table   = it_for_all_entries_table
+                                    iv_for_all_entries_tabname = lv_for_all_entries_tabname
+                                    iv_do_into_corresponding   = iv_do_into_corresponding
+                                    iv_number_of_rows_expr     = lv_number_of_rows_expr
+                                    io_sql_parser              = lo_sql_parser
+                          IMPORTING et_result_table            = et_result_table
+                                    es_result_line             = es_result_line
+                                    ev_subrc                   = ev_subrc ).
+  endmethod.
+
+
+  METHOD zif_zosql_db_layer~update.
+    DATA: lv_table_name    TYPE string,
+          lv_set_statement TYPE string,
+          lv_where         TYPE string,
+          lv_new_syntax    TYPE abap_bool,
+          lo_sql_parser    TYPE REF TO zcl_zosql_parser_recurs_desc.
+
+    _split_update_into_parts( EXPORTING iv_update_statement   = iv_update_statement
+                              IMPORTING ev_table_name         = lv_table_name
+                                        ev_set_statement      = lv_set_statement
+                                        ev_where              = lv_where
+                                        ev_new_syntax         = lv_new_syntax
+                                        eo_sql_parser         = lo_sql_parser ).
+
+    _update_by_sql_parts( iv_table_name    = lv_table_name
+                          iv_set_statement = lv_set_statement
+                          iv_where         = lv_where
+                          iv_new_syntax    = lv_new_syntax
+                          it_parameters    = it_parameters
+                          io_sql_parser    = lo_sql_parser ).
+  ENDMETHOD.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
@@ -604,7 +660,7 @@ endmethod.
           ls_dynamic_component          LIKE LINE OF lt_dynamic_components,
           lo_dynamic_struct_with_params TYPE REF TO cl_abap_structdescr,
           lt_parameters                 TYPE zosql_db_layer_params,
-          lo_where_parser               TYPE REF TO zcl_zosql_where_parser,
+          lo_where_processor            TYPE REF TO zcl_zosql_where_processor,
           lo_parameters                 TYPE REF TO zcl_zosql_parameters,
           lo_parser_helper              TYPE REF TO zcl_zosql_parser_helper,
           ls_node_where                 TYPE zcl_zosql_parser_recurs_desc=>ty_node.
@@ -624,7 +680,7 @@ endmethod.
       EXPORTING
         it_parameters = lt_parameters.
 
-    CREATE OBJECT lo_where_parser
+    CREATE OBJECT lo_where_processor
       EXPORTING
         io_parameters = lo_parameters.
 
@@ -634,15 +690,14 @@ endmethod.
                                                      IMPORTING es_node_where = ls_node_where ).
     ENDIF.
 
-    lo_where_parser->zif_zosql_sqlcond_parser~parse_condition( iv_sql_condition       = iv_where
-                                                               io_sql_parser          = io_sql_parser
-                                                               iv_id_of_node_to_parse = ls_node_where-id ).
+    lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
+                                                                                 iv_id_of_node_to_parse = ls_node_where-id ).
 
     LOOP AT it_parameters_with_name ASSIGNING <ls_parameter_with_name>.
       ls_dynamic_component-name = <ls_parameter_with_name>-param_name.
 
-      ls_dynamic_component-type = _create_type_for_parameter( is_parameter    = <ls_parameter_with_name>
-                                                              io_where_parser = lo_where_parser ).
+      ls_dynamic_component-type = _create_type_for_parameter( is_parameter       = <ls_parameter_with_name>
+                                                              io_where_processor = lo_where_processor ).
       APPEND ls_dynamic_component TO lt_dynamic_components.
     ENDLOOP.
 
@@ -690,13 +745,35 @@ endmethod.
     IF is_parameter-parameter_value_ref IS BOUND.
       ro_type ?= cl_abap_typedescr=>describe_by_data_ref( is_parameter-parameter_value_ref ).
     ELSEIF is_parameter-parameter_value_range IS NOT INITIAL
-      OR io_where_parser->is_parameter_compared_as_range( is_parameter-param_name_in_select ) = abap_true.
+      OR io_where_processor->is_parameter_compared_as_range( is_parameter-param_name_in_select ) = abap_true.
 
       ro_type ?= cl_abap_typedescr=>describe_by_data( is_parameter-parameter_value_range ).
     ELSE.
       ro_type ?= cl_abap_typedescr=>describe_by_data( is_parameter-parameter_value_single ).
     ENDIF.
   endmethod.
+
+
+  METHOD _DELETE_BY_SQL_PARTS.
+
+    DATA: lv_where                      TYPE string,
+          ld_dynamic_struct_with_params TYPE REF TO data.
+
+    FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
+
+    lv_where = iv_where.
+    _prepare_for_update_delete( EXPORTING it_parameters                 = it_parameters
+                                          iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
+                                          io_sql_parser                 = io_sql_parser
+                                IMPORTING ed_dynamic_struct_with_params = ld_dynamic_struct_with_params
+                                CHANGING  cv_where                      = lv_where ).
+
+    ASSIGN ld_dynamic_struct_with_params->* TO <ls_dynamic_struct_with_pars>.
+
+    _execute_delete( iv_table_name                 = iv_table_name
+                     iv_where                      = lv_where
+                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
+  ENDMETHOD.
 
 
   method _EXECUTE_DELETE.
@@ -921,7 +998,6 @@ METHOD _PREPARE_FOR_SELECT.
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
 
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  iv_where                = cv_where
                                                                   io_sql_parser           = io_sql_parser ).
 
   _prepare_where_for_select( EXPORTING it_parameters_with_name       = lt_parameters_with_name
@@ -943,7 +1019,7 @@ METHOD _PREPARE_FOR_UPDATE_DELETE.
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
 
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  iv_where                = cv_where ).
+                                                                  io_sql_parser           = io_sql_parser ).
 
   _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                          iv_name_of_struct_with_params = iv_name_of_struct_with_params
@@ -1045,6 +1121,59 @@ ENDMETHOD.
   endmethod.
 
 
+  METHOD _SELECT_BY_SQL_PARTS.
+    DATA: lv_where_ready_for_select   TYPE string,
+          ld_struct_with_params       TYPE REF TO data,
+          ld_result_table_prepared    TYPE REF TO data,
+          lv_number_of_rows_to_select TYPE i.
+
+    FIELD-SYMBOLS: <ls_result_first_line>  TYPE any,
+                   <ls_struct_with_params> TYPE any,
+                   <lt_result_table>       TYPE ANY TABLE.
+
+    CLEAR: et_result_table, es_result_line, ev_subrc.
+
+    lv_where_ready_for_select = iv_where.
+    _prepare_for_select( EXPORTING it_parameters                 = it_parameters
+                                   iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
+                                   iv_name_of_for_all_ent_in_sel = iv_for_all_entries_tabname
+                                   iv_name_of_for_all_ent_var    = 'IT_FOR_ALL_ENTRIES_TABLE'
+                                   iv_new_syntax                 = iv_new_syntax
+                                   iv_number_of_rows_expr        = iv_number_of_rows_expr
+                                   io_sql_parser                 = io_sql_parser
+                         IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
+                                   ev_number_of_rows_to_select   = lv_number_of_rows_to_select
+                         CHANGING  cv_where                      = lv_where_ready_for_select
+                         ).
+
+    ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
+
+    ld_result_table_prepared = _prepare_result_table_for_sel( it_result_table = et_result_table
+                                                              is_result_line  = es_result_line ).
+
+    ASSIGN ld_result_table_prepared->* TO <lt_result_table>.
+
+    _execute_select( EXPORTING iv_select                     = iv_select
+                               iv_from                       = iv_from
+                               iv_where                      = lv_where_ready_for_select
+                               iv_group_by                   = iv_group_by
+                               iv_order_by                   = iv_order_by
+                               iv_distinct                   = iv_distinct
+                               iv_new_syntax                 = iv_new_syntax
+                               it_for_all_entries_table      = it_for_all_entries_table
+                               is_dynamic_struct_with_params = <ls_struct_with_params>
+                               iv_do_into_corresponding      = iv_do_into_corresponding
+                               iv_number_of_rows_to_select   = lv_number_of_rows_to_select
+                     IMPORTING et_result_table               = <lt_result_table> ).
+
+    return_result_of_select_toitab( EXPORTING it_result_table          = <lt_result_table>
+                                              iv_do_into_corresponding = iv_do_into_corresponding
+                                    IMPORTING et_result_table          = et_result_table
+                                              es_result_line           = es_result_line
+                                              ev_subrc                 = ev_subrc ).
+  ENDMETHOD.
+
+
   METHOD _SET_PARAM_VALUE_TO_STRUCT.
 
     FIELD-SYMBOLS: <lv_value>     TYPE any,
@@ -1064,4 +1193,178 @@ ENDMETHOD.
       <lv_value> = is_parameter-parameter_value_single.
     ENDIF.
   ENDMETHOD.
+
+
+  method _SPLIT_DELETE_INTO_PARTS.
+
+    DATA: lo_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_delete_table TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_where        TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    CREATE OBJECT eo_sql_parser.
+    eo_sql_parser->set_sql( iv_delete_statement ).
+    eo_sql_parser->run_recursive_descent_parser( ).
+
+    CREATE OBJECT lo_parser_helper.
+    lo_parser_helper->get_key_nodes_of_sql_delete( EXPORTING io_sql_parser        = eo_sql_parser
+                                                   IMPORTING es_node_delete_table = ls_node_delete_table
+                                                             es_node_where        = ls_node_where
+                                                             ev_new_syntax        = ev_new_syntax ).
+
+    ev_table_name    = lo_parser_helper->get_delete_table_name( eo_sql_parser ).
+    ev_where         = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+  endmethod.
+
+
+  METHOD _SPLIT_SELECT_INTO_PARTS.
+
+    DATA: lv_select                  TYPE string,
+          lv_single                  TYPE abap_bool,
+          lv_end_token_index         TYPE i,
+          lv_select_field_list_start TYPE i,
+          lv_select_field_list_end   TYPE i,
+          lo_sql_parser_helper       TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_distinct           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_single             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_nodes_select_field_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          ls_node_up_to_n_rows       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_from               TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_for_all_entries    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_group_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_order_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    FIELD-SYMBOLS: <ls_node>                TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    CLEAR: ev_select_field_list, ev_from, ev_where, ev_group_by, ev_order_by, ev_distinct.
+
+    eo_sql_parser = parse_sql( iv_select ).
+
+    CREATE OBJECT lo_sql_parser_helper.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = eo_sql_parser
+                                                       IMPORTING es_node_distinct              = ls_node_distinct
+                                                                 es_node_single                = ls_node_single
+                                                                 et_nodes_of_select_field_list = lt_nodes_select_field_list
+                                                                 es_node_up_to_n_rows          = ls_node_up_to_n_rows
+                                                                 es_node_from                  = ls_node_from
+                                                                 es_node_for_all_entries       = ls_node_for_all_entries
+                                                                 es_node_where                 = ls_node_where
+                                                                 es_node_group_by              = ls_node_group_by
+                                                                 es_node_order_by              = ls_node_order_by
+                                                                 ev_new_syntax                 = ev_new_syntax ).
+
+    IF ls_node_distinct IS NOT INITIAL.
+      ev_distinct = abap_true.
+    ENDIF.
+
+    IF ls_node_single IS NOT INITIAL.
+      lv_single = abap_true.
+    ENDIF.
+
+    LOOP AT lt_nodes_select_field_list ASSIGNING <ls_node>.
+      IF lv_select_field_list_start IS INITIAL.
+        lv_select_field_list_start = <ls_node>-token_index.
+      ELSEIF lv_select_field_list_start > <ls_node>-token_index.
+        lv_select_field_list_start = <ls_node>-token_index.
+      ENDIF.
+
+      lv_end_token_index = eo_sql_parser->get_node_end_token_index( <ls_node>-id ).
+
+      IF lv_end_token_index > lv_select_field_list_end.
+        lv_select_field_list_end = lv_end_token_index.
+      ENDIF.
+    ENDLOOP.
+
+    IF lv_select_field_list_start IS NOT INITIAL AND lv_select_field_list_end IS NOT INITIAL.
+      ev_select_field_list =
+        eo_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = lv_select_field_list_start
+                                                   iv_end_token_index   = lv_select_field_list_end ).
+    ENDIF.
+
+    ev_number_of_rows_expr = lo_sql_parser_helper->get_up_to_n_rows_value( eo_sql_parser ).
+
+    IF ls_node_up_to_n_rows IS NOT INITIAL.
+      ev_number_of_rows_expr = eo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_up_to_n_rows-id
+                                                                           iv_n            = 2 ).
+    ENDIF.
+
+    ev_from = eo_sql_parser->get_node_sql_without_self( ls_node_from-id ).
+
+    ev_for_all_entries_tabname = lo_sql_parser_helper->get_for_all_entries_tabname( io_sql_parser = eo_sql_parser ).
+
+    IF ls_node_where IS NOT INITIAL.
+      ev_where = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+    ENDIF.
+
+    IF ls_node_group_by IS NOT INITIAL.
+      ev_group_by = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_group_by-id
+                                                                 iv_number_of_tokens_offset = 2 ).
+    ENDIF.
+
+    IF ls_node_order_by IS NOT INITIAL.
+      ev_order_by = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_order_by-id
+                                                                 iv_number_of_tokens_offset = 2 ).
+    ENDIF.
+
+    IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
+      MESSAGE e071 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ELSEIF lv_single = abap_true.
+      ev_number_of_rows_expr = '1'.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD _SPLIT_UPDATE_INTO_PARTS.
+
+    DATA: lo_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_update_table TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_set          TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_where        TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    CREATE OBJECT eo_sql_parser.
+    eo_sql_parser->set_sql( iv_update_statement ).
+    eo_sql_parser->run_recursive_descent_parser( ).
+
+    CREATE OBJECT lo_parser_helper.
+    lo_parser_helper->get_key_nodes_of_sql_update( EXPORTING io_sql_parser        = eo_sql_parser
+                                                   IMPORTING es_node_update_table = ls_node_update_table
+                                                             es_node_set          = ls_node_set
+                                                             es_node_where        = ls_node_where
+                                                             ev_new_syntax        = ev_new_syntax ).
+
+    ev_table_name    = lo_parser_helper->get_update_table_name( eo_sql_parser ).
+    ev_set_statement = eo_sql_parser->get_node_sql_without_self( ls_node_set-id ).
+    ev_where         = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+  ENDMETHOD.
+
+
+  method _UPDATE_BY_SQL_PARTS.
+    DATA: lt_parameters_with_name       TYPE ty_parameters_with_name,
+          ld_dynamic_struct_with_params TYPE REF TO data,
+          lv_set_statement              TYPE string,
+          lv_where                      TYPE string.
+
+    FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
+
+    lv_set_statement = iv_set_statement.
+    lv_where         = iv_where.
+
+    _prepare_for_update_delete( EXPORTING it_parameters                 = it_parameters
+                                          iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
+                                          io_sql_parser                 = io_sql_parser
+                                IMPORTING ed_dynamic_struct_with_params = ld_dynamic_struct_with_params
+                                CHANGING  cv_where                      = lv_where ).
+
+    ASSIGN ld_dynamic_struct_with_params->* TO <ls_dynamic_struct_with_pars>.
+
+    _prepare_set_for_update( EXPORTING it_parameters                 = it_parameters
+                                       iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
+                             CHANGING  cv_set_statement              = lv_set_statement ).
+
+    _execute_update( iv_table_name                 = iv_table_name
+                     iv_set_statement              = lv_set_statement
+                     iv_where                      = lv_where
+                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
+  endmethod.
 ENDCLASS.

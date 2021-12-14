@@ -8,14 +8,14 @@ public section.
   methods CONSTRUCTOR
     importing
       !IV_TABLE_NAME type CLIKE
-      !IO_SET_IN_UPDATE_SQL type ref to ZCL_ZOSQL_SET_PARSER .
+      !IO_SET_IN_UPDATE_SQL type ref to ZCL_ZOSQL_SET_PROCESSOR .
 protected section.
 
   methods UPDATE_REC_BEFORE_SET_TO_BUF
     redefinition .
 private section.
 
-  data MO_SET_IN_UPDATE_SQL type ref to ZCL_zosql_SET_PARSER .
+  data MO_SET_IN_UPDATE_SQL type ref to ZCL_ZOSQL_SET_PROCESSOR .
 ENDCLASS.
 
 

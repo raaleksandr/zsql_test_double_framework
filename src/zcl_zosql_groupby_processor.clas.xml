@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_ZOSQL_GROUPBY_PARSER</CLSNAME>
+    <CLSNAME>ZCL_ZOSQL_GROUPBY_PROCESSOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Group by parser and processor</DESCRIPT>
+    <DESCRIPT>Group by processor</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -13,16 +13,16 @@
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_GROUPBY_PARSER</CLSNAME>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_PROCESSOR</CLSNAME>
+     <CMPNAME>INITIALIZE_BY_PARSED_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills group by field list attribute with SQL parser</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_PROCESSOR</CLSNAME>
      <CMPNAME>MT_GROUP_BY_FIELDS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>List of group by fields</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_GROUPBY_PARSER</CLSNAME>
-     <CMPNAME>PARSE_GROUP_BY</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Parses group by clause</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

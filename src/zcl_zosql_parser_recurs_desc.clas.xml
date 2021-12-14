@@ -20,6 +20,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>GET_CHILD_NODES_RECURSIVE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns all childs on all levels recursively</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
      <CMPNAME>GET_NODE_END_TOKEN_INDEX</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns index of end token of node and all its descendants</DESCRIPT>

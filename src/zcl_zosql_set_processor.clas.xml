@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_ZOSQL_SET_PARSER</CLSNAME>
+    <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Parses and processor of &apos;SET&apos; condition of &apos;UPDATE&apos; statemen</DESCRIPT>
+    <DESCRIPT>Class to process &apos;SET&apos; condition of &apos;UPDATE&apos; statement</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -14,25 +14,25 @@
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SET_PARSER</CLSNAME>
+     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
      <CMPNAME>CONSTRUCTOR</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>CONSTRUCTOR</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SET_PARSER</CLSNAME>
+     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
+     <CMPNAME>INITIALIZE_BY_PARSED_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initializes class from SQL Parser</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
      <CMPNAME>MO_PARAMETERS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Instance that stores parameters for dynamic SQL Query</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SET_PARSER</CLSNAME>
-     <CMPNAME>PARSE_SET</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Parses &apos;SET&apos; condition of &apos;UPDATE&apos; SQL statement</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SET_PARSER</CLSNAME>
+     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
      <CMPNAME>UPDATE_RECORD</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Updates one record according to &apos;SET&apos; condition</DESCRIPT>
