@@ -86,40 +86,8 @@ ENDFORM.
 FORM set_col_titles_as_fieldnames USING io_alv   TYPE REF TO cl_salv_table
                                         it_table TYPE STANDARD TABLE.
 
-  DATA: lo_columns             TYPE REF TO cl_salv_columns_table,
-        lo_table               TYPE REF TO cl_abap_tabledescr,
-        lo_struct              TYPE REF TO cl_abap_structdescr,
-        lt_components_of_table TYPE cl_abap_structdescr=>component_table,
-        lo_column              TYPE REF TO cl_salv_column,
-        lv_column_name         TYPE lvc_fname,
-        lv_short_text          TYPE scrtext_s,
-        lv_medium_text         TYPE scrtext_m,
-        lv_long_text           TYPE scrtext_l.
-
-  FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_components_of_table.
-
-  lo_table ?= cl_abap_tabledescr=>describe_by_data( it_table ).
-  lo_struct ?= lo_table->get_table_line_type( ).
-  lt_components_of_table = lo_struct->get_components( ).
-
-  lo_columns = io_alv->get_columns( ).
-  LOOP AT lt_components_of_table ASSIGNING <ls_component>.
-    lv_column_name = <ls_component>-name.
-    TRY.
-        lo_column = lo_columns->get_column( lv_column_name ).
-
-        lv_short_text = <ls_component>-name.
-        lo_column->set_short_text( lv_short_text ).
-
-        lv_medium_text = <ls_component>-name.
-        lo_column->set_medium_text( lv_medium_text ).
-
-        lv_long_text = <ls_component>-name.
-        lo_column->set_long_text( lv_long_text ).
-      CATCH cx_salv_not_found.
-        CONTINUE.
-    ENDTRY.
-  ENDLOOP.
+  zcl_zosql_utils=>salv_set_fieldnames_to_col_tit( io_salv  = io_alv
+                                                   it_table = it_table ).
 ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form SIMPLE_SELECT

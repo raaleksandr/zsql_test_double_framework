@@ -7,16 +7,20 @@ public section.
 
   class-data DUMMY type TEXT255 .
 
-  class-methods SPLIT_CONDITION_INTO_TOKENS
-    importing
-      !IV_SQL_CONDITION type CLIKE
-    returning
-      value(RT_TOKENS) type STRING_TABLE .
   class-methods DELETE_N_END_TOKENS
     importing
       value(IV_N) type I
     changing
       !CV_SQL type CLIKE .
+  class-methods SPLIT_CONDITION_INTO_TOKENS
+    importing
+      !IV_SQL_CONDITION type CLIKE
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
+  class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
+    importing
+      !IO_SALV type ref to CL_SALV_TABLE
+      !IT_TABLE type ANY TABLE .
   class-methods BOOLEAN_NOT
     importing
       !IV_BOOLEAN type ABAP_BOOL
@@ -37,18 +41,18 @@ public section.
       !IV_VALUE type ANY
     returning
       value(RD_REF_TO_COPY_OF_DATA) type ref to DATA .
-  class-methods GET_LAST_N_CHARS
-    importing
-      !IV_STRING type CLIKE
-      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
-    returning
-      value(RV_LAST_N_CHARACTERS) type STRING .
   class-methods GET_FIRST_N_CHARS
     importing
       !IV_STRING type CLIKE
       value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
     returning
       value(RV_FIRST_N_CHARACTERS) type STRING .
+  class-methods GET_LAST_N_CHARS
+    importing
+      !IV_STRING type CLIKE
+      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
+    returning
+      value(RV_LAST_N_CHARACTERS) type STRING .
   class-methods GET_START_TOKEN
     importing
       !IV_SQL type CLIKE
@@ -465,6 +469,44 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
   endmethod.
+
+
+  METHOD salv_set_fieldnames_to_col_tit.
+    DATA: lo_columns             TYPE REF TO cl_salv_columns_table,
+          lo_table               TYPE REF TO cl_abap_tabledescr,
+          lo_struct              TYPE REF TO cl_abap_structdescr,
+          lt_components_of_table TYPE cl_abap_structdescr=>component_table,
+          lo_column              TYPE REF TO cl_salv_column,
+          lv_column_name         TYPE lvc_fname,
+          lv_short_text          TYPE scrtext_s,
+          lv_medium_text         TYPE scrtext_m,
+          lv_long_text           TYPE scrtext_l.
+
+    FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_components_of_table.
+
+    lo_table ?= cl_abap_tabledescr=>describe_by_data( it_table ).
+    lo_struct ?= lo_table->get_table_line_type( ).
+    lt_components_of_table = lo_struct->get_components( ).
+
+    lo_columns = io_salv->get_columns( ).
+    LOOP AT lt_components_of_table ASSIGNING <ls_component>.
+      lv_column_name = <ls_component>-name.
+      TRY.
+          lo_column = lo_columns->get_column( lv_column_name ).
+
+          lv_short_text = <ls_component>-name.
+          lo_column->set_short_text( lv_short_text ).
+
+          lv_medium_text = <ls_component>-name.
+          lo_column->set_medium_text( lv_medium_text ).
+
+          lv_long_text = <ls_component>-name.
+          lo_column->set_long_text( lv_long_text ).
+        CATCH cx_salv_not_found.
+          CONTINUE.
+      ENDTRY.
+    ENDLOOP.
+  ENDMETHOD.
 
 
   method SPLIT_CONDITION_INTO_TOKENS.
