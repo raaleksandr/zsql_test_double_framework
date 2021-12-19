@@ -50,12 +50,13 @@ private section.
   data MD_DATA_SET type ref to DATA .
   constants C_AS type STRING value 'AS' ##NO_TEXT.
   constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
+  constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
 
   methods _PREPARE_COUNT_FOR_GROUP_BY .
   methods _GET_COMPONENT_FOR_FIELD
     importing
       !IS_SELECT_PARAMETER type TY_SELECT_PARAMETER
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     returning
       value(RS_COMPONENT) type ABAP_COMPONENTDESCR
     raising
@@ -118,25 +119,24 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _RUN_GROUP_BY_FUNCTION
     importing
-      !IV_GROUP_BY_FUNCTION type CLIKE
-      !IV_NEW_VALUE type ANY
+      !IT_TABLE_LINES_BY_KEY type STANDARD TABLE
     changing
-      !CV_GROUPED_VALUE type ANY
+      !CS_LINE_TO_GROUP type ANY
     raising
       ZCX_ZOSQL_ERROR .
   methods _FILL_DATASET_WHERE_EMPTY
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods _STAR_TO_FIELD_LIST
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods _CREATE_DATA_SET_FOR_SELECT
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_from_iterator
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
 ENDCLASS.
@@ -466,17 +466,21 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _GROUP_INTO_HASHED_TABLE.
+  METHOD _group_into_hashed_table.
 
-    DATA: lv_fieldname     TYPE fieldname.
+    DATA: lv_fieldname         TYPE fieldname,
+          ld_table_one_group   TYPE REF TO data,
+          lv_same_key          TYPE abap_bool,
+          ld_line_grouped_copy TYPE REF TO data.
 
-    FIELD-SYMBOLS: <lt_table_before>     TYPE STANDARD TABLE,
-                   <lt_table_grouped>    TYPE HASHED TABLE,
-                   <ls_line_before>      TYPE any,
-                   <ls_line_grouped>     TYPE any,
-                   <ls_select_parameter> LIKE LINE OF mt_select_parameters,
-                   <lv_field_before>     TYPE any,
-                   <lv_field_grouped>    TYPE any.
+    FIELD-SYMBOLS: <lt_table_before>      TYPE STANDARD TABLE,
+                   <lt_table_grouped>     TYPE HASHED TABLE,
+                   <ls_line_before>       TYPE any,
+                   <ls_line_grouped>      TYPE any,
+                   <lv_field_before>      TYPE any,
+                   <lv_field_grouped>     TYPE any,
+                   <lt_table_one_group>   TYPE STANDARD TABLE,
+                   <ls_line_grouped_copy> TYPE any.
 
     ASSIGN id_ref_to_hash_group_by_table->* TO <lt_table_grouped>.
 
@@ -486,38 +490,49 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     LOOP AT <lt_table_before> ASSIGNING <ls_line_before>.
       READ TABLE <lt_table_grouped> FROM <ls_line_before> ASSIGNING <ls_line_grouped>.
-      IF sy-subrc = 0.
-        LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
-
-          IF <ls_select_parameter>-field_alias IS NOT INITIAL.
-            lv_fieldname = <ls_select_parameter>-field_alias.
-          ELSE.
-            lv_fieldname = <ls_select_parameter>-field_name.
-          ENDIF.
-          lv_fieldname = zcl_zosql_utils=>to_upper_case( lv_fieldname ).
-
-          IF <ls_select_parameter>-parameter_type = parameter_type-groupby_function.
-            ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_before> TO <lv_field_before>.
-            ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_grouped> TO <lv_field_grouped>.
-
-            _run_group_by_function( EXPORTING iv_group_by_function = <ls_select_parameter>-function_name
-                                              iv_new_value         = <lv_field_before>
-                                    CHANGING  cv_grouped_value     = <lv_field_grouped> ).
-          ELSEIF <ls_select_parameter>-parameter_type = parameter_type-field.
-            READ TABLE it_group_by_fields WITH KEY fieldname = lv_fieldname TRANSPORTING NO FIELDS.
-            IF sy-subrc <> 0.
-              MESSAGE e061 WITH lv_fieldname INTO zcl_zosql_utils=>dummy.
-              zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-            ENDIF.
-          ENDIF.
-        ENDLOOP.
-      ELSE.
+      IF sy-subrc <> 0.
         INSERT <ls_line_before> INTO TABLE <lt_table_grouped>.
       ENDIF.
     ENDLOOP.
 
+    CREATE DATA ld_table_one_group LIKE <lt_table_before>.
+    ASSIGN ld_table_one_group->* TO <lt_table_one_group>.
+
+    CREATE DATA ld_line_grouped_copy LIKE LINE OF <lt_table_grouped>.
+    ASSIGN ld_line_grouped_copy->* TO <ls_line_grouped_copy>.
+
+    LOOP AT <lt_table_grouped> ASSIGNING <ls_line_grouped>.
+
+      REFRESH <lt_table_one_group>.
+      LOOP AT <lt_table_before> ASSIGNING <ls_line_before>.
+
+        lv_same_key = abap_true.
+        LOOP AT it_group_by_fields INTO lv_fieldname.
+          ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_before>  TO <lv_field_before>.
+          ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_grouped> TO <lv_field_grouped>.
+
+          IF <lv_field_before> <> <lv_field_grouped>.
+            lv_same_key = abap_false.
+            EXIT.
+          ENDIF.
+        ENDLOOP.
+
+        CHECK lv_same_key = abap_true.
+
+        APPEND <ls_line_before> TO <lt_table_one_group>.
+      ENDLOOP.
+
+      <ls_line_grouped_copy> = <ls_line_grouped>.
+      _run_group_by_function( EXPORTING it_table_lines_by_key = <lt_table_one_group>
+                              CHANGING  cs_line_to_group      = <ls_line_grouped_copy> ).
+
+      IF <ls_line_grouped_copy> <> <ls_line_grouped>.
+        MODIFY TABLE <lt_table_grouped> FROM <ls_line_grouped_copy>.
+      ENDIF.
+    ENDLOOP.
+
     <lt_table_before> = <lt_table_grouped>.
-  endmethod.
+  ENDMETHOD.
 
 
   method _IS_FUNCTION.
@@ -602,26 +617,61 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _RUN_GROUP_BY_FUNCTION.
+  METHOD _run_group_by_function.
 
-    CASE zcl_zosql_utils=>to_upper_case( iv_group_by_function ).
-      WHEN 'SUM'.
-        cv_grouped_value = cv_grouped_value + iv_new_value.
-      WHEN 'MIN'.
-        IF iv_new_value < cv_grouped_value.
-          cv_grouped_value = iv_new_value.
-        ENDIF.
-      WHEN 'MAX'.
-        IF iv_new_value > cv_grouped_value.
-          cv_grouped_value = iv_new_value.
-        ENDIF.
-      WHEN c_function_count.
-        cv_grouped_value = cv_grouped_value + 1.
-      WHEN OTHERS.
-        MESSAGE e060 WITH iv_group_by_function INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDCASE.
-  endmethod.
+    DATA: lv_fieldname TYPE fieldname.
+
+    FIELD-SYMBOLS: <ls_select_parameter>       LIKE LINE OF mt_select_parameters,
+                   <lv_grouped_value>          TYPE any,
+                   <ls_table_line_not_grouped> TYPE any,
+                   <lv_not_grouped_value>      TYPE any.
+
+    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
+      WHERE parameter_type = parameter_type-groupby_function.
+
+      IF <ls_select_parameter>-field_alias IS NOT INITIAL.
+        lv_fieldname = <ls_select_parameter>-field_alias.
+      ELSE.
+        lv_fieldname = <ls_select_parameter>-field_name.
+      ENDIF.
+      lv_fieldname = zcl_zosql_utils=>to_upper_case( lv_fieldname ).
+
+      ASSIGN COMPONENT lv_fieldname OF STRUCTURE cs_line_to_group TO <lv_grouped_value>.
+      CLEAR <lv_grouped_value>.
+
+      LOOP AT it_table_lines_by_key ASSIGNING <ls_table_line_not_grouped>.
+        ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_table_line_not_grouped> TO <lv_not_grouped_value>.
+
+        CASE zcl_zosql_utils=>to_upper_case( <ls_select_parameter>-function_name ).
+          WHEN 'SUM'.
+            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
+          WHEN 'MIN'.
+            IF <lv_not_grouped_value> < <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
+              <lv_grouped_value> = <lv_not_grouped_value>.
+            ENDIF.
+          WHEN 'MAX'.
+            IF <lv_not_grouped_value> > <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
+              <lv_grouped_value> = <lv_not_grouped_value>.
+            ENDIF.
+          WHEN c_function_count.
+            <lv_grouped_value> = <lv_grouped_value> + 1.
+          WHEN c_function_avg.
+            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
+          WHEN OTHERS.
+            MESSAGE e060 WITH <ls_select_parameter>-function_name INTO zcl_zosql_utils=>dummy.
+            zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+        ENDCASE.
+      ENDLOOP.
+    ENDLOOP.
+
+    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
+      WHERE parameter_type = parameter_type-groupby_function
+        AND function_name  = c_function_avg.
+
+      ASSIGN COMPONENT lv_fieldname OF STRUCTURE cs_line_to_group TO <lv_grouped_value>.
+      <lv_grouped_value> = <lv_grouped_value> / LINES( it_table_lines_by_key ).
+    ENDLOOP.
+  ENDMETHOD.
 
 
   METHOD _SEPARATE_ALIAS.
