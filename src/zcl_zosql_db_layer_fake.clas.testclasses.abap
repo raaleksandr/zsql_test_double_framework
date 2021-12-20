@@ -67,6 +67,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       select_up_to_n_rows_prm FOR TESTING RAISING zcx_zosql_error,
       select_single FOR TESTING RAISING zcx_zosql_error,
       select_with_empty_range FOR TESTING RAISING zcx_zosql_error,
+      select_count_star FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
       where_with_brackets FOR TESTING RAISING zcx_zosql_error,
@@ -82,6 +83,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_with_order_by FOR TESTING RAISING zcx_zosql_error,
       group_by_2_fields FOR TESTING RAISING zcx_zosql_error,
       group_by_with_avg FOR TESTING RAISING zcx_zosql_error,
+      group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
@@ -1813,6 +1815,44 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
   ENDMETHOD.
 
+  METHOD select_count_star.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    CONCATENATE 'SELECT COUNT( * ) AS CNT'
+      'FROM zosql_for_tst'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             cnt TYPE i,
+           END OF ty_result.
+
+    DATA: ls_result_line  TYPE ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING es_result_line  = ls_result_line ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = ls_result_line-cnt exp = 2 ).
+  ENDMETHOD.
+
   METHOD open_cursor_fetch_itab.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst,
@@ -2746,6 +2786,72 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-key_field        = 'KEY1'.
     ls_expected_line-amount           = 20.
     APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_count_distinct.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_1'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_2'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_3'.
+    ls_line-some_other_field = 'VAL2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY2'.
+    ls_line-key_field2       = 'KEY2_1'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field COUNT( DISTINCT some_other_field ) as cnt'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+             cnt       TYPE i,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
+                                              IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE ty_result,
+          lt_expected_table TYPE TABLE OF ty_result.
+
+    ls_expected_line-key_field = 'KEY1'.
+    ls_expected_line-cnt       = 2.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field = 'KEY2'.
+    ls_expected_line-cnt       = 1.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.

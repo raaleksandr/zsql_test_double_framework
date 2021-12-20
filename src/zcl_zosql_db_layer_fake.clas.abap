@@ -606,7 +606,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       CREATE OBJECT lo_group_by.
       lo_group_by->initialize_by_parsed_sql( io_sql_parser       = io_sql_parser
                                              iv_group_by_node_id = ls_node_group_by-id ).
-      lo_select->apply_group_by( lo_group_by->mt_group_by_fields ).
+      lo_select->apply_group_by( lo_group_by ).
     ENDIF.
 
     IF ls_node_distinct IS NOT INITIAL.

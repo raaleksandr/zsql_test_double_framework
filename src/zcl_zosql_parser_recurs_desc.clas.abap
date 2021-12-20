@@ -338,7 +338,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     " <SELECT> ::= SELECT <SELECT_FIELDS> <FROM> <UP_TO_N_ROWS> <FOR_ALL_ENTRIES> <WHERE> <GROUP_BY>
     " <SELECT_FIELDS> ::= * | <SELECT_FIELD> {<SELECT_FIELD>} | <SELECT_FIELD>,{<SELECT_FIELD>}
     " <SELECT_FIELD> ::= data_source~* | <FUNCTION> [<ALIAS>] | <COL_SPEC> [<ALIAS>]
-    " <FUNCTION> ::= function_name( col_name )
+    " <FUNCTION> ::= function_name( [DISTINCT] col_name )
     " <COL_SPEC> ::= col_name | data_source~col_name
     " <ALIAS> ::= AS alias
     " <FROM> ::= FROM tabname [<ALIAS>] { <JOIN> }
@@ -736,6 +736,14 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     IF _step_forward( ) <> abap_true.
       RETURN.
+    ENDIF.
+
+    IF mv_current_token_ucase = 'DISTINCT'.
+      _add_node( iv_parent_id = lv_function_field_node_id ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
     ENDIF.
 
     _add_node( iv_parent_id = lv_function_field_node_id ).

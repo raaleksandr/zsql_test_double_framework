@@ -7,16 +7,22 @@ public section.
 
   class-data DUMMY type TEXT255 .
 
-  class-methods DELETE_N_END_TOKENS
+  class-methods CREATE_HASH_TAB_LIKE_STANDARD
     importing
-      value(IV_N) type I
-    changing
-      !CV_SQL type CLIKE .
+      !IT_STANDARD_TABLE_TEMPLATE type STANDARD TABLE
+      !IT_KEY_FIELDS type FIELDNAME_TABLE
+    returning
+      value(RD_HASHED_TABLE) type ref to DATA .
   class-methods SPLIT_CONDITION_INTO_TOKENS
     importing
       !IV_SQL_CONDITION type CLIKE
     returning
       value(RT_TOKENS) type STRING_TABLE .
+  class-methods DELETE_N_END_TOKENS
+    importing
+      value(IV_N) type I
+    changing
+      !CV_SQL type CLIKE .
   class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
     importing
       !IO_SALV type ref to CL_SALV_TABLE
@@ -255,6 +261,32 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     ASSIGN rd_ref_to_copy_of_data->* TO <lv_value_copy>.
     <lv_value_copy> = iv_value.
   endmethod.
+
+
+  METHOD create_hash_tab_like_standard.
+    DATA: lo_table_data_set  TYPE REF TO cl_abap_tabledescr,
+          lo_struct_data_set TYPE REF TO cl_abap_structdescr,
+          lt_key             TYPE abap_keydescr_tab,
+          lo_hashed_table    TYPE REF TO cl_abap_tabledescr.
+
+    FIELD-SYMBOLS: <ls_key_field> LIKE LINE OF it_key_fields,
+                   <ls_key>       LIKE LINE OF lt_key.
+
+    lo_table_data_set ?= cl_abap_tabledescr=>describe_by_data( it_standard_table_template ).
+    lo_struct_data_set ?= lo_table_data_set->get_table_line_type( ).
+
+    LOOP AT it_key_fields ASSIGNING <ls_key_field>.
+      APPEND INITIAL LINE TO lt_key ASSIGNING <ls_key>.
+      <ls_key>-name = <ls_key_field>-fieldname.
+    ENDLOOP.
+
+    lo_hashed_table = cl_abap_tabledescr=>create( p_line_type  = lo_struct_data_set
+                                                  p_table_kind = cl_abap_tabledescr=>tablekind_hashed
+                                                  p_unique     = abap_true
+                                                  p_key        = lt_key ).
+
+    CREATE DATA rd_hashed_table TYPE HANDLE lo_hashed_table.
+  ENDMETHOD.
 
 
   method DELETE_END_TOKEN_IF_EQUALS.

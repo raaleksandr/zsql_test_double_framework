@@ -31,8 +31,9 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       one_table_where_param_ref FOR TESTING RAISING zcx_zosql_error,
       one_table_2_params_with_or FOR TESTING RAISING zcx_zosql_error,
       one_table_for_all_entries FOR TESTING RAISING zcx_zosql_error,
-      one_table_group_by FOR TESTING RAISING zcx_zosql_error,
       one_table_distinct FOR TESTING RAISING zcx_zosql_error,
+      group_by FOR TESTING RAISING zcx_zosql_error,
+      group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       join FOR TESTING RAISING zcx_zosql_error,
       new_syntax FOR TESTING RAISING zcx_zosql_error,
       new_syntax_no_host_var FOR TESTING RAISING zcx_zosql_error,
@@ -500,7 +501,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD one_table_group_by.
+  METHOD group_by.
 
     DATA: ls_line          TYPE zosql_for_tst2,
           lt_initial_table TYPE TABLE OF zosql_for_tst2.
@@ -557,6 +558,74 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     ls_expected_line-amount    = 5.
     ls_expected_line-qty       = 1.
     APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_count_distinct.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    DELETE FROM zosql_for_tst2.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_1'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_2'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY1'.
+    ls_line-key_field2       = 'KEY1_3'.
+    ls_line-some_other_field = 'VAL2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt            = sy-mandt.
+    ls_line-key_field        = 'KEY2'.
+    ls_line-key_field2       = 'KEY2_1'.
+    ls_line-some_other_field = 'VAL1'.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table.
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field COUNT( DISTINCT some_other_field ) as cnt'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+             cnt       TYPE i,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
+                                              IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE ty_result,
+          lt_expected_table TYPE TABLE OF ty_result.
+
+    ls_expected_line-key_field = 'KEY1'.
+    ls_expected_line-cnt       = 2.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field = 'KEY2'.
+    ls_expected_line-cnt       = 1.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
