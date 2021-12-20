@@ -52,6 +52,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>CREATE_HASH_TAB_LIKE_STANDARD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates hashed internal table which is like standard</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>DELETE_END_TOKEN_IF_EQUALS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Deletes end token from query if it equals to certain string</DESCRIPT>

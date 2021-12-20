@@ -13,7 +13,7 @@ public section.
   methods APPLY_DISTINCT .
   methods APPLY_GROUP_BY
     importing
-      !IT_GROUP_BY_FIELDS type FIELDNAME_TABLE
+      !IO_GROUP_BY type ref to ZCL_ZOSQL_GROUPBY_PROCESSOR
     raising
       ZCX_ZOSQL_ERROR .
   methods GET_RESULT_AS_REF_TO_DATA
@@ -43,6 +43,7 @@ private section.
            field_name     TYPE string,
            field_alias    TYPE string,
            function_name  TYPE string,
+           distinct_flag  TYPE abap_bool,
          END OF ty_select_parameter .
 
   data:
@@ -52,7 +53,6 @@ private section.
   constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
 
-  methods _PREPARE_COUNT_FOR_GROUP_BY .
   methods _GET_COMPONENT_FOR_FIELD
     importing
       !IS_SELECT_PARAMETER type TY_SELECT_PARAMETER
@@ -61,69 +61,19 @@ private section.
       value(RS_COMPONENT) type ABAP_COMPONENTDESCR
     raising
       ZCX_ZOSQL_ERROR .
-  methods _GET_COMPONENT_FOR_COUNT
+  methods _GET_COMPONENT_FOR_COUNT_STAR
     importing
       !IV_NAME type CLIKE
     returning
       value(RS_COMPONENT) type ABAP_COMPONENTDESCR .
-  methods _APPEND_TO_LAST_FIELD
-    importing
-      !IV_ALIAS type CLIKE
-    changing
-      !CT_FIELD_LIST type STRING_TABLE .
-  methods _IS_FUNCTION
-    importing
-      !IV_FIELD type CLIKE
-    returning
-      value(RV_IS_FUNCTION) type ABAP_BOOL .
-  methods _IS_FUNCTION_NAME
-    importing
-      !IV_TOKEN type CLIKE
-    returning
-      value(RV_IS_FUNCTION_NAME) type ABAP_BOOL .
-  methods _PARSE_FIELD
+  methods _PROCESS_FIELD
     importing
       !IV_FIELD type CLIKE
     changing
       !CS_PARAMETER type TY_SELECT_PARAMETER .
-  methods _PARSE_FUNCTION
-    importing
-      !IV_FIELD type CLIKE
-    changing
-      value(CS_PARAMETER) type TY_SELECT_PARAMETER .
-  methods _SEPARATE_ALIAS
-    importing
-      !IV_WHOLE_EXPRESSION type CLIKE
-    exporting
-      !EV_EXPRESSION_WITHOUT_ALIAS type CLIKE
-      !EV_ALIAS type CLIKE .
-  methods _SPLIT_SELECT_INTO_FIELDS
-    importing
-      !IV_FIELD_LIST_FROM_SELECT type STRING
-      value(IV_NEW_SYNTAX) type ABAP_BOOL
-    returning
-      value(RT_FIELDS_IN_RESULT_SET) type STRING_TABLE .
-  methods _CREATE_HASH_TABLE_TO_GROUP
-    importing
-      !IT_GROUP_BY_FIELDS type FIELDNAME_TABLE
-    returning
-      value(RD_GROUP_BY_HASH_TABLE) type ref to DATA .
   methods _GET_ALL_FIELDS_OF_DATASET
     returning
       value(RT_ALL_FIELDS_OF_DATASET) type FIELDNAME_TABLE .
-  methods _GROUP_INTO_HASHED_TABLE
-    importing
-      !IT_GROUP_BY_FIELDS type FIELDNAME_TABLE
-      !ID_REF_TO_HASH_GROUP_BY_TABLE type ref to DATA
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _RUN_GROUP_BY_FUNCTION
-    importing
-      !IT_TABLE_LINES_BY_KEY type STANDARD TABLE
-    changing
-      !CS_LINE_TO_GROUP type ANY
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _FILL_DATASET_WHERE_EMPTY
     importing
       !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
@@ -189,10 +139,14 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
                    <lt_data_set>                 TYPE STANDARD TABLE,
                    <ls_data_set>                 TYPE any.
 
-    ld_hash_table_with_all_fields = _create_hash_table_to_group( _get_all_fields_of_dataset( ) ).
-    ASSIGN ld_hash_table_with_all_fields->* TO <lt_hash_tab_with_all_fields>.
-
     ASSIGN md_data_set->* TO <lt_data_set>.
+
+    ld_hash_table_with_all_fields =
+      zcl_zosql_utils=>create_hash_tab_like_standard(
+        it_standard_table_template = <lt_data_set>
+        it_key_fields              = _get_all_fields_of_dataset( ) ).
+
+    ASSIGN ld_hash_table_with_all_fields->* TO <lt_hash_tab_with_all_fields>.
 
     LOOP AT <lt_data_set> ASSIGNING <ls_data_set>.
       READ TABLE <lt_hash_tab_with_all_fields> FROM <ls_data_set> TRANSPORTING NO FIELDS.
@@ -207,12 +161,33 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   METHOD APPLY_GROUP_BY.
 
-    DATA: ld_hash_table_to_group TYPE REF TO data.
+    DATA: lt_fields_with_aggr_func TYPE zcl_zosql_groupby_processor=>ty_fields_with_aggr_func.
 
-    ld_hash_table_to_group = _create_hash_table_to_group( it_group_by_fields ).
+    FIELD-SYMBOLS: <ls_field_with_aggr_func> LIKE LINE OF lt_fields_with_aggr_func,
+                   <ls_select_parameter>     LIKE LINE OF mt_select_parameters,
+                   <lt_data_set>             TYPE STANDARD TABLE.
 
-    _group_into_hashed_table( it_group_by_fields            = it_group_by_fields
-                              id_ref_to_hash_group_by_table = ld_hash_table_to_group ).
+    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
+      WHERE parameter_type = parameter_type-groupby_function.
+
+      APPEND INITIAL LINE TO lt_fields_with_aggr_func ASSIGNING <ls_field_with_aggr_func>.
+
+      IF <ls_select_parameter>-field_alias IS NOT INITIAL.
+        <ls_field_with_aggr_func>-fieldname = <ls_select_parameter>-field_alias.
+      ELSE.
+        <ls_field_with_aggr_func>-fieldname = <ls_select_parameter>-field_name.
+      ENDIF.
+
+      <ls_field_with_aggr_func>-aggregation_function = <ls_select_parameter>-function_name.
+      <ls_field_with_aggr_func>-distinct_flag        = <ls_select_parameter>-distinct_flag.
+    ENDLOOP.
+
+    ASSIGN md_data_set->* TO <lt_data_set>.
+
+    IF lt_fields_with_aggr_func IS NOT INITIAL.
+      io_group_by->apply_group_by( EXPORTING it_fields_with_aggr_func = lt_fields_with_aggr_func
+                                   CHANGING  ct_data_set              = <lt_data_set> ).
+    ENDIF.
   ENDMETHOD.
 
 
@@ -281,15 +256,17 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
         ENDIF.
 
         CASE lv_state.
-          WHEN lc_state_in_function
-            OR lc_state_fieldname.
-
-            _parse_field( EXPORTING iv_field     = <ls_node_of_field>-token
-                          CHANGING  cs_parameter = ls_parameter ).
-
-            IF lv_state = lc_state_fieldname.
-              ls_parameter-parameter_type = parameter_type-field.
+          WHEN lc_state_in_function.
+            IF <ls_node_of_field>-token_ucase = 'DISTINCT'.
+              ls_parameter-distinct_flag = abap_true.
+            ELSE.
+              _process_field( EXPORTING iv_field     = <ls_node_of_field>-token
+                              CHANGING  cs_parameter = ls_parameter ).
             ENDIF.
+          WHEN lc_state_fieldname.
+            _process_field( EXPORTING iv_field     = <ls_node_of_field>-token
+                            CHANGING  cs_parameter = ls_parameter ).
+            ls_parameter-parameter_type = parameter_type-field.
           WHEN lc_state_expect_alias.
             ls_parameter-field_alias = <ls_node_of_field>-token.
         ENDCASE.
@@ -304,33 +281,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _APPEND_TO_LAST_FIELD.
-
-    DATA: lv_index_of_last_record TYPE i,
-          lv_value_of_last_record TYPE string,
-          lv_alias                TYPE string.
-
-    IF ct_field_list IS INITIAL.
-      RETURN.
-    ENDIF.
-
-    lv_alias = zcl_zosql_utils=>condense( iv_alias ).
-
-    lv_index_of_last_record = LINES( ct_field_list ).
-    READ TABLE ct_field_list INDEX lv_index_of_last_record INTO lv_value_of_last_record.
-
-    IF zcl_zosql_utils=>check_starts_with_token( iv_sql   = lv_alias
-                                                 iv_token = c_as ) = abap_true.
-
-      CONCATENATE lv_value_of_last_record lv_alias INTO lv_value_of_last_record SEPARATED BY space.
-    ELSE.
-      CONCATENATE lv_value_of_last_record c_as lv_alias INTO lv_value_of_last_record SEPARATED BY space.
-    ENDIF.
-
-    MODIFY ct_field_list INDEX lv_index_of_last_record FROM lv_value_of_last_record.
-  endmethod.
-
-
   METHOD _CREATE_DATA_SET_FOR_SELECT.
 
     DATA: lo_struct                TYPE REF TO cl_abap_structdescr,
@@ -342,8 +292,10 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
 
-      IF <ls_select_parameter>-function_name = c_function_count.
-        ls_new_component = _get_component_for_count( <ls_select_parameter>-field_alias ).
+      IF <ls_select_parameter>-function_name = c_function_count
+        AND <ls_select_parameter>-distinct_flag <> abap_true.
+
+        ls_new_component = _get_component_for_count_star( <ls_select_parameter>-field_alias ).
       ELSE.
 
         ls_new_component = _get_component_for_field( is_select_parameter = <ls_select_parameter>
@@ -356,33 +308,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     lo_table = cl_abap_tabledescr=>create( lo_struct ).
 
     CREATE DATA md_data_set TYPE HANDLE lo_table.
-  ENDMETHOD.
-
-
-  METHOD _CREATE_HASH_TABLE_TO_GROUP.
-
-    DATA: lo_table_data_set      TYPE REF TO cl_abap_tabledescr,
-          lo_struct_data_set     TYPE REF TO cl_abap_structdescr,
-          lt_key                 TYPE abap_keydescr_tab,
-          lo_group_by_hash_table TYPE REF TO cl_abap_tabledescr.
-
-    FIELD-SYMBOLS: <ls_group_by_field>   LIKE LINE OF it_group_by_fields,
-                   <ls_key>              LIKE LINE OF lt_key.
-
-    lo_table_data_set ?= cl_abap_tabledescr=>describe_by_data_ref( md_data_set ).
-    lo_struct_data_set ?= lo_table_data_set->get_table_line_type( ).
-
-    LOOP AT it_group_by_fields ASSIGNING <ls_group_by_field>.
-      APPEND INITIAL LINE TO lt_key ASSIGNING <ls_key>.
-      <ls_key>-name = <ls_group_by_field>-fieldname.
-    ENDLOOP.
-
-    lo_group_by_hash_table = cl_abap_tabledescr=>create( p_line_type  = lo_struct_data_set
-                                                         p_table_kind = cl_abap_tabledescr=>tablekind_hashed
-                                                         p_unique     = abap_true
-                                                         p_key        = lt_key ).
-
-    CREATE DATA rd_group_by_hash_table TYPE HANDLE lo_group_by_hash_table.
   ENDMETHOD.
 
 
@@ -434,7 +359,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _GET_COMPONENT_FOR_COUNT.
+  method _GET_COMPONENT_FOR_COUNT_STAR.
     rs_component-name = iv_name.
     rs_component-type = cl_abap_elemdescr=>get_i( ).
   endmethod.
@@ -466,92 +391,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _group_into_hashed_table.
-
-    DATA: lv_fieldname         TYPE fieldname,
-          ld_table_one_group   TYPE REF TO data,
-          lv_same_key          TYPE abap_bool,
-          ld_line_grouped_copy TYPE REF TO data.
-
-    FIELD-SYMBOLS: <lt_table_before>      TYPE STANDARD TABLE,
-                   <lt_table_grouped>     TYPE HASHED TABLE,
-                   <ls_line_before>       TYPE any,
-                   <ls_line_grouped>      TYPE any,
-                   <lv_field_before>      TYPE any,
-                   <lv_field_grouped>     TYPE any,
-                   <lt_table_one_group>   TYPE STANDARD TABLE,
-                   <ls_line_grouped_copy> TYPE any.
-
-    ASSIGN id_ref_to_hash_group_by_table->* TO <lt_table_grouped>.
-
-    _prepare_count_for_group_by( ).
-
-    ASSIGN md_data_set->* TO <lt_table_before>.
-
-    LOOP AT <lt_table_before> ASSIGNING <ls_line_before>.
-      READ TABLE <lt_table_grouped> FROM <ls_line_before> ASSIGNING <ls_line_grouped>.
-      IF sy-subrc <> 0.
-        INSERT <ls_line_before> INTO TABLE <lt_table_grouped>.
-      ENDIF.
-    ENDLOOP.
-
-    CREATE DATA ld_table_one_group LIKE <lt_table_before>.
-    ASSIGN ld_table_one_group->* TO <lt_table_one_group>.
-
-    CREATE DATA ld_line_grouped_copy LIKE LINE OF <lt_table_grouped>.
-    ASSIGN ld_line_grouped_copy->* TO <ls_line_grouped_copy>.
-
-    LOOP AT <lt_table_grouped> ASSIGNING <ls_line_grouped>.
-
-      REFRESH <lt_table_one_group>.
-      LOOP AT <lt_table_before> ASSIGNING <ls_line_before>.
-
-        lv_same_key = abap_true.
-        LOOP AT it_group_by_fields INTO lv_fieldname.
-          ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_before>  TO <lv_field_before>.
-          ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_line_grouped> TO <lv_field_grouped>.
-
-          IF <lv_field_before> <> <lv_field_grouped>.
-            lv_same_key = abap_false.
-            EXIT.
-          ENDIF.
-        ENDLOOP.
-
-        CHECK lv_same_key = abap_true.
-
-        APPEND <ls_line_before> TO <lt_table_one_group>.
-      ENDLOOP.
-
-      <ls_line_grouped_copy> = <ls_line_grouped>.
-      _run_group_by_function( EXPORTING it_table_lines_by_key = <lt_table_one_group>
-                              CHANGING  cs_line_to_group      = <ls_line_grouped_copy> ).
-
-      IF <ls_line_grouped_copy> <> <ls_line_grouped>.
-        MODIFY TABLE <lt_table_grouped> FROM <ls_line_grouped_copy>.
-      ENDIF.
-    ENDLOOP.
-
-    <lt_table_before> = <lt_table_grouped>.
-  ENDMETHOD.
-
-
-  method _IS_FUNCTION.
-
-    IF iv_field CP '*(*)*'.
-      rv_is_function = abap_true.
-    ENDIF.
-  endmethod.
-
-
-  method _IS_FUNCTION_NAME.
-
-    IF iv_token CP '*('.
-      rv_is_function_name = abap_true.
-    ENDIF.
-  endmethod.
-
-
-  METHOD _PARSE_FIELD.
+  METHOD _PROCESS_FIELD.
 
     DATA: lv_dataset_name_or_alias TYPE string,
           lv_field_name            TYPE string.
@@ -564,196 +404,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     cs_parameter-dataset_name = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_dataset_name_or_alias ) ).
     cs_parameter-field_name   = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_field_name ) ).
-  ENDMETHOD.
-
-
-  method _PARSE_FUNCTION.
-
-    DATA: ltd_parts TYPE TABLE OF string,
-          lv_part   TYPE string.
-
-    SPLIT iv_field AT space INTO TABLE ltd_parts.
-
-    LOOP AT ltd_parts INTO lv_part.
-      IF _is_function_name( lv_part ) = abap_true.
-        cs_parameter-function_name = zcl_zosql_utils=>to_upper_case( lv_part ).
-        REPLACE FIRST OCCURRENCE OF '(' IN cs_parameter-function_name WITH space.
-        CONDENSE cs_parameter-function_name.
-        cs_parameter-parameter_type = parameter_type-groupby_function.
-      ELSEIF lv_part = ')'.
-        EXIT.
-      ELSE.
-        _parse_field( EXPORTING iv_field     = lv_part
-                      CHANGING  cs_parameter = cs_parameter ).
-      ENDIF.
-    ENDLOOP.
-  endmethod.
-
-
-  METHOD _PREPARE_COUNT_FOR_GROUP_BY.
-
-    FIELD-SYMBOLS: <lt_table>     TYPE STANDARD TABLE,
-                   <ls_select_parameter> LIKE LINE OF mt_select_parameters,
-                   <ls_table_line>     TYPE any,
-                   <lv_count_field>    TYPE i.
-
-    READ TABLE mt_select_parameters WITH KEY function_name = c_function_count TRANSPORTING NO FIELDS.
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
-
-    ASSIGN md_data_set->* TO <lt_table>.
-
-    LOOP AT <lt_table> ASSIGNING <ls_table_line>.
-      LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
-        WHERE function_name = c_function_count.
-
-        ASSIGN COMPONENT <ls_select_parameter>-field_alias OF STRUCTURE <ls_table_line> TO <lv_count_field>.
-        IF sy-subrc = 0.
-          <lv_count_field> = 1.
-        ENDIF.
-      ENDLOOP.
-    ENDLOOP.
-  ENDMETHOD.
-
-
-  METHOD _run_group_by_function.
-
-    DATA: lv_fieldname TYPE fieldname.
-
-    FIELD-SYMBOLS: <ls_select_parameter>       LIKE LINE OF mt_select_parameters,
-                   <lv_grouped_value>          TYPE any,
-                   <ls_table_line_not_grouped> TYPE any,
-                   <lv_not_grouped_value>      TYPE any.
-
-    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
-      WHERE parameter_type = parameter_type-groupby_function.
-
-      IF <ls_select_parameter>-field_alias IS NOT INITIAL.
-        lv_fieldname = <ls_select_parameter>-field_alias.
-      ELSE.
-        lv_fieldname = <ls_select_parameter>-field_name.
-      ENDIF.
-      lv_fieldname = zcl_zosql_utils=>to_upper_case( lv_fieldname ).
-
-      ASSIGN COMPONENT lv_fieldname OF STRUCTURE cs_line_to_group TO <lv_grouped_value>.
-      CLEAR <lv_grouped_value>.
-
-      LOOP AT it_table_lines_by_key ASSIGNING <ls_table_line_not_grouped>.
-        ASSIGN COMPONENT lv_fieldname OF STRUCTURE <ls_table_line_not_grouped> TO <lv_not_grouped_value>.
-
-        CASE zcl_zosql_utils=>to_upper_case( <ls_select_parameter>-function_name ).
-          WHEN 'SUM'.
-            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
-          WHEN 'MIN'.
-            IF <lv_not_grouped_value> < <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
-              <lv_grouped_value> = <lv_not_grouped_value>.
-            ENDIF.
-          WHEN 'MAX'.
-            IF <lv_not_grouped_value> > <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
-              <lv_grouped_value> = <lv_not_grouped_value>.
-            ENDIF.
-          WHEN c_function_count.
-            <lv_grouped_value> = <lv_grouped_value> + 1.
-          WHEN c_function_avg.
-            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
-          WHEN OTHERS.
-            MESSAGE e060 WITH <ls_select_parameter>-function_name INTO zcl_zosql_utils=>dummy.
-            zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-        ENDCASE.
-      ENDLOOP.
-    ENDLOOP.
-
-    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
-      WHERE parameter_type = parameter_type-groupby_function
-        AND function_name  = c_function_avg.
-
-      ASSIGN COMPONENT lv_fieldname OF STRUCTURE cs_line_to_group TO <lv_grouped_value>.
-      <lv_grouped_value> = <lv_grouped_value> / LINES( it_table_lines_by_key ).
-    ENDLOOP.
-  ENDMETHOD.
-
-
-  METHOD _SEPARATE_ALIAS.
-
-    DATA: lt_tokens        TYPE TABLE OF string,
-          lv_token         TYPE string,
-          lv_alias_started TYPE abap_bool.
-
-    lt_tokens = zcl_zosql_utils=>split_condition_into_tokens( iv_whole_expression ).
-    CLEAR: ev_expression_without_alias, ev_alias.
-
-    LOOP AT lt_tokens INTO lv_token.
-
-      IF zcl_zosql_utils=>to_upper_case( lv_token ) = 'AS'.
-        lv_alias_started = abap_true.
-        CONTINUE.
-      ENDIF.
-
-      IF lv_alias_started = abap_true.
-        ev_alias = lv_token.
-      ELSE.
-        CONCATENATE ev_expression_without_alias lv_token INTO ev_expression_without_alias
-          SEPARATED BY space.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-
-  METHOD _SPLIT_SELECT_INTO_FIELDS.
-
-    DATA: lv_field_after_split         TYPE string,
-          lv_field                     TYPE string,
-          lv_alias_expected            TYPE abap_bool,
-          lt_fields_in_result_set_copy LIKE rt_fields_in_result_set,
-          lv_inside_function           TYPE abap_bool,
-          lv_add_field                 TYPE abap_bool,
-          lv_append_to_last_field      TYPE abap_bool.
-
-    IF iv_new_syntax = abap_true.
-      SPLIT iv_field_list_from_select AT ',' INTO TABLE rt_fields_in_result_set.
-    ELSE.
-      rt_fields_in_result_set = zcl_zosql_utils=>split_condition_into_tokens( iv_field_list_from_select ).
-
-      lt_fields_in_result_set_copy = rt_fields_in_result_set.
-      REFRESH rt_fields_in_result_set.
-
-      LOOP AT lt_fields_in_result_set_copy INTO lv_field_after_split.
-
-        lv_add_field            = abap_true.
-        lv_append_to_last_field = abap_false.
-
-        IF zcl_zosql_utils=>to_upper_case( lv_field_after_split ) = c_as.
-          lv_alias_expected = abap_true.
-          lv_add_field = abap_false.
-        ELSEIF lv_field_after_split CP '*(*'.
-          lv_inside_function = abap_true.
-          lv_add_field = abap_false.
-        ELSEIF lv_field_after_split = ')'.
-          lv_inside_function = abap_false.
-        ELSEIF lv_inside_function = abap_true.
-          lv_add_field = abap_false.
-        ELSEIF lv_alias_expected = abap_true.
-          lv_append_to_last_field = abap_true.
-          lv_add_field            = abap_false.
-          lv_alias_expected       = abap_false.
-        ENDIF.
-
-        CONCATENATE lv_field lv_field_after_split INTO lv_field SEPARATED BY space.
-
-        IF lv_add_field = abap_true.
-          IF lv_field IS NOT INITIAL.
-            APPEND zcl_zosql_utils=>condense( lv_field ) TO rt_fields_in_result_set.
-          ENDIF.
-
-          CLEAR lv_field.
-        ELSEIF lv_append_to_last_field = abap_true.
-          _append_to_last_field( EXPORTING iv_alias      = lv_field
-                                 CHANGING  ct_field_list = rt_fields_in_result_set ).
-          CLEAR lv_field.
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
   ENDMETHOD.
 
 
