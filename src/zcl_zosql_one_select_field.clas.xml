@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Class to fill parameters of one select field from parser</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>FILL_SELECT_FIELD_PARAMS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills structure with parameters of current select field</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>GET_PARAMETERS_OF_SELECT_FIELD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns filled select field parameters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>MS_CURRENT_NODE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Current node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>MT_NODES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>List of nodes corresponding to one select field</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>MV_CURRENT_NODE_INDEX</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Index of current node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_ALIAS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Processes alias if exists</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_FIELD</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Processes field</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_FILL_CURRENT_NODE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills parameters of current node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_FUNCTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Processes function or returns false if it is not function</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_GET_FUNCTION_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns function name from current token</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_MOVE_TO_FIRST</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Moves position to first node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_SELECT_FIELD</CLSNAME>
+     <CMPNAME>_MOVE_TO_NEXT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Moves position variables to the next node or returns false</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
