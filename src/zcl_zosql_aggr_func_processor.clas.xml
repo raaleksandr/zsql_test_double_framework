@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Class to process aggregation functions of SELECT field list</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+     <CMPNAME>APPLY_AGGREGATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs aggregation functions on fields</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+     <CMPNAME>C_FUNCTION_AVG</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Aggregation function &apos;AVG&apos;</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+     <CMPNAME>C_FUNCTION_COUNT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Aggregation function &apos;COUNT&apos;</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+     <CMPNAME>FILL_AGGREGATION_FUNCTIONS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Executes all aggregation functions for one set of keys</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

@@ -338,7 +338,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     " <SELECT> ::= SELECT <SELECT_FIELDS> <FROM> <UP_TO_N_ROWS> <FOR_ALL_ENTRIES> <WHERE> <GROUP_BY>
     " <SELECT_FIELDS> ::= * | <SELECT_FIELD> {<SELECT_FIELD>} | <SELECT_FIELD>,{<SELECT_FIELD>}
     " <SELECT_FIELD> ::= data_source~* | <FUNCTION> [<ALIAS>] | <COL_SPEC> [<ALIAS>]
-    " <FUNCTION> ::= function_name( [DISTINCT] col_name )
+    " <FUNCTION> ::= function_name( [DISTINCT] col_name ) | COUNT(*)
     " <COL_SPEC> ::= col_name | data_source~col_name
     " <ALIAS> ::= AS alias
     " <FROM> ::= FROM tabname [<ALIAS>] { <JOIN> }
@@ -723,7 +723,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _FUNCTION.
+  METHOD _function.
 
     DATA: lv_function_field_node_id TYPE i.
 
@@ -734,33 +734,39 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     lv_function_field_node_id = _add_node( iv_parent_id = iv_parent_id ).
 
-    IF _step_forward( ) <> abap_true.
-      RETURN.
-    ENDIF.
+    IF mv_current_token_ucase = 'COUNT(*)'.
+      _step_forward( ).
+      rv_it_is_really_function = abap_true.
+    ELSE.
 
-    IF mv_current_token_ucase = 'DISTINCT'.
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+
+      IF mv_current_token_ucase = 'DISTINCT'.
+        _add_node( iv_parent_id = lv_function_field_node_id ).
+
+        IF _step_forward( ) <> abap_true.
+          RETURN.
+        ENDIF.
+      ENDIF.
+
       _add_node( iv_parent_id = lv_function_field_node_id ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
       ENDIF.
+
+      IF mv_current_token = ')'.
+        _add_node( iv_parent_id = lv_function_field_node_id ).
+        rv_it_is_really_function = abap_true.
+      ENDIF.
+
+      _step_forward( ).
     ENDIF.
-
-    _add_node( iv_parent_id = lv_function_field_node_id ).
-
-    IF _step_forward( ) <> abap_true.
-      RETURN.
-    ENDIF.
-
-    IF mv_current_token = ')'.
-      _add_node( iv_parent_id = lv_function_field_node_id ).
-      rv_it_is_really_function = abap_true.
-    ENDIF.
-
-    _step_forward( ).
 
     _alias( lv_function_field_node_id ).
-  endmethod.
+  ENDMETHOD.
 
 
   method _GROUP_BY.
@@ -1011,7 +1017,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DO.
 
-      IF mv_current_token_ucase = 'FROM'.
+      IF mv_current_token_ucase = 'FROM' OR mv_reached_to_end_flag = abap_true.
         RETURN.
       ENDIF.
 
