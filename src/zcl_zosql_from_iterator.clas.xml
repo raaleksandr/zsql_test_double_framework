@@ -57,12 +57,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>INIT_BY_FROM</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Initialize iterator by SELECT SQL FROM clause(with join etc)</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>INIT_BY_SQL_PARSER</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Initialize iterator by SELECT SQL FROM clause(with join etc)</DESCRIPT>
@@ -72,6 +66,12 @@
      <CMPNAME>MO_ZOSQL_TEST_ENVIRONMENT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Test data environment for use in fake database operations</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_ADD_ANOTHER_JOIN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Adds one more joined dataset in &apos;FROM&apos;</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
@@ -111,6 +111,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_CREATE_DATASET_ITERATOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates iterator object for one dataset included in join</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>_FILL_RECORD_STATISTIC</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Adds dataset records join info necessary for outer joins</DESCRIPT>
@@ -120,6 +126,12 @@
      <CMPNAME>_FIND_NEXT_POSITION_FOR_CONDIT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Moves position forward until it meets all join conditions</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_GET_DATASET_NAME_AND_ALIAS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns dataset name and alias in join</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>

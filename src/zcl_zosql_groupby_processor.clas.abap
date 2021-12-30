@@ -85,10 +85,8 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
 
     lt_child_nodes_of_group_by = io_sql_parser->get_child_nodes( iv_group_by_node_id ).
 
-    LOOP AT lt_child_nodes_of_group_by ASSIGNING <ls_child_node>.
-      IF <ls_child_node>-token_ucase = 'BY'.
-        CONTINUE.
-      ENDIF.
+    LOOP AT lt_child_nodes_of_group_by ASSIGNING <ls_child_node>
+      WHERE node_type = 'SELECT_FIELD'.
 
       APPEND INITIAL LINE TO mt_group_by_fields ASSIGNING <ls_group_by_field>.
       FIND FIRST OCCURRENCE OF '~' IN <ls_child_node>-token.

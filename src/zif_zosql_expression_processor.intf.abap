@@ -5,7 +5,9 @@ interface ZIF_ZOSQL_EXPRESSION_PROCESSOR
   methods INITIALIZE_BY_PARSED_SQL
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
-      value(IV_ID_OF_NODE_TO_PARSE) type I optional .
+      value(IV_ID_OF_NODE_TO_PARSE) type I optional
+    raising
+      ZCX_ZOSQL_ERROR .
   methods CREATE_NEW_INSTANCE
     returning
       value(RO_PROCESSOR) type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR .
