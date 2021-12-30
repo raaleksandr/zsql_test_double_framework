@@ -1,81 +1,142 @@
-class ZCL_ZOSQL_PARSER_RECURS_DESC definition
-  public
-  create public .
+CLASS zcl_zosql_parser_recurs_desc DEFINITION
+  PUBLIC
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  types:
-    BEGIN OF ty_node,
+    TYPES:
+      BEGIN OF ty_node,
         id          TYPE i,
         parent_id   TYPE i,
         token       TYPE string,
         token_ucase TYPE string,
         token_index TYPE i,
         level       TYPE i,
+        node_type   TYPE string,
       END OF ty_node .
-  types:
-    ty_tree  TYPE STANDARD TABLE OF ty_node WITH KEY id .
+    TYPES:
+      ty_tree  TYPE STANDARD TABLE OF ty_node WITH KEY id .
 
-  methods GET_CHILD_NODES
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RT_CHILD_NODES_TREE) type TY_TREE .
-  methods GET_CHILD_NODES_RECURSIVE
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RT_CHILD_NODES_TREE) type TY_TREE .
-  methods GET_NODE_END_TOKEN_INDEX
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RV_END_TOKEN_INDEX) type I .
-  methods GET_NODE_INFO
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RS_NODE_INFO) type TY_NODE .
-  methods GET_NODE_SQL
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RV_SQL_PART) type STRING .
-  methods GET_NODE_SQL_START_AT_OFFSET
-    importing
-      !IV_NODE_ID type I
-      value(IV_NUMBER_OF_TOKENS_OFFSET) type I
-    returning
-      value(RV_SQL_PART) type STRING .
-  methods GET_NODE_SQL_WITHOUT_SELF
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RV_SQL_PART) type STRING .
-  methods GET_NODE_TOKEN_INDEX
-    importing
-      !IV_NODE_ID type I
-    returning
-      value(RV_TOKEN_INDEX) type I .
-  methods GET_SQL_AS_RANGE_OF_TOKENS
-    importing
-      value(IV_START_TOKEN_INDEX) type I
-      value(IV_END_TOKEN_INDEX) type I
-    returning
-      value(RV_SQL_PART) type STRING .
-  methods GET_TOKEN_OF_NTH_CHILD_NODE
-    importing
-      value(IV_MAIN_NODE_ID) type I
-      value(IV_N) type I
-    returning
-      value(RV_TOKEN) type STRING .
-  methods GET_TOP_NODE
-    returning
-      value(RS_TOP_NODE) type TY_NODE .
-  methods RUN_RECURSIVE_DESCENT_PARSER .
-  methods SET_SQL
-    importing
-      !IV_SQL type CLIKE .
+    CONSTANTS: BEGIN OF node_type,
+                 select                         TYPE string VALUE 'SELECT',
+                 select_field                   TYPE string VALUE 'SELECT_FIELD',
+                 function                       TYPE string VALUE 'FUNCTION',
+                 distinct                       TYPE string VALUE 'DISTINCT',
+                 function_argument              TYPE string VALUE 'FUNCTION_ARGUMENT',
+                 opening_bracket                TYPE string VALUE 'OPENING_BRACKET',
+                 closing_bracket                TYPE string VALUE 'CLOSING_BRACKET',
+                 alias_as                       TYPE string VALUE 'ALIAS_AS',
+                 alias                          TYPE string VALUE 'ALIAS',
+                 from                           TYPE string VALUE 'FROM',
+                 table                          TYPE string VALUE 'TABLE',
+                 join                           TYPE string VALUE 'JOIN',
+                 join_on                        TYPE string VALUE 'JOIN_ON',
+                 expression_left_part           TYPE string VALUE 'EXPRESSION_LEFT_PART',
+                 expression_logical_operator    TYPE string VALUE 'EXPRESSION_LOGICAL_OPERATOR',
+                 expression_not                 TYPE string VALUE 'EXPRESSION_NOT',
+                 expression_between             TYPE string VALUE 'EXPRESSION_BETWEEN',
+                 expression_between_lower_bound TYPE string VALUE 'EXPRESSION_BETWEEN_LOWER_BOUND',
+                 expression_between_and_oper    TYPE string VALUE 'EXPRESSION_BETWEEN_AND_OPERATOR',
+                 expression_between_upper_bound TYPE string VALUE 'EXPRESSION_BETWEEN_UPPER_BOUND',
+                 expression_comparison_operator TYPE string VALUE 'EXPRESSION_COMPARISON_OPERATOR',
+                 expression_right_part          TYPE string VALUE 'EXPRESSION_RIGHT_PART',
+                 up_to_n_rows                   TYPE string VALUE 'UP_TO_N_ROWS',
+                 up_to_n_rows_count             TYPE string VALUE 'UP_TO_N_ROWS_COUNT',
+                 for_all_entries                TYPE string VALUE 'FOR_ALL_ENTRIES',
+                 for_all_entries_tabname        TYPE string VALUE 'FOR_ALL_ENTRIES_TABNAME',
+                 where                          TYPE string VALUE 'WHERE',
+                 group_by                       TYPE string VALUE 'GROUP_BY',
+                 order_by                       TYPE string VALUE 'ORDER_BY',
+                 update                         TYPE string VALUE 'UPDATE',
+                 update_tabname                 TYPE string VALUE 'UPDATE_TABNAME',
+                 update_set_fields              TYPE string VALUE 'UPDATE_SET_FIELDS',
+                 update_set_field_name          TYPE string VALUE 'UPDATE_SET_FIELD_NAME',
+                 update_set_equal_operator      TYPE string VALUE 'UPDATE_SET_EQUAL_OPERATOR',
+                 update_set_value               TYPE string VALUE 'UPDATE_SET_VALUE',
+                 delete                         TYPE string VALUE 'DELETE',
+                 delete_tabname                 TYPE string VALUE 'DELETE_TABNAME',
+                 list_of_vals_opening_bracket   TYPE string VALUE 'LIST_OF_VALS_OPENING_BRACKET',
+                 list_of_vals_value             TYPE string VALUE 'LIST_OF_VALS_VALUE',
+               END OF node_type .
+
+    METHODS get_child_node_token_with_type
+      IMPORTING
+        !iv_node_id     TYPE i
+        !iv_node_type   TYPE clike
+        VALUE(iv_ucase) TYPE abap_bool DEFAULT abap_false
+      RETURNING
+        VALUE(rv_token) TYPE string .
+    METHODS get_child_node_with_type
+      IMPORTING
+        !iv_node_id          TYPE i
+        !iv_node_type        TYPE clike
+      RETURNING
+        VALUE(rs_child_node) TYPE ty_node .
+    METHODS get_child_nodes
+      IMPORTING
+        !iv_node_id                TYPE i
+      RETURNING
+        VALUE(rt_child_nodes_tree) TYPE ty_tree .
+    METHODS get_child_nodes_with_self
+      IMPORTING
+        !iv_node_id                TYPE i
+      RETURNING
+        VALUE(rt_child_nodes_tree) TYPE ty_tree .
+    METHODS get_child_nodes_recursive
+      IMPORTING
+        !iv_node_id                TYPE i
+      RETURNING
+        VALUE(rt_child_nodes_tree) TYPE ty_tree .
+    METHODS get_node_end_token_index
+      IMPORTING
+        !iv_node_id               TYPE i
+      RETURNING
+        VALUE(rv_end_token_index) TYPE i .
+    METHODS get_node_info
+      IMPORTING
+        !iv_node_id         TYPE i
+      RETURNING
+        VALUE(rs_node_info) TYPE ty_node .
+    METHODS get_node_sql
+      IMPORTING
+        !iv_node_id        TYPE i
+      RETURNING
+        VALUE(rv_sql_part) TYPE string .
+    METHODS get_node_sql_start_at_offset
+      IMPORTING
+        !iv_node_id                       TYPE i
+        VALUE(iv_number_of_tokens_offset) TYPE i
+      RETURNING
+        VALUE(rv_sql_part)                TYPE string .
+    METHODS get_node_sql_without_self
+      IMPORTING
+        !iv_node_id        TYPE i
+      RETURNING
+        VALUE(rv_sql_part) TYPE string .
+    METHODS get_node_token_index
+      IMPORTING
+        !iv_node_id           TYPE i
+      RETURNING
+        VALUE(rv_token_index) TYPE i .
+    METHODS get_sql_as_range_of_tokens
+      IMPORTING
+        VALUE(iv_start_token_index) TYPE i
+        VALUE(iv_end_token_index)   TYPE i
+      RETURNING
+        VALUE(rv_sql_part)          TYPE string .
+    METHODS get_token_of_nth_child_node
+      IMPORTING
+        VALUE(iv_main_node_id) TYPE i
+        VALUE(iv_n)            TYPE i
+      RETURNING
+        VALUE(rv_token)        TYPE string .
+    METHODS get_top_node
+      RETURNING
+        VALUE(rs_top_node) TYPE ty_node .
+    METHODS run_recursive_descent_parser .
+    METHODS set_sql
+      IMPORTING
+        !iv_sql TYPE clike .
 protected section.
 private section.
 
@@ -87,13 +148,13 @@ private section.
   data MV_CURRENT_TOKEN_UCASE type STRING .
   data MV_REACHED_TO_END_FLAG type ABAP_BOOL .
 
-  methods _UP_TO_N_ROWS
-    importing
-      !IV_PARENT_ID type I .
   methods _MINIMIZE_NESTED_NODE_CHAINS .
   methods _DELETE_NODE
     importing
       !IV_NODE_ID type I .
+  methods _UP_TO_N_ROWS
+    importing
+      !IV_PARENT_ID type I .
   methods _WHERE
     importing
       !IV_PARENT_ID type I .
@@ -186,6 +247,7 @@ private section.
   methods _ADD_NODE
     importing
       value(IV_PARENT_ID) type I optional
+      !IV_NODE_TYPE type CLIKE
     returning
       value(RV_NEW_NODE_ID) type I .
   methods _SELECT
@@ -224,6 +286,39 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       lt_child_nodes = get_child_nodes_recursive( <ls_node>-id ).
       APPEND LINES OF lt_child_nodes TO rt_child_nodes_tree.
     ENDLOOP.
+  endmethod.
+
+
+  METHOD get_child_nodes_with_self.
+
+    DATA: ls_current_node TYPE ty_node.
+
+    ls_current_node = get_node_info( iv_node_id ).
+    rt_child_nodes_tree = get_child_nodes( iv_node_id ).
+    INSERT ls_current_node INTO rt_child_nodes_tree INDEX 1.
+  ENDMETHOD.
+
+
+  METHOD get_child_node_token_with_type.
+    DATA: ls_child_node   TYPE ty_node.
+
+    ls_child_node = get_child_node_with_type( iv_node_id   = iv_node_id
+                                              iv_node_type = iv_node_type ).
+
+    IF iv_ucase = abap_true.
+      rv_token = ls_child_node-token_ucase.
+    ELSE.
+      rv_token = ls_child_node-token.
+    ENDIF.
+  ENDMETHOD.
+
+
+  method GET_CHILD_NODE_WITH_TYPE.
+    DATA: lt_child_nodes TYPE ty_tree.
+
+    lt_child_nodes = get_child_nodes( iv_node_id ).
+
+    READ TABLE lt_child_nodes WITH KEY node_type = iv_node_type INTO rs_child_node.
   endmethod.
 
 
@@ -412,6 +507,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
+    ls_node-node_type = iv_node_type.
+
     APPEND ls_node TO mt_parsed_tree.
 
     rv_new_node_id = ls_node-id.
@@ -420,11 +517,13 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method _ALIAS.
     IF mv_current_token_ucase = 'AS'.
-      _add_node( iv_parent_id = iv_parent_id ).
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-alias_as ).
 
       _step_forward( ).
 
-      _add_node( iv_parent_id = iv_parent_id ).
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-alias ).
 
       _step_forward( ).
     ENDIF.
@@ -435,7 +534,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_select_column_node_id TYPE i.
 
-    lv_select_column_node_id = _add_node( iv_parent_id = iv_parent_id ).
+    lv_select_column_node_id = _add_node( iv_parent_id = iv_parent_id
+                                          iv_node_type = node_type-select_field ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -453,7 +553,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_delete_node_id = _add_node( ).
+    lv_delete_node_id = _add_node( iv_node_type = node_type-delete ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -463,13 +563,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_delete_node_id ).
+    _add_node( iv_parent_id = lv_delete_node_id
+               iv_node_type = node_type-delete ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_delete_node_id ).
+    _add_node( iv_parent_id = lv_delete_node_id
+               iv_node_type = node_type-delete_tabname ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -502,7 +604,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_left_from_or_node_id TYPE i.
 
-    lv_left_from_or_node_id = _add_node( iv_parent_id ).
+    lv_left_from_or_node_id = _add_node( iv_parent_id = iv_parent_id
+                                         iv_node_type = node_type-expression_left_part ).
 
     _expression_or( lv_left_from_or_node_id ).
 
@@ -510,7 +613,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_left_from_or_node_id ).
+    _add_node( iv_parent_id = lv_left_from_or_node_id
+               iv_node_type = node_type-expression_logical_operator ).
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
@@ -524,7 +628,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     DATA: lv_not_before_compare_node_id TYPE i.
 
     IF mv_current_token_ucase = 'NOT'.
-      lv_not_before_compare_node_id = _add_node( iv_parent_id ).
+      lv_not_before_compare_node_id = _add_node( iv_parent_id = iv_parent_id
+                                                 iv_node_type = node_type-expression_not ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
@@ -545,7 +650,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_start_of_expression_node_id = _add_node( iv_parent_id ).
+    lv_start_of_expression_node_id = _add_node( iv_parent_id = iv_parent_id
+                                                iv_node_type = node_type-opening_bracket ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -554,7 +660,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     _expression( lv_start_of_expression_node_id ).
 
     IF mv_current_token = ')'.
-      _add_node( lv_start_of_expression_node_id ).
+      _add_node( iv_parent_id = lv_start_of_expression_node_id
+                 iv_node_type = node_type-closing_bracket ).
       _step_forward( ).
 
       rv_it_was_expr_in_brackets = abap_true.
@@ -574,7 +681,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_start_of_comparison_node_id = _add_node( iv_parent_id ).
+    lv_start_of_comparison_node_id = _add_node( iv_parent_id = iv_parent_id
+                                                iv_node_type = node_type-expression_left_part ).
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
@@ -582,7 +690,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     lv_is_operator_between = _expression_not_between( lv_start_of_comparison_node_id ).
 
     IF lv_is_operator_between <> abap_true.
-      _add_node( lv_start_of_comparison_node_id ).
+      _add_node( iv_parent_id = lv_start_of_comparison_node_id
+                 iv_node_type = node_type-expression_comparison_operator ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
@@ -599,13 +708,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_between ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_between_lower_bound ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -615,13 +726,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_between_and_oper ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id ).
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_between_upper_bound ).
 
     _step_forward( ).
 
@@ -633,7 +746,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_left_from_and_node_id TYPE i.
 
-    lv_left_from_and_node_id = _add_node( iv_parent_id ).
+    lv_left_from_and_node_id = _add_node( iv_parent_id = iv_parent_id
+                                          iv_node_type = node_type-expression_left_part ).
 
     _expression_and( lv_left_from_and_node_id ).
 
@@ -641,7 +755,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_left_from_and_node_id ).
+    _add_node( iv_parent_id = lv_left_from_and_node_id
+               iv_node_type = node_type-expression_logical_operator ).
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
@@ -658,7 +773,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_for_all_entries_node_id = _add_node( iv_parent_id = iv_parent_id ).
+    lv_for_all_entries_node_id = _add_node( iv_parent_id = iv_parent_id
+                                            iv_node_type = node_type-for_all_entries ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -668,7 +784,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_for_all_entries_node_id ).
+    _add_node( iv_parent_id = lv_for_all_entries_node_id
+               iv_node_type = node_type-for_all_entries ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -678,7 +795,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_for_all_entries_node_id ).
+    _add_node( iv_parent_id = lv_for_all_entries_node_id
+               iv_node_type = node_type-for_all_entries ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -688,13 +806,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_for_all_entries_node_id ).
+    _add_node( iv_parent_id = lv_for_all_entries_node_id
+               iv_node_type = node_type-for_all_entries ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_for_all_entries_node_id ).
+    _add_node( iv_parent_id = lv_for_all_entries_node_id
+               iv_node_type = node_type-for_all_entries_tabname ).
 
     _step_forward( ).
   endmethod.
@@ -708,7 +828,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_from_node_id = _add_node( iv_parent_id = iv_parent_id ).
+    lv_from_node_id = _add_node( iv_parent_id = iv_parent_id
+                                 iv_node_type = node_type-from ).
 
     _step_forward( ).
 
@@ -732,7 +853,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_function_field_node_id = _add_node( iv_parent_id = iv_parent_id ).
+    lv_function_field_node_id = _add_node( iv_parent_id = iv_parent_id
+                                           iv_node_type = node_type-function ).
 
     IF mv_current_token_ucase = 'COUNT(*)'.
       _step_forward( ).
@@ -744,21 +866,24 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       ENDIF.
 
       IF mv_current_token_ucase = 'DISTINCT'.
-        _add_node( iv_parent_id = lv_function_field_node_id ).
+        _add_node( iv_parent_id = lv_function_field_node_id
+                   iv_node_type = node_type-distinct ).
 
         IF _step_forward( ) <> abap_true.
           RETURN.
         ENDIF.
       ENDIF.
 
-      _add_node( iv_parent_id = lv_function_field_node_id ).
+      _add_node( iv_parent_id = lv_function_field_node_id
+                 iv_node_type = node_type-function_argument ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
       ENDIF.
 
       IF mv_current_token = ')'.
-        _add_node( iv_parent_id = lv_function_field_node_id ).
+        _add_node( iv_parent_id = lv_function_field_node_id
+                   iv_node_type = node_type-closing_bracket ).
         rv_it_is_really_function = abap_true.
       ENDIF.
 
@@ -777,7 +902,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_group_by_node_id = _add_node( iv_parent_id ).
+    lv_group_by_node_id = _add_node( iv_parent_id = iv_parent_id
+                                     iv_node_type = node_type-group_by ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -787,7 +913,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_group_by_node_id ).
+    _add_node( iv_parent_id = lv_group_by_node_id
+               iv_node_type = node_type-group_by ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -814,7 +941,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     DATA: lv_join_node_id TYPE i.
 
     IF mv_current_token_ucase = 'LEFT' OR mv_current_token_ucase = 'JOIN'.
-      lv_join_node_id = _add_node( iv_parent_id ).
+      lv_join_node_id = _add_node( iv_parent_id = iv_parent_id
+                                   iv_node_type = node_type-join ).
     ELSE.
       RETURN.
     ENDIF.
@@ -824,7 +952,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF mv_current_token_ucase = 'OUTER' OR mv_current_token_ucase = 'JOIN'.
-      _add_node( lv_join_node_id ).
+      _add_node( iv_parent_id = lv_join_node_id
+                 iv_node_type = node_type-join ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
@@ -832,7 +961,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF mv_current_token_ucase = 'JOIN'.
-      _add_node( lv_join_node_id ).
+      _add_node( iv_parent_id = lv_join_node_id
+                 iv_node_type = node_type-join ).
 
       IF _step_forward( ) <> abap_true.
         RETURN.
@@ -875,7 +1005,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_on_node_id = _add_node( iv_parent_id ).
+    lv_on_node_id = _add_node( iv_parent_id = iv_parent_id
+                               iv_node_type = 'JOIN_ON' ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -893,7 +1024,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_order_by_node_id = _add_node( iv_parent_id ).
+    lv_order_by_node_id = _add_node( iv_parent_id = iv_parent_id
+                                     iv_node_type = node_type-order_by ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -903,7 +1035,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_order_by_node_id ).
+    _add_node( iv_parent_id = lv_order_by_node_id
+               iv_node_type = node_type-order_by ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -920,7 +1053,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     lv_is_list_with_brackets = _right_operand_is_list_of_vals( iv_parent_id ).
 
     IF lv_is_list_with_brackets <> abap_true.
-      _add_node( iv_parent_id ).
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-expression_right_part ).
       _step_forward( ).
     ENDIF.
   endmethod.
@@ -935,7 +1069,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_list_of_values_node_id = _add_node( iv_parent_id ).
+    lv_list_of_values_node_id = _add_node( iv_parent_id = iv_parent_id
+                                           iv_node_type = node_type-list_of_vals_opening_bracket ).
 
     DO.
 
@@ -949,7 +1084,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
         EXIT.
       ENDIF.
 
-      _add_node( lv_list_of_values_node_id ).
+      _add_node( iv_parent_id = lv_list_of_values_node_id
+                 iv_node_type = node_type-list_of_vals_value ).
     ENDDO.
 
     _step_forward( ).
@@ -966,7 +1102,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_select_node_id = _add_node( ).
+    lv_select_node_id = _add_node( iv_node_type = node_type-select ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -994,7 +1130,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     IF zcl_zosql_utils=>get_last_n_chars( iv_string              = mv_current_token
                                           iv_how_many_characters = 2 ) = '~*'.
-      _add_node( iv_parent_id = iv_parent_id ).
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-select_field ).
       RETURN.
     ENDIF.
 
@@ -1010,7 +1147,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     DATA: lv_select_fields_node_id TYPE i.
 
     IF mv_current_token = '*'.
-      _add_node( iv_parent_id = iv_parent_id ).
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-select_field ).
       _step_forward( ).
       RETURN.
     ENDIF.
@@ -1047,7 +1185,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_from_table_node_id TYPE i.
 
-    lv_from_table_node_id = _add_node( iv_parent_id = iv_parent_id ).
+    lv_from_table_node_id = _add_node( iv_parent_id = iv_parent_id
+                                       iv_node_type = node_type-table ).
 
     _step_forward( ).
 
@@ -1064,13 +1203,14 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_update_node_id = _add_node( ).
+    lv_update_node_id = _add_node( iv_node_type = node_type-update ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_update_node_id ).
+    _add_node( iv_parent_id = lv_update_node_id
+               iv_node_type = node_type-update_tabname ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -1085,7 +1225,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_set_field_node_id TYPE i.
 
-    lv_set_field_node_id = _add_node( iv_parent_id ).
+    lv_set_field_node_id = _add_node( iv_parent_id = iv_parent_id
+                                      iv_node_type = node_type-update_set_field_name ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -1095,13 +1236,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_set_field_node_id ).
+    _add_node( iv_parent_id = lv_set_field_node_id
+               iv_node_type = node_type-update_set_equal_operator ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_set_field_node_id ).
+    _add_node( iv_parent_id = lv_set_field_node_id
+               iv_node_type = node_type-update_set_value ).
 
     _step_forward( ).
   endmethod.
@@ -1115,7 +1258,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_set_node_id = _add_node( iv_parent_id ).
+    lv_set_node_id = _add_node( iv_parent_id = iv_parent_id
+                                iv_node_type = node_type-update_set_fields ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -1140,7 +1284,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_up_to_n_rows_node_id = _add_node( iv_parent_id ).
+    lv_up_to_n_rows_node_id = _add_node( iv_parent_id = iv_parent_id
+                                         iv_node_type = node_type-up_to_n_rows ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
@@ -1150,19 +1295,22 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _add_node( lv_up_to_n_rows_node_id ).
+    _add_node( iv_parent_id = lv_up_to_n_rows_node_id
+               iv_node_type = node_type-up_to_n_rows ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_up_to_n_rows_node_id ).
+    _add_node( iv_parent_id = lv_up_to_n_rows_node_id
+               iv_node_type = node_type-up_to_n_rows_count ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.
     ENDIF.
 
-    _add_node( lv_up_to_n_rows_node_id ).
+    _add_node( iv_parent_id = lv_up_to_n_rows_node_id
+               iv_node_type = node_type-up_to_n_rows ).
 
     _step_forward( ).
   endmethod.
@@ -1176,7 +1324,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_where_node_id = _add_node( iv_parent_id ).
+    lv_where_node_id = _add_node( iv_parent_id = iv_parent_id
+                                  iv_node_type = node_type-where ).
 
     IF _step_forward( ) <> abap_true.
       RETURN.

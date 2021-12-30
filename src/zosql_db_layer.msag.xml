@@ -173,6 +173,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>077</MSGNR>
+     <TEXT>Invalid logical expression, OR/AND expected</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>
