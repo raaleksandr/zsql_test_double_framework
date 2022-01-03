@@ -461,8 +461,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_where TYPE zcl_zosql_where_processor
       EXPORTING
-        io_parameters = lo_parameters
-        iv_new_syntax = iv_new_syntax.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_parameters             = lo_parameters
+        iv_new_syntax             = iv_new_syntax.
 
     CREATE OBJECT lo_zosql_parser_helper.
     lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser

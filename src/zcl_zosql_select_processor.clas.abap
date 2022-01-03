@@ -399,18 +399,18 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     LOOP AT lt_nodes_of_select_field ASSIGNING <ls_node>.
       CASE <ls_node>-node_type.
-        WHEN 'FUNCTION'.
+        WHEN zcl_zosql_parser_recurs_desc=>node_type-function.
           rs_select_field_parameters-function_name = _get_function_name_from_token( <ls_node>-token_ucase ).
 
           IF rs_select_field_parameters-function_name = 'COUNT(*)'.
             rs_select_field_parameters-field_name = '*'.
           ENDIF.
-        WHEN 'FUNCTION_ARGUMENT'.
+        WHEN zcl_zosql_parser_recurs_desc=>node_type-function_argument.
           ls_argument_parameters = _fill_select_field_as_field( io_sql_parser              = io_sql_parser
                                                                 iv_node_id_of_select_field = <ls_node>-id ).
           rs_select_field_parameters-dataset_name = ls_argument_parameters-dataset_name.
           rs_select_field_parameters-field_name   = ls_argument_parameters-field_name.
-        WHEN 'DISTINCT'.
+        WHEN zcl_zosql_parser_recurs_desc=>node_type-distinct.
           rs_select_field_parameters-distinct_flag = abap_true.
       ENDCASE.
     ENDLOOP.
@@ -437,7 +437,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   method _GET_ALIAS.
     rv_alias = io_sql_parser->get_child_node_token_with_type( iv_node_id   = iv_node_id_of_select_field
-                                                              iv_node_type = 'ALIAS' ).
+                                                              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-alias ).
   endmethod.
 
 

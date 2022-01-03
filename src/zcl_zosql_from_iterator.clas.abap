@@ -404,7 +404,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     FIELD-SYMBOLS: <ls_node_join_on> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     lt_child_nodes = io_sql_parser->get_child_nodes( iv_parent_node_id_of_join ).
-    READ TABLE lt_child_nodes WITH KEY node_type = 'JOIN_ON' ASSIGNING <ls_node_join_on>.
+    READ TABLE lt_child_nodes WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-join_on ASSIGNING <ls_node_join_on>.
     IF sy-subrc = 0.
       lv_id_of_expression_parent = <ls_node_join_on>-id.
     ENDIF.
@@ -538,7 +538,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     INSERT ls_main_node_of_join INTO lt_nodes_of_join INDEX 1.
 
-    READ TABLE lt_nodes_of_join WITH KEY node_type = 'JOIN' token_ucase = 'LEFT' TRANSPORTING NO FIELDS.
+    READ TABLE lt_nodes_of_join WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-join token_ucase = 'LEFT' TRANSPORTING NO FIELDS.
     IF sy-subrc = 0.
       lv_type_of_join = c_left_join.
     ELSE.
@@ -652,11 +652,11 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     lt_nodes_of_join = io_sql_parser->get_child_nodes( iv_parent_node_id_of_join ).
     INSERT ls_main_node_of_join INTO lt_nodes_of_join INDEX 1.
 
-    READ TABLE lt_nodes_of_join WITH KEY node_type = 'TABLE' ASSIGNING <ls_node>.
+    READ TABLE lt_nodes_of_join WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-table ASSIGNING <ls_node>.
     IF sy-subrc = 0.
       ev_name = <ls_node>-token_ucase.
       ev_alias = io_sql_parser->get_child_node_token_with_type( iv_node_id = <ls_node>-id
-                                                                iv_node_type = 'ALIAS'
+                                                                iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-alias
                                                                 iv_ucase     = abap_true ).
     ENDIF.
   endmethod.

@@ -192,7 +192,9 @@ private section.
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
     returning
-      value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA .
+      value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CREATE_TYPE_FOR_PARAMETER
     importing
       !IS_PARAMETER type TY_PARAMETER_WITH_NAME
@@ -276,7 +278,9 @@ private section.
       !ED_DYNAMIC_STRUCT_WITH_PARAMS type ref to DATA
       value(EV_NUMBER_OF_ROWS_TO_SELECT) type I
     changing
-      !CV_WHERE type STRING .
+      !CV_WHERE type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _PREPARE_FOR_UPDATE_DELETE
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -285,7 +289,9 @@ private section.
     exporting
       !ED_DYNAMIC_STRUCT_WITH_PARAMS type ref to DATA
     changing
-      !CV_WHERE type STRING .
+      !CV_WHERE type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
