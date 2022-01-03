@@ -24,6 +24,8 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       f_cut TYPE REF TO zcl_zosql_db_layer.  "class under test
 
     METHODS: setup,
+      teardown,
+      _clear_test_database_tables,
       one_table_no_conditions FOR TESTING RAISING zcx_zosql_error,
       one_table_where_static FOR TESTING RAISING zcx_zosql_error,
       one_table_where_param_eq FOR TESTING RAISING zcx_zosql_error,
@@ -51,6 +53,7 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       select_with_empty_range FOR TESTING RAISING zcx_zosql_error,
       select_into_sorted_table FOR TESTING RAISING zcx_zosql_error,
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
+      select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
       insert_by_itab FOR TESTING RAISING zcx_zosql_error,
@@ -70,6 +73,17 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
 
   METHOD setup.
     f_cut ?= zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    _clear_test_database_tables( ).
+  ENDMETHOD.
+
+  METHOD teardown.
+    _clear_test_database_tables( ).
+  ENDMETHOD.
+
+  METHOD _clear_test_database_tables.
+    DELETE FROM zosql_for_tst.
+    DELETE FROM zosql_for_tst2.
+    DELETE FROM zosql_for_tst3.
   ENDMETHOD.
 
   METHOD one_table_no_conditions.
@@ -79,8 +93,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -130,8 +142,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -175,8 +185,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -232,8 +240,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -307,8 +313,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_some_value    TYPE text50.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -362,8 +366,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -440,8 +442,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     " Check if for all entries works
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -509,8 +509,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zosql_for_tst2.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-key_field2  = 'KEY1_1'.
@@ -569,8 +567,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zosql_for_tst2.
-
     ls_line-mandt            = sy-mandt.
     ls_line-key_field        = 'KEY1'.
     ls_line-key_field2       = 'KEY1_1'.
@@ -638,8 +634,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zosql_for_tst2.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-key_field2  = 'KEY1_1'.
@@ -708,8 +702,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'SOME VALUE'.
     APPEND ls_line TO lt_initial_table.
@@ -757,9 +749,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           ls_line2_initial  TYPE zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-    DELETE FROM zosql_for_tst2.
-
     " Table 1
     ls_line1_initial-key_field   = 'KEY1'.
     ls_line1_initial-text_field1 = 'TEXT1_1'.
@@ -830,8 +819,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_initial_table.
@@ -878,8 +865,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_initial_table.
@@ -928,8 +913,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     " Case of new syntax when there is no spaces between fields in select
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_initial_table.
@@ -978,8 +961,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_initial_table2 TYPE TABLE OF zosql_for_tst2.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_initial_table.
@@ -1052,8 +1033,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1100,8 +1079,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1154,8 +1131,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1210,8 +1185,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     APPEND ls_line TO lt_initial_table.
@@ -1249,8 +1222,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1291,8 +1262,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1352,8 +1321,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1418,8 +1385,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1464,8 +1429,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1510,8 +1473,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1550,8 +1511,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     APPEND ls_line TO lt_initial_table.
@@ -1580,14 +1539,55 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = ls_result_line-cnt exp = 2 ).
   ENDMETHOD.
 
+  METHOD select_subquery_where_eq.
+
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    ls_line-amount    = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    ls_line-amount    = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table.
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST2'
+      'WHERE AMOUNT = ( SELECT MAX( AMOUNT )'
+      '                   FROM ZOSQL_FOR_TST2 )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: ls_result_line  TYPE ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select      = lv_select
+                                              IMPORTING es_result_line = ls_result_line ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = ls_result_line-key_field exp = 'KEY2' ).
+  ENDMETHOD.
+
   METHOD open_cursor_fetch_itab.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1682,8 +1682,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_select        TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-mandt       = sy-mandt.
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
@@ -1789,8 +1787,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_insert_table TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_insert_table.
@@ -1862,8 +1858,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_table_before_modify TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_modify.
@@ -1917,8 +1911,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lt_table_before_modify TYPE TABLE OF zosql_for_tst.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_modify.
@@ -1961,8 +1953,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_update.
@@ -2010,8 +2000,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_update.
@@ -2067,8 +2055,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_update.
@@ -2124,8 +2110,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_update_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_update.
@@ -2185,8 +2169,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_delete_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_delete.
@@ -2227,8 +2209,6 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
           lv_delete_statement    TYPE string.
 
     " GIVEN
-    DELETE FROM zosql_for_tst.
-
     ls_line-key_field   = 'KEY1'.
     ls_line-text_field1 = 'VALUE1_1'.
     APPEND ls_line TO lt_table_before_delete.

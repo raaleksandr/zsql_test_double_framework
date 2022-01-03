@@ -346,34 +346,40 @@ CLASS ltc_unit_tests_on_prog IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD select_with_params.
-    DATA: lt_sbook TYPE TABLE OF sbook,
-          ls_sbook TYPE sbook.
+    DATA: lt_sbook         TYPE TABLE OF sbook,
+          ls_sbook         TYPE sbook,
+          lv_previous_year TYPE numc4,
+          lv_current_year  TYPE numc4.
 
     " GIVEN
+
+    lv_previous_year = sy-datum(4) - 1.
+    lv_current_year  = sy-datum(4).
+
     ls_sbook-bookid     = '101'.
     ls_sbook-carrid     = '1'.
-    ls_sbook-fldate     = '20201001'.
+    CONCATENATE lv_previous_year '1001' INTO ls_sbook-fldate.
     ls_sbook-luggweight = '15'.
     ls_sbook-smoker     = ' '.
     APPEND ls_sbook TO lt_sbook.
 
     ls_sbook-bookid     = '102'.
     ls_sbook-carrid     = '2'.
-    ls_sbook-fldate     = '20211002'.
+    CONCATENATE lv_current_year '1002' INTO ls_sbook-fldate.
     ls_sbook-luggweight = '50'.
     ls_sbook-smoker     = 'X'.
     APPEND ls_sbook TO lt_sbook.
 
     ls_sbook-bookid     = '103'.
     ls_sbook-carrid     = '2'.
-    ls_sbook-fldate     = '20211003'.
+    CONCATENATE lv_current_year '1003' INTO ls_sbook-fldate.
     ls_sbook-luggweight = '15'.
     ls_sbook-smoker     = ' '.
     APPEND ls_sbook TO lt_sbook.
 
     ls_sbook-bookid     = '104'.
     ls_sbook-carrid     = '5'.
-    ls_sbook-fldate     = '20211005'.
+    CONCATENATE lv_current_year '1005' INTO ls_sbook-fldate.
     ls_sbook-luggweight = '15'.
     ls_sbook-smoker     = 'X'.
     APPEND ls_sbook TO lt_sbook.
@@ -398,7 +404,7 @@ CLASS ltc_unit_tests_on_prog IMPLEMENTATION.
     ls_sbook_expected-mandt      = sy-mandt.
     ls_sbook_expected-bookid     = '104'.
     ls_sbook_expected-carrid     = '5'.
-    ls_sbook_expected-fldate     = '20211005'.
+    CONCATENATE lv_current_year '1005' INTO ls_sbook_expected-fldate.
     ls_sbook_expected-luggweight = '15'.
     ls_sbook_expected-smoker     = 'X'.
     APPEND ls_sbook_expected TO lt_sbook_expected.

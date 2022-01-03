@@ -56,12 +56,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_HELPER</CLSNAME>
-     <CMPNAME>_CHECK_TOKENS_AT_POSITIONS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Checks if a node contains specific tokens at positions</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_PARSER_HELPER</CLSNAME>
      <CMPNAME>_NEW_SYNTAX_HOST_CHAR_EXISTS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if @ host char exists in the beginning of any token</DESCRIPT>

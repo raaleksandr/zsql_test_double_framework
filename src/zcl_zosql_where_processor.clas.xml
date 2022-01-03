@@ -32,9 +32,21 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>MO_ZOSQL_TEST_ENVIRONMENT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Test data environment for use in fake database operations</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>MS_PARAMETER_FOR_VALUE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parameter for SQL with Z-SQL test double framework</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>M_RIGHT_PART_SUBQUERY_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>If right part of expression is subquery then here is SQL</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
@@ -44,9 +56,27 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_CHECK_IF_VALUE_IS_SUBQUERY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if right part of comparison expression is subquery</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>_FILL_PARAMETER_DATA_FOR_COND</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fills data necessary for parameter value replacement of cond</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_GET_REF_TO_RIGHT_OPERAND_SUBQ</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns reference to right operand if it is subquery result</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_PROCESS_SUBQUERY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Prepares class attributes if right part is subquery</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

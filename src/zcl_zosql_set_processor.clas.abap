@@ -67,11 +67,10 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
       ls_set_field-fieldname = <ls_node_set_field>-token_ucase.
 
       lt_child_nodes_of_field = io_sql_parser->get_child_nodes( <ls_node_set_field>-id ).
-      READ TABLE lt_child_nodes_of_field INDEX 1 INTO ls_node_equation.
-      CHECK sy-subrc = 0.
-      CHECK ls_node_equation-token = '='.
 
-      READ TABLE lt_child_nodes_of_field INDEX 2 INTO ls_node_new_value.
+      READ TABLE lt_child_nodes_of_field
+        WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-update_set_value
+        INTO ls_node_new_value.
       CHECK sy-subrc = 0.
 
       ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( ls_node_new_value-token ).
