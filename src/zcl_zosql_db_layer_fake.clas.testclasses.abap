@@ -87,7 +87,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_with_avg FOR TESTING RAISING zcx_zosql_error,
       group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       group_by_without_alias FOR TESTING RAISING zcx_zosql_error,
-      for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error.
+      for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
+      subquery_exists FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
 CLASS ltc_cases_for_insert DEFINITION FOR TESTING
@@ -3070,6 +3071,62 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected TO lt_expected.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD subquery_exists.
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line           TYPE zosql_for_tst,
+          lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line2          TYPE zosql_for_tst2,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2,
+          lv_select         TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line2-mandt     = sy-mandt.
+    ls_line2-key_field = 'KEY2'.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+    mo_test_environment->insert_test_data( lt_initial_table2 ).
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST AS T1'
+      'WHERE EXISTS ( SELECT *'
+      '                 FROM ZOSQL_FOR_TST2 AS T2'
+      '                 WHERE T2~KEY_FIELD = T1~KEY_FIELD )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: ls_result_line  TYPE ty_result,
+          lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected TYPE ty_result,
+          lt_expected TYPE TABLE OF ty_result.
+
+    ls_expected-key_field = 'KEY2'.
+    APPEND ls_expected TO lt_expected.
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
   ENDMETHOD.
 ENDCLASS.
 

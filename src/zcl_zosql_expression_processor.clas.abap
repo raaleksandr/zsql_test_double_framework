@@ -131,6 +131,55 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  METHOD zif_zosql_expression_processor~get_list_of_operands.
+
+    DATA: lt_operands LIKE rt_operands.
+
+    FIELD-SYMBOLS: <ls_condition> LIKE LINE OF mt_or_conditions,
+                   <ls_operand>   LIKE LINE OF rt_operands.
+
+    IF m_empty_condition_flag = abap_true.
+      RETURN.
+    ENDIF.
+
+    DO 1 TIMES.
+      LOOP AT mt_or_conditions ASSIGNING <ls_condition>.
+        lt_operands = <ls_condition>-processor->get_list_of_operands( ).
+        APPEND LINES OF lt_operands TO rt_operands.
+      ENDLOOP.
+
+      CHECK sy-subrc <> 0.
+
+      LOOP AT mt_and_conditions ASSIGNING <ls_condition>.
+        lt_operands = <ls_condition>-processor->get_list_of_operands( ).
+        APPEND LINES OF lt_operands TO rt_operands.
+      ENDLOOP.
+
+      CHECK sy-subrc <> 0.
+
+      IF ms_not_condition-processor IS BOUND.
+        rt_operands = ms_not_condition-processor->get_list_of_operands( ).
+      ELSE.
+        APPEND INITIAL LINE TO rt_operands ASSIGNING <ls_operand>.
+        <ls_operand>-dataset_name_or_alias = m_dataset_name_or_alias_left.
+        <ls_operand>-fieldname             = m_fieldname_left.
+
+        APPEND INITIAL LINE TO rt_operands ASSIGNING <ls_operand>.
+        <ls_operand>-dataset_name_or_alias = m_dataset_name_or_alias_right.
+
+        IF m_dataset_name_or_alias_right IS NOT INITIAL.
+          <ls_operand>-fieldname      = m_fieldname_right_or_value.
+        ELSE.
+          <ls_operand>-constant_value = m_fieldname_right_or_value.
+        ENDIF.
+      ENDIF.
+    ENDDO.
+
+    SORT rt_operands.
+    DELETE ADJACENT DUPLICATES FROM rt_operands.
+  ENDMETHOD.
+
+
   METHOD zif_zosql_expression_processor~initialize_by_parsed_sql.
 
     DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_recurs_desc=>ty_tree,

@@ -20,6 +20,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ITERATOR_POSITION</CLSNAME>
+     <CMPNAME>CHECK_DATA_SET_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if dataset exists in object</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ITERATOR_POSITION</CLSNAME>
      <CMPNAME>GET_DATA_SET_LIST</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns list of dataset laying in object at the moment</DESCRIPT>

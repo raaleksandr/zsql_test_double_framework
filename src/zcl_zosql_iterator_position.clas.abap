@@ -37,6 +37,11 @@ public section.
       !IV_DATASET_NAME type CLIKE optional
       !IV_DATASET_ALIAS type CLIKE optional
       !ID_REF_TO_CURRENT_LINE type ref to DATA .
+  methods CHECK_DATA_SET_EXISTS
+    importing
+      !IV_DATASET_NAME_OR_ALIAS type CLIKE
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
 protected section.
 private section.
 
@@ -68,6 +73,24 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
     ENDIF.
 
     <ls_data_set_data>-ref_to_data = id_ref_to_current_line.
+  endmethod.
+
+
+  method CHECK_DATA_SET_EXISTS.
+
+    DATA: lv_dataset_name_or_alias_ucase TYPE string.
+
+    lv_dataset_name_or_alias_ucase = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+    READ TABLE mt_data_sets_data WITH KEY dataset_name = lv_dataset_name_or_alias_ucase
+      TRANSPORTING NO FIELDS.
+    IF sy-subrc <> 0.
+      READ TABLE mt_data_sets_data WITH KEY dataset_alias = lv_dataset_name_or_alias_ucase
+        TRANSPORTING NO FIELDS.
+    ENDIF.
+
+    IF sy-subrc = 0.
+      rv_exists = abap_true.
+    ENDIF.
   endmethod.
 
 

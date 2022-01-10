@@ -19,6 +19,9 @@ public section.
       !IV_PARAMETER_NAME_IN_SELECT type ZOSQL_PARAM_NAME_IN_SELECT
     returning
       value(RD_REF_TO_VALUE_OF_PARAMETER) type ref to DATA .
+  methods GET_ALL_PARAMETERS
+    returning
+      value(RT_PARAMETERS) type ZOSQL_DB_LAYER_PARAMS .
   methods CONSTRUCTOR
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS .
@@ -46,6 +49,11 @@ CLASS ZCL_ZOSQL_PARAMETERS IMPLEMENTATION.
 
   method CONSTRUCTOR.
     mt_parameters = it_parameters.
+  endmethod.
+
+
+  method GET_ALL_PARAMETERS.
+    rt_parameters = mt_parameters.
   endmethod.
 
 

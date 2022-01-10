@@ -44,6 +44,7 @@ public section.
                  expression_comparison_operator TYPE string VALUE 'EXPRESSION_COMPARISON_OPERATOR',
                  expression_right_part          TYPE string VALUE 'EXPRESSION_RIGHT_PART',
                  expression_in                  TYPE string VALUE 'EXPRESSION_IN',
+                 expression_exists              TYPE string VALUE 'EXISTS',
                  subquery_opening_bracket       TYPE string VALUE 'SUBQUERY_OPENING_BRACKET',
                  up_to_n_rows                   TYPE string VALUE 'UP_TO_N_ROWS',
                  up_to_n_rows_count             TYPE string VALUE 'UP_TO_N_ROWS_COUNT',
@@ -164,6 +165,11 @@ private section.
       value(IV_PARENT_ID) type I
     returning
       value(RV_IT_WAS_SUBQUERY) type ABAP_BOOL .
+  methods _EXPRESSION_EXISTS
+    importing
+      value(IV_PARENT_ID) type I
+    returning
+      value(RV_IT_WAS_EXISTS_CONDITION) type ABAP_BOOL .
   methods _DELETE_NODE
     importing
       !IV_NODE_ID type I .
@@ -495,6 +501,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     "                      left_operand <OPERATION> ( <SUBQUERY> ) |
     "                      left_operand BETWEEN value1 AND value2 |
     "                      left_operand IN <RIGHT_OPERAND_IN> |
+    "                      EXISTS ( <SUBQUERY> )
     "                      ( <EXPRESSION> )
     " <RIGHT_OPERAND_IN> ::= right_operand | <RIGHT_OPERAND_LIST_OF_VALS>
     " <SUBQUERY> ::= SELECT <SELECT_FIELDS> <FROM> <WHERE> <GROUP_BY>
@@ -734,6 +741,27 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
+  method _EXPRESSION_EXISTS.
+
+    DATA: lv_exists_node_id TYPE i.
+
+    IF mv_current_token_ucase <> 'EXISTS'.
+      RETURN.
+    ENDIF.
+
+    lv_exists_node_id = _add_node( iv_parent_id = iv_parent_id
+                                   iv_node_type = node_type-expression_exists ).
+
+     IF _step_forward( ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    _subquery( lv_exists_node_id ).
+
+    rv_it_was_exists_condition = abap_true.
+  endmethod.
+
+
   method _EXPRESSION_IN.
     IF mv_current_token_ucase <> 'IN'.
       RETURN.
@@ -785,6 +813,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_start_of_comparison_node_id TYPE i,
           lv_is_expression_in_brackets   TYPE abap_bool,
+          lv_is_operator_exists          TYPE abap_bool,
           lv_is_operator_between         TYPE abap_bool,
           lv_is_operator_in              TYPE abap_bool,
           lv_is_subquery                 TYPE abap_bool.
@@ -793,6 +822,12 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                                                             iv_in_join   = iv_in_join ).
 
     IF lv_is_expression_in_brackets = abap_true.
+      RETURN.
+    ENDIF.
+
+    lv_is_operator_exists = _expression_exists( iv_parent_id ).
+
+    IF lv_is_operator_exists = abap_true.
       RETURN.
     ENDIF.
 
