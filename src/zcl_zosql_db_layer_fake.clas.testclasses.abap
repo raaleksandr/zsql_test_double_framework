@@ -88,7 +88,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       group_by_without_alias FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
-      subquery_exists FOR TESTING RAISING zcx_zosql_error.
+      subquery_exists FOR TESTING RAISING zcx_zosql_error,
+      param_with_name_like_field FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
 CLASS ltc_cases_for_insert DEFINITION FOR TESTING
@@ -3127,6 +3128,58 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD param_with_name_like_field.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          lv_select TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE KEY_FIELD = IT_IS~PARAM'
+      INTO lv_select SEPARATED BY space.
+
+    ls_param-param_name_in_select   = 'IT_IS~PARAM'.
+    ls_param-parameter_value_single = 'KEY2'.
+    APPEND ls_param TO lt_params.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_params
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    ls_expected_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 ENDCLASS.
 
