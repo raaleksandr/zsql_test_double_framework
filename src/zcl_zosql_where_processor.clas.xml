@@ -20,6 +20,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>C_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>&apos;EXISTS&apos; keyword</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>IS_PARAMETER_COMPARED_AS_RANGE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Cheks if the parameter is compared with &apos;IN&apos; operator</DESCRIPT>
@@ -62,6 +68,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_FIELDS_OF_PARENT_AS_PARAMS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns parent SQL field values as params for subquery</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>_FILL_PARAMETER_DATA_FOR_COND</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fills data necessary for parameter value replacement of cond</DESCRIPT>
@@ -74,9 +86,27 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_IF_SUBQUERY_RETURNS_ANY_REC</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if subquery in right part returns any record</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_PROCESS_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills parameters of object for EXISTS statement in where</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>_PROCESS_SUBQUERY</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Prepares class attributes if right part is subquery</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_RUN_SUBQUERY_AND_GET_RESULT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Runs subquery in right part of expression and returns result</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

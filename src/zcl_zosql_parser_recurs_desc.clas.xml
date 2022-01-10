@@ -200,6 +200,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_EXPRESSION_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Parses expression in case it is EXISTS condition in where</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
      <CMPNAME>_EXPRESSION_IN</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parses IN expression in where/join condition</DESCRIPT>

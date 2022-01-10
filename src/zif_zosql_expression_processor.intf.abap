@@ -2,10 +2,19 @@ interface ZIF_ZOSQL_EXPRESSION_PROCESSOR
   public .
 
 
+  types:
+    BEGIN OF ty_operand,
+           dataset_name_or_alias TYPE string,
+           fieldname             TYPE fieldname,
+           constant_value        TYPE string,
+         END OF ty_operand .
+  types:
+    TY_OPERANDS  TYPE STANDARD TABLE OF ty_operand WITH DEFAULT KEY .
+
   methods INITIALIZE_BY_PARSED_SQL
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
-      value(IV_ID_OF_NODE_TO_PARSE) type I optional
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_TO_PARSE) type I
     raising
       ZCX_ZOSQL_ERROR .
   methods CREATE_NEW_INSTANCE
@@ -18,4 +27,7 @@ interface ZIF_ZOSQL_EXPRESSION_PROCESSOR
       value(RV_CONDITION_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods GET_LIST_OF_OPERANDS
+    returning
+      value(RT_OPERANDS) type TY_OPERANDS .
 endinterface.

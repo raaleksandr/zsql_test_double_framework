@@ -10,7 +10,6 @@ public section.
 protected section.
 
   data MV_NEW_SYNTAX type ABAP_BOOL .
-  data MT_TOKENS type STRING_TABLE .
 
   methods DELETE_HOST_VARIABLE_SYMBOL
     importing
