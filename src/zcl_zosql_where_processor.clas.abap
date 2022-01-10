@@ -44,14 +44,9 @@ private section.
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
   constants C_EXISTS type STRING value 'EXISTS' ##NO_TEXT.
 
-  methods _FIELDS_OF_PARENT_AS_PARAMS
-    importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
-    exporting
-      !ET_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
-      !ET_MAPPING_OF_FIELDS_TO_PARAMS type TY_FIELD_PARAMETER_MAPPING_TAB
-    raising
-      ZCX_ZOSQL_ERROR .
+  methods _TRY_TO_GET_PARAMETER_NAME
+    returning
+      value(RV_PARAMETER_NAME) type STRING .
   methods _CHECK_IF_VALUE_IS_SUBQUERY
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -197,13 +192,13 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
 
   METHOD _CHECK_IF_VALUE_IS_PARAMETER.
-    rv_value_is_parameter = mo_parameters->check_parameter_exists( m_fieldname_right_or_value ).
 
-    IF rv_value_is_parameter <> abap_true AND mv_new_syntax = abap_true.
-      rv_value_is_parameter =
-        mo_parameters->check_parameter_exists(
-                         delete_host_variable_symbol( m_fieldname_right_or_value )
-                       ).
+    DATA: lv_parameter_name TYPE string.
+
+    lv_parameter_name = _try_to_get_parameter_name( ).
+
+    IF lv_parameter_name IS NOT INITIAL.
+      rv_value_is_parameter = abap_true.
     ENDIF.
   ENDMETHOD.
 
@@ -226,102 +221,12 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _fields_of_parent_as_params.
-
-    DATA: lo_subquery_sql_parser         TYPE REF TO zcl_zosql_parser_recurs_desc,
-          lo_subquery_from               TYPE REF TO zcl_zosql_from_iterator,
-          lo_subquery_where              TYPE REF TO zif_zosql_expression_processor,
-          lt_data_sets_subquery          TYPE zcl_zosql_from_iterator=>ty_data_sets,
-          lt_operands                    TYPE zif_zosql_expression_processor=>ty_operands,
-          lt_data_sets_parent_query      TYPE zcl_zosql_from_iterator=>ty_data_sets,
-          lt_parameters                  TYPE zosql_db_layer_params,
-          ld_ref_to_parent_dataset_value TYPE REF TO data,
-          lo_zosql_parser_helper         TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_where                  TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    FIELD-SYMBOLS: <ls_operand>               LIKE LINE OF lt_operands,
-                   <ls_data_set_parent_query> LIKE LINE OF lt_data_sets_parent_query,
-                   <ls_parameter>             LIKE LINE OF lt_parameters,
-                   <ls_mapping>               LIKE LINE OF et_mapping_of_fields_to_params.
-
-    REFRESH: et_parameters, et_mapping_of_fields_to_params.
-
-    CREATE OBJECT lo_subquery_sql_parser.
-    lo_subquery_sql_parser->set_sql( m_right_part_subquery_sql ).
-    lo_subquery_sql_parser->run_recursive_descent_parser( ).
-
-    CREATE OBJECT lo_subquery_from
-      EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
-
-    lo_subquery_from->init_by_sql_parser( lo_subquery_sql_parser ).
-
-    CREATE OBJECT lo_subquery_where TYPE zcl_zosql_where_processor
-      EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment
-        io_parameters             = mo_parameters
-        iv_new_syntax             = mv_new_syntax.
-
-    CREATE OBJECT lo_zosql_parser_helper.
-    lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = lo_subquery_sql_parser
-                                                         IMPORTING es_node_where = ls_node_where ).
-
-    lo_subquery_where->initialize_by_parsed_sql( io_sql_parser          = lo_subquery_sql_parser
-                                                 iv_id_of_node_to_parse = ls_node_where-id ).
-
-    lt_data_sets_subquery = lo_subquery_from->get_data_set_list( ).
-    lt_operands = lo_subquery_where->get_list_of_operands( ).
-    lt_data_sets_parent_query = io_iteration_position->get_data_set_list( ).
-
-    lt_parameters = mo_parameters->get_all_parameters( ).
-
-    LOOP AT lt_operands ASSIGNING <ls_operand>
-      WHERE dataset_name_or_alias IS NOT INITIAL.
-
-      READ TABLE lt_data_sets_subquery WITH KEY dataset_name = <ls_operand>-dataset_name_or_alias
-        TRANSPORTING NO FIELDS.
-      IF sy-subrc = 0.
-        CONTINUE.
-      ENDIF.
-
-      READ TABLE lt_data_sets_subquery WITH KEY dataset_alias = <ls_operand>-dataset_name_or_alias
-        TRANSPORTING NO FIELDS.
-      IF sy-subrc = 0.
-        CONTINUE.
-      ENDIF.
-
-      IF io_iteration_position->check_data_set_exists( <ls_operand>-dataset_name_or_alias ) = abap_true.
-
-        ld_ref_to_parent_dataset_value =
-          io_iteration_position->get_field_ref_of_data_set(
-            iv_dataset_name_or_alias = <ls_operand>-dataset_name_or_alias
-            iv_fieldname             = <ls_operand>-fieldname ).
-
-        IF ld_ref_to_parent_dataset_value IS BOUND.
-          APPEND INITIAL LINE TO et_parameters ASSIGNING <ls_parameter>.
-
-          CONCATENATE ':'
-            <ls_operand>-dataset_name_or_alias
-            '__'
-            <ls_operand>-fieldname
-            INTO <ls_parameter>-param_name_in_select.
-
-          <ls_parameter>-parameter_value_ref = ld_ref_to_parent_dataset_value.
-
-          APPEND INITIAL LINE TO et_mapping_of_fields_to_params ASSIGNING <ls_mapping>.
-
-          CONCATENATE <ls_operand>-dataset_name_or_alias '~'
-            <ls_operand>-fieldname INTO <ls_mapping>-fieldname_in_sql.
-
-          <ls_mapping>-parameter_name = <ls_parameter>-param_name_in_select.
-        ENDIF.
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-
   method _FILL_PARAMETER_DATA_FOR_COND.
-    ms_parameter_for_value = mo_parameters->get_parameter_data( m_fieldname_right_or_value ).
+
+    DATA: lv_parameter_name TYPE string.
+
+    lv_parameter_name = _try_to_get_parameter_name( ).
+    ms_parameter_for_value = mo_parameters->get_parameter_data( lv_parameter_name ).
   endmethod.
 
 
@@ -441,33 +346,46 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   METHOD _run_subquery_and_get_result.
 
-    DATA: lo_subquery                    TYPE REF TO zcl_zosql_db_layer_fake,
-          lt_parameters_field_values     TYPE zosql_db_layer_params,
-          lt_parameters                  TYPE zosql_db_layer_params,
-          lv_subquery_sql                TYPE string,
-          lt_mapping_of_fields_to_params TYPE ty_field_parameter_mapping_tab.
-
-    FIELD-SYMBOLS: <ls_mapping> LIKE LINE OF lt_mapping_of_fields_to_params.
-
-    lt_parameters = mo_parameters->get_all_parameters( ).
-    _fields_of_parent_as_params( EXPORTING io_iteration_position          = io_iteration_position
-                                 IMPORTING et_parameters                  = lt_parameters_field_values
-                                           et_mapping_of_fields_to_params = lt_mapping_of_fields_to_params ).
-
-    APPEND LINES OF lt_parameters_field_values TO lt_parameters.
-
-    lv_subquery_sql = m_right_part_subquery_sql.
-    LOOP AT lt_mapping_of_fields_to_params ASSIGNING <ls_mapping>.
-      REPLACE ALL OCCURRENCES OF <ls_mapping>-fieldname_in_sql IN lv_subquery_sql
-        WITH <ls_mapping>-parameter_name IGNORING CASE.
-    ENDLOOP.
+    DATA: lo_subquery TYPE REF TO zcl_zosql_subquery_in_where.
 
     CREATE OBJECT lo_subquery
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
+        io_zosql_test_environment     = mo_zosql_test_environment
+        iv_subquery_sql               = m_right_part_subquery_sql
+        io_iteration_position_parent  = io_iteration_position
+        io_parameters_of_parent_query = mo_parameters
+        iv_new_syntax                 = mv_new_syntax.
 
-    lo_subquery->zif_zosql_db_layer~select( EXPORTING iv_select          = lv_subquery_sql
-                                                      it_parameters      = lt_parameters
-                                            IMPORTING ed_result_as_table = rd_ref_to_result_as_table ).
+    rd_ref_to_result_as_table = lo_subquery->run_subquery_and_get_result( ).
   ENDMETHOD.
+
+
+  method _TRY_TO_GET_PARAMETER_NAME.
+    DATA: lv_fieldname_full TYPE string,
+          lv_param_without_host_symbol TYPE string.
+
+    IF mo_parameters->check_parameter_exists( m_fieldname_right_or_value ) = abap_true.
+      rv_parameter_name = m_fieldname_right_or_value.
+      RETURN.
+    ENDIF.
+
+    IF m_dataset_name_or_alias_right IS NOT INITIAL.
+      CONCATENATE m_dataset_name_or_alias_right m_fieldname_right_or_value
+        INTO lv_fieldname_full SEPARATED BY '~'.
+
+      IF mo_parameters->check_parameter_exists( lv_fieldname_full ) = abap_true.
+        rv_parameter_name = lv_fieldname_full.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    IF mv_new_syntax = abap_true.
+
+      lv_param_without_host_symbol = delete_host_variable_symbol( m_fieldname_right_or_value ).
+
+      IF mo_parameters->check_parameter_exists( lv_param_without_host_symbol ) = abap_true.
+        rv_parameter_name = lv_param_without_host_symbol.
+      ENDIF.
+    ENDIF.
+  endmethod.
 ENDCLASS.
