@@ -503,7 +503,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     "                      left_operand IN <RIGHT_OPERAND_IN> |
     "                      EXISTS ( <SUBQUERY> )
     "                      ( <EXPRESSION> )
-    " <RIGHT_OPERAND_IN> ::= right_operand | <RIGHT_OPERAND_LIST_OF_VALS>
+    " <RIGHT_OPERAND_IN> ::= right_operand | <RIGHT_OPERAND_LIST_OF_VALS> | <SUBQUERY>
     " <SUBQUERY> ::= SELECT <SELECT_FIELDS> <FROM> <WHERE> <GROUP_BY>
     " <GROUP_BY> ::= GROUP BY <GROUP_ORDER_FIELDS>
     " <GROUP_ORDER_FIELDS> ::= <COL_SPEC> { <COL_SPEC> }
@@ -1178,7 +1178,16 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   METHOD _right_operand_in.
 
-    DATA: lv_is_list_with_brackets TYPE abap_bool.
+    DATA: lv_is_subquery           TYPE abap_bool,
+          lv_is_list_with_brackets TYPE abap_bool.
+
+    lv_is_subquery = _subquery( iv_parent_id ).
+
+    IF lv_is_subquery = abap_true
+      OR iv_in_join = abap_true.
+
+      RETURN.
+    ENDIF.
 
     lv_is_list_with_brackets = _right_operand_list_of_vals( iv_parent_id ).
 

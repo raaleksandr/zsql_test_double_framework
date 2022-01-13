@@ -26,18 +26,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
-     <CMPNAME>IS_PARAMETER_COMPARED_AS_RANGE</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Cheks if the parameter is compared with &apos;IN&apos; operator</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
-     <CMPNAME>MO_PARAMETERS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Instance storing parameters for dynamic SQL Query</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>MO_ZOSQL_TEST_ENVIRONMENT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Test data environment for use in fake database operations</DESCRIPT>
@@ -56,21 +44,15 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
-     <CMPNAME>_CHECK_IF_VALUE_IS_PARAMETER</CMPNAME>
+     <CMPNAME>_CHECK_FOR_IN_WHEN_SUBQUERY</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Checks whether value is parameter</DESCRIPT>
+     <DESCRIPT>Performs check &apos;IN&apos; if right part is subquery</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>_CHECK_IF_VALUE_IS_SUBQUERY</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if right part of comparison expression is subquery</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
-     <CMPNAME>_FILL_PARAMETER_DATA_FOR_COND</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Fills data necessary for parameter value replacement of cond</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
@@ -101,12 +83,6 @@
      <CMPNAME>_RUN_SUBQUERY_AND_GET_RESULT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Runs subquery in right part of expression and returns result</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
-     <CMPNAME>_TRY_TO_GET_PARAMETER_NAME</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Tries to return parameter name if value is parameter</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

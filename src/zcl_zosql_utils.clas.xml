@@ -118,6 +118,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>IS_NUMBER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if variable is a number (p, float, int etc)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>IS_STRUCTURE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if variable is a structure</DESCRIPT>

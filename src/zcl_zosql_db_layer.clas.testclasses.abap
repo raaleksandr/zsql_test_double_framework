@@ -54,6 +54,8 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       select_into_sorted_table FOR TESTING RAISING zcx_zosql_error,
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
       select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
+      select_between FOR TESTING RAISING zcx_zosql_error,
+      select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
       insert_by_itab FOR TESTING RAISING zcx_zosql_error,
@@ -1580,6 +1582,138 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = ls_result_line-key_field exp = 'KEY2' ).
+  ENDMETHOD.
+
+  METHOD select_between.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-amount      = 25.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table.
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST2'
+      'WHERE amount between 20 AND 30'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+
+    DATA: lt_result       TYPE TABLE OF zosql_for_tst2.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst2,
+          lt_expected_table TYPE TABLE OF zosql_for_tst2.
+
+    ls_expected_line-mandt     = sy-mandt.
+    ls_expected_line-key_field = 'KEY2'.
+    ls_expected_line-amount    = 20.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt     = sy-mandt.
+    ls_expected_line-key_field = 'KEY3'.
+    ls_expected_line-amount    = 25.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result, lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_param_in_join.
+    DATA: ls_line           TYPE zosql_for_tst,
+          lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line2          TYPE zosql_for_tst2,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2,
+          lt_params         TYPE zosql_db_layer_params,
+          ls_param          TYPE zosql_db_layer_param,
+          lv_select         TYPE string.
+
+    " GIVEN
+    ls_line-mandt        = sy-mandt.
+    ls_line-key_field    = 'KEY1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt        = sy-mandt.
+    ls_line-key_field    = 'KEY2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt        = sy-mandt.
+    ls_line-key_field    = 'KEY3'.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
+
+    ls_line-mandt        = sy-mandt.
+    ls_line-key_field    = 'KEY3'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line2-mandt       = sy-mandt.
+    ls_line2-key_field   = 'KEY1'.
+    ls_line2-amount      = 10.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt       = sy-mandt.
+    ls_line2-key_field   = 'KEY2'.
+    ls_line2-amount      = 20.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt       = sy-mandt.
+    ls_line2-key_field   = 'KEY3'.
+    ls_line2-amount      = 25.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    INSERT zosql_for_tst2 FROM TABLE lt_initial_table2.
+
+    CONCATENATE 'SELECT ZOSQL_FOR_TST~key_field'
+      'FROM ZOSQL_FOR_TST'
+      'JOIN ZOSQL_FOR_TST2 ON ZOSQL_FOR_TST2~KEY_FIELD = ZOSQL_FOR_TST~KEY_FIELD'
+      '                   AND ZOSQL_FOR_TST2~AMOUNT >= :MIN_AMOUNT'
+      INTO lv_select SEPARATED BY space.
+
+    ls_param-param_name_in_select   = ':MIN_AMOUNT'.
+    ls_param-parameter_value_single = 15.
+    APPEND ls_param TO lt_params.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field  TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_result  TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_params
+                                              IMPORTING et_result_table = lt_result ).
+
+    "THEN
+
+    DATA: lt_expected  TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected.
+    APPEND 'KEY3' TO lt_expected.
+
+    SORT: lt_result, lt_expected.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
   METHOD open_cursor_fetch_itab.
