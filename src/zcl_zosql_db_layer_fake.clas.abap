@@ -55,7 +55,7 @@ private section.
 
   methods _EXECUTE_SQL
     importing
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       !IO_SQL_EXECUTOR_FOR_LINE type ref to ZIF_ZOSQL_SQL_EXEC_LINE
@@ -160,7 +160,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lv_table_name               TYPE string,
           lo_sql_parser               TYPE REF TO zcl_zosql_parser_recurs_desc,
           lo_parser_helper            TYPE REF TO zcl_zosql_parser_helper,
-          lv_new_syntax               TYPE abap_bool.
+          lv_new_syntax               TYPE abap_bool,
+          lo_parameters               TYPE REF TO zcl_zosql_parameters.
 
     FIELD-SYMBOLS: <lt_buffer> TYPE STANDARD TABLE.
 
@@ -183,7 +184,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       EXPORTING
         iv_table_name        = lv_table_name.
 
-    _execute_sql( it_parameters            = it_parameters
+    CREATE OBJECT lo_parameters
+      EXPORTING
+        it_parameters = it_parameters.
+
+    _execute_sql( io_parameters            = lo_parameters
                   iv_new_syntax            = lv_new_syntax
                   io_iterator              = lo_table_iterator
                   io_sql_executor_for_line = lo_sql_executor_for_line
@@ -403,7 +408,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         iv_table_name        = lv_table_name
         io_set_in_update_sql = lo_set.
 
-    _execute_sql( it_parameters            = it_parameters
+    _execute_sql( io_parameters            = lo_parameters
                   iv_new_syntax            = lv_new_syntax
                   io_iterator              = lo_table_iterator
                   io_sql_executor_for_line = lo_sql_executor_for_line
@@ -450,19 +455,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     DATA: lo_iter_pos            TYPE REF TO zcl_zosql_iterator_position,
           lo_where               TYPE REF TO zif_zosql_expression_processor,
-          lo_parameters          TYPE REF TO zcl_zosql_parameters,
           lv_not_end_of_data     TYPE abap_bool,
           lo_zosql_parser_helper TYPE REF TO zcl_zosql_parser_helper,
           ls_node_where          TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    CREATE OBJECT lo_parameters
-      EXPORTING
-        it_parameters = it_parameters.
-
     CREATE OBJECT lo_where TYPE zcl_zosql_where_processor
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
-        io_parameters             = lo_parameters
+        io_parameters             = io_parameters
         iv_new_syntax             = iv_new_syntax.
 
     CREATE OBJECT lo_zosql_parser_helper.
@@ -572,13 +572,19 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_sql_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
           ls_node_group_by         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_distinct         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lv_new_syntax            TYPE abap_bool.
+          lv_new_syntax            TYPE abap_bool,
+          lo_parameters            TYPE REF TO zcl_zosql_parameters.
 
     REFRESH et_result_table.
 
+    CREATE OBJECT lo_parameters
+      EXPORTING
+        it_parameters = it_parameters.
+
     CREATE OBJECT lo_from_iterator
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_parameters             = lo_parameters.
 
     lo_from_iterator->init_by_sql_parser( io_sql_parser ).
 
@@ -597,7 +603,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                                                  es_node_group_by = ls_node_group_by
                                                                  ev_new_syntax    = lv_new_syntax ).
 
-    _execute_sql( it_parameters            = it_parameters
+    _execute_sql( io_parameters            = lo_parameters
                   iv_new_syntax            = lv_new_syntax
                   io_iterator              = lo_from_iterator
                   io_sql_executor_for_line = lo_sql_executor_for_line

@@ -120,9 +120,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
 
   METHOD create_dynamic_tab_for_result.
-    DATA: lo_select    TYPE REF TO zcl_zosql_select_processor,
-          lo_from_iter TYPE REF TO zcl_zosql_from_iterator,
-          lo_iter_pos  TYPE REF TO zcl_zosql_iterator_position.
+    DATA: lo_select           TYPE REF TO zcl_zosql_select_processor,
+          lo_from_iter        TYPE REF TO zcl_zosql_from_iterator,
+          lo_iter_pos         TYPE REF TO zcl_zosql_iterator_position.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 

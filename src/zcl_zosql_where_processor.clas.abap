@@ -5,11 +5,6 @@ class ZCL_ZOSQL_WHERE_PROCESSOR definition
 
 public section.
 
-  methods IS_PARAMETER_COMPARED_AS_RANGE
-    importing
-      !IV_PARAMETER_NAME_IN_SELECT type ZOSQL_PARAM_NAME_IN_SELECT
-    returning
-      value(RV_IS_COMPARED_AS_RANGE) type ABAP_BOOL .
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
@@ -38,15 +33,18 @@ private section.
   types:
     ty_field_parameter_mapping_tab TYPE STANDARD TABLE OF ty_field_parameter_mapping WITH KEY fieldname_in_sql .
 
-  data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
   data MS_PARAMETER_FOR_VALUE type ZOSQL_DB_LAYER_PARAM .
   data M_RIGHT_PART_SUBQUERY_SQL type STRING .
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
   constants C_EXISTS type STRING value 'EXISTS' ##NO_TEXT.
 
-  methods _TRY_TO_GET_PARAMETER_NAME
+  methods _CHECK_FOR_IN_WHEN_SUBQUERY
+    importing
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
-      value(RV_PARAMETER_NAME) type STRING .
+      value(RV_CONDITIONS_TRUE) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CHECK_IF_VALUE_IS_SUBQUERY
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -82,10 +80,6 @@ private section.
       value(RD_REF_TO_RESULT_AS_TABLE) type ref to DATA
     raising
       ZCX_ZOSQL_ERROR .
-  methods _CHECK_IF_VALUE_IS_PARAMETER
-    returning
-      value(RV_VALUE_IS_PARAMETER) type ABAP_BOOL .
-  methods _FILL_PARAMETER_DATA_FOR_COND .
 ENDCLASS.
 
 
@@ -97,8 +91,8 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
     DATA: lo_factory TYPE REF TO zif_zosql_factory.
 
-    super->constructor( iv_new_syntax ).
-    mo_parameters = io_parameters.
+    super->constructor( io_parameters = io_parameters
+                        iv_new_syntax = iv_new_syntax ).
 
     IF io_zosql_test_environment IS BOUND.
       mo_zosql_test_environment = io_zosql_test_environment.
@@ -107,45 +101,6 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
       mo_zosql_test_environment = lo_factory->get_test_environment( ).
     ENDIF.
   endmethod.
-
-
-  METHOD IS_PARAMETER_COMPARED_AS_RANGE.
-
-    DATA: lo_where_parser TYPE REF TO zcl_zosql_where_processor.
-
-    FIELD-SYMBOLS: <ls_condition> LIKE LINE OF mt_or_conditions.
-
-    LOOP AT mt_or_conditions ASSIGNING <ls_condition>.
-      lo_where_parser ?= <ls_condition>-processor.
-      IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
-        rv_is_compared_as_range = abap_true.
-        RETURN.
-      ENDIF.
-    ENDLOOP.
-
-    LOOP AT mt_and_conditions ASSIGNING <ls_condition>.
-      lo_where_parser ?= <ls_condition>-processor.
-      IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
-        rv_is_compared_as_range = abap_true.
-        RETURN.
-      ENDIF.
-    ENDLOOP.
-
-    IF ms_not_condition-processor IS BOUND.
-      lo_where_parser ?= ms_not_condition-processor.
-      IF lo_where_parser->is_parameter_compared_as_range( iv_parameter_name_in_select ) = abap_true.
-        rv_is_compared_as_range = abap_true.
-        RETURN.
-      ENDIF.
-    ENDIF.
-
-    IF _check_if_value_is_parameter( ) = abap_true
-      AND m_operation = c_in
-      AND ms_parameter_for_value-param_name_in_select = iv_parameter_name_in_select.
-
-      rv_is_compared_as_range = abap_true.
-    ENDIF.
-  ENDMETHOD.
 
 
   method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
@@ -182,32 +137,63 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   METHOD _check_elementary.
 
-    CASE m_operation.
+    CASE mv_operation.
       WHEN c_exists.
         rv_conditions_true = _if_subquery_returns_any_rec( io_iteration_position ).
-      WHEN OTHERS.
-        rv_conditions_true = super->_check_elementary( io_iteration_position ).
+        RETURN.
+      WHEN c_in.
+        IF m_right_part_subquery_sql IS NOT INITIAL.
+          rv_conditions_true = _check_for_in_when_subquery( io_iteration_position ).
+          RETURN.
+        ENDIF.
     ENDCASE.
+
+    rv_conditions_true = super->_check_elementary( io_iteration_position ).
   ENDMETHOD.
 
 
-  METHOD _CHECK_IF_VALUE_IS_PARAMETER.
+  method _CHECK_FOR_IN_WHEN_SUBQUERY.
 
-    DATA: lv_parameter_name TYPE string.
+    DATA: ld_result              TYPE REF TO data,
+          ld_ref_to_left_operand TYPE REF TO data.
 
-    lv_parameter_name = _try_to_get_parameter_name( ).
+    FIELD-SYMBOLS: <lt_result>                  TYPE STANDARD TABLE,
+                   <lv_value_to_find_in_result> TYPE any,
+                   <ls_result>                  TYPE any,
+                   <lv_value_from_subquery>     TYPE any.
 
-    IF lv_parameter_name IS NOT INITIAL.
-      rv_value_is_parameter = abap_true.
+    ld_result = _run_subquery_and_get_result( io_iteration_position ).
+    IF ld_result IS NOT BOUND.
+      RETURN.
     ENDIF.
-  ENDMETHOD.
+
+    ASSIGN ld_result->* TO <lt_result>.
+
+    ld_ref_to_left_operand = _get_ref_to_left_operand( io_iteration_position ).
+
+    IF ld_ref_to_left_operand IS NOT BOUND.
+      RETURN.
+    ENDIF.
+
+    ASSIGN ld_ref_to_left_operand->* TO <lv_value_to_find_in_result>.
+
+    LOOP AT <lt_result> ASSIGNING <ls_result>.
+      ASSIGN COMPONENT 1 OF STRUCTURE <ls_result> TO <lv_value_from_subquery>.
+      CHECK sy-subrc = 0.
+
+      IF <lv_value_to_find_in_result> = <lv_value_from_subquery>.
+        rv_conditions_true = abap_true.
+        EXIT.
+      ENDIF.
+    ENDLOOP.
+  endmethod.
 
 
   method _CHECK_IF_VALUE_IS_SUBQUERY.
 
     DATA: ls_node_subquery TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    IF m_fieldname_right_or_value IS NOT INITIAL.
+    IF ms_right_operand-fieldname_or_value IS NOT INITIAL.
       RETURN.
     ENDIF.
 
@@ -221,19 +207,8 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  method _FILL_PARAMETER_DATA_FOR_COND.
-
-    DATA: lv_parameter_name TYPE string.
-
-    lv_parameter_name = _try_to_get_parameter_name( ).
-    ms_parameter_for_value = mo_parameters->get_parameter_data( lv_parameter_name ).
-  endmethod.
-
-
   method _GET_REF_TO_RIGHT_OPERAND.
-    IF _check_if_value_is_parameter( ) = abap_true.
-      rd_ref_to_right_operand = mo_parameters->get_parameter_value_ref( ms_parameter_for_value-param_name_in_select ).
-    ELSEIF m_right_part_subquery_sql IS NOT INITIAL.
+    IF m_right_part_subquery_sql IS NOT INITIAL.
       rd_ref_to_right_operand = _get_ref_to_right_operand_subq( io_iteration_position ).
     ELSE.
       rd_ref_to_right_operand = super->_get_ref_to_right_operand( io_iteration_position ).
@@ -287,15 +262,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
     super->_process_elementary( io_sql_parser                 = io_sql_parser
                                 iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
-    IF _check_if_value_is_parameter( ) = abap_true.
-
-      IF mv_new_syntax = abap_true.
-        m_fieldname_right_or_value = delete_host_variable_symbol( m_fieldname_right_or_value ).
-      ENDIF.
-
-      _fill_parameter_data_for_cond( ).
-
-    ELSEIF _check_if_value_is_subquery( io_sql_parser                 = io_sql_parser
+    IF _check_if_value_is_subquery( io_sql_parser                 = io_sql_parser
                                         iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ) = abap_true.
 
       _process_subquery( io_sql_parser                 = io_sql_parser
@@ -307,8 +274,8 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
 
   method _PROCESS_EXISTS.
-    CLEAR m_fieldname_left.
-    m_operation = c_exists.
+    CLEAR ms_left_operand-fieldname_or_value.
+    mv_operation = c_exists.
     _process_subquery( io_sql_parser                 = io_sql_parser
                        iv_id_of_node_elementary_cond = iv_id_of_node_exists ).
   endmethod.
@@ -358,34 +325,4 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
     rd_ref_to_result_as_table = lo_subquery->run_subquery_and_get_result( ).
   ENDMETHOD.
-
-
-  method _TRY_TO_GET_PARAMETER_NAME.
-    DATA: lv_fieldname_full TYPE string,
-          lv_param_without_host_symbol TYPE string.
-
-    IF mo_parameters->check_parameter_exists( m_fieldname_right_or_value ) = abap_true.
-      rv_parameter_name = m_fieldname_right_or_value.
-      RETURN.
-    ENDIF.
-
-    IF m_dataset_name_or_alias_right IS NOT INITIAL.
-      CONCATENATE m_dataset_name_or_alias_right m_fieldname_right_or_value
-        INTO lv_fieldname_full SEPARATED BY '~'.
-
-      IF mo_parameters->check_parameter_exists( lv_fieldname_full ) = abap_true.
-        rv_parameter_name = lv_fieldname_full.
-        RETURN.
-      ENDIF.
-    ENDIF.
-
-    IF mv_new_syntax = abap_true.
-
-      lv_param_without_host_symbol = delete_host_variable_symbol( m_fieldname_right_or_value ).
-
-      IF mo_parameters->check_parameter_exists( lv_param_without_host_symbol ) = abap_true.
-        rv_parameter_name = lv_param_without_host_symbol.
-      ENDIF.
-    ENDIF.
-  endmethod.
 ENDCLASS.

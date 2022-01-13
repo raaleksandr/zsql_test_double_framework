@@ -63,6 +63,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>MO_PARAMETERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Instance that stores parameters for dynamic SQL Query</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>MO_ZOSQL_TEST_ENVIRONMENT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Test data environment for use in fake database operations</DESCRIPT>

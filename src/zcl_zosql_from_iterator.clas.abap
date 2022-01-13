@@ -16,7 +16,8 @@ public section.
 
   methods CONSTRUCTOR
     importing
-      !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional .
+      !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS optional .
   methods GET_DATA_SET_LIST
     returning
       value(RT_DATA_SET_LIST) type TY_DATA_SETS .
@@ -88,6 +89,7 @@ private section.
   data:
     mt_outer_join_add_chain TYPE STANDARD TABLE OF ty_outer_join_add_iter WITH DEFAULT KEY .
   data MV_OUTER_JOIN_ADD_MODE_INDEX type I .
+  data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
   methods _CREATE_DATASET_ITERATOR
     importing
@@ -177,9 +179,18 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
 
-  method CONSTRUCTOR.
+  METHOD constructor.
 
-    DATA: lo_factory TYPE REF TO zif_zosql_factory.
+    DATA: lo_factory          TYPE REF TO zif_zosql_factory,
+          lt_parameters_empty TYPE zosql_db_layer_params.
+
+    IF io_parameters IS BOUND.
+      mo_parameters = io_parameters.
+    ELSE.
+      CREATE OBJECT mo_parameters
+        EXPORTING
+          it_parameters = lt_parameters_empty.
+    ENDIF.
 
     IF io_zosql_test_environment IS BOUND.
       mo_zosql_test_environment = io_zosql_test_environment.
@@ -187,7 +198,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
       CREATE OBJECT lo_factory TYPE zcl_zosql_factory.
       mo_zosql_test_environment = lo_factory->get_test_environment( ).
     ENDIF.
-  endmethod.
+  ENDMETHOD.
 
 
   method GET_COMPONENTS_OF_DATA_SET.
@@ -409,7 +420,9 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
       lv_id_of_expression_parent = <ls_node_join_on>-id.
     ENDIF.
 
-    CREATE OBJECT ls_join_condition-expression_processor TYPE zcl_zosql_join_processor.
+    CREATE OBJECT ls_join_condition-expression_processor TYPE zcl_zosql_join_processor
+      EXPORTING
+        io_parameters = mo_parameters.
 
     ls_join_condition-expression_processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
                                                                       iv_id_of_node_to_parse = lv_id_of_expression_parent ).
@@ -473,7 +486,8 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     CREATE OBJECT lo_next_from_iter
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_parameters             = mo_parameters.
 
     lo_next_from_iter->_init_by_attributes( it_datasets_with_position = lt_datasets_with_records
                                             it_join_conditions        = lt_join_conditions_needed ).

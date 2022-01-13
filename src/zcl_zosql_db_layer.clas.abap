@@ -278,6 +278,7 @@ private section.
       !ED_DYNAMIC_STRUCT_WITH_PARAMS type ref to DATA
       value(EV_NUMBER_OF_ROWS_TO_SELECT) type I
     changing
+      !CV_FROM type STRING
       !CV_WHERE type STRING
     raising
       ZCX_ZOSQL_ERROR .
@@ -450,6 +451,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
           lv_distinct                 TYPE abap_bool,
           lv_new_syntax               TYPE abap_bool,
           lv_number_of_rows_expr      TYPE string,
+          lv_from_ready_for_select    TYPE string,
           lv_where_ready_for_select   TYPE string,
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
@@ -473,6 +475,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_number_of_rows_expr     = lv_number_of_rows_expr
                                         eo_sql_parser              = lo_sql_parser ).
 
+    lv_from_ready_for_select = lv_from.
     lv_where_ready_for_select = lv_where.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
                                    iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
@@ -483,13 +486,14 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                    io_sql_parser                 = lo_sql_parser
                          IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
-                         CHANGING  cv_where                      = lv_where_ready_for_select
+                         CHANGING  cv_from                       = lv_from_ready_for_select
+                                   cv_where                      = lv_where_ready_for_select
                          ).
 
     ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
 
     rv_cursor = _open_cursor( iv_select                     = lv_select_field_list
-                              iv_from                       = lv_from
+                              iv_from                       = lv_from_ready_for_select
                               iv_where                      = lv_where_ready_for_select
                               iv_group_by                   = lv_group_by
                               iv_order_by                   = lv_order_by
@@ -1006,6 +1010,11 @@ METHOD _PREPARE_FOR_SELECT.
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
                                                                   io_sql_parser           = io_sql_parser ).
 
+  _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
+                                         iv_name_of_struct_with_params = iv_name_of_struct_with_params
+                                         iv_new_syntax                 = iv_new_syntax
+                               CHANGING  cv_sql                        = cv_from ).
+
   _prepare_where_for_select( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                        iv_name_of_struct_with_params = iv_name_of_struct_with_params
                                        iv_name_of_for_all_ent_in_sel = iv_name_of_for_all_ent_in_sel
@@ -1128,7 +1137,8 @@ ENDMETHOD.
 
 
   METHOD _SELECT_BY_SQL_PARTS.
-    DATA: lv_where_ready_for_select   TYPE string,
+    DATA: lv_from_ready_for_select    TYPE string,
+          lv_where_ready_for_select   TYPE string,
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
           lv_number_of_rows_to_select TYPE i.
@@ -1139,6 +1149,7 @@ ENDMETHOD.
 
     CLEAR: et_result_table, es_result_line, ev_subrc.
 
+    lv_from_ready_for_select  = iv_from.
     lv_where_ready_for_select = iv_where.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
                                    iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
@@ -1149,7 +1160,8 @@ ENDMETHOD.
                                    io_sql_parser                 = io_sql_parser
                          IMPORTING ed_dynamic_struct_with_params = ld_struct_with_params
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
-                         CHANGING  cv_where                      = lv_where_ready_for_select
+                         CHANGING  cv_from                       = lv_from_ready_for_select
+                                   cv_where                      = lv_where_ready_for_select
                          ).
 
     ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
@@ -1160,7 +1172,7 @@ ENDMETHOD.
     ASSIGN ld_result_table_prepared->* TO <lt_result_table>.
 
     _execute_select( EXPORTING iv_select                     = iv_select
-                               iv_from                       = iv_from
+                               iv_from                       = lv_from_ready_for_select
                                iv_where                      = lv_where_ready_for_select
                                iv_group_by                   = iv_group_by
                                iv_order_by                   = iv_order_by

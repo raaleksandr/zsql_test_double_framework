@@ -13,16 +13,16 @@ public section.
       !IT_KEY_FIELDS type FIELDNAME_TABLE
     returning
       value(RD_HASHED_TABLE) type ref to DATA .
-  class-methods SPLIT_CONDITION_INTO_TOKENS
-    importing
-      !IV_SQL_CONDITION type CLIKE
-    returning
-      value(RT_TOKENS) type STRING_TABLE .
   class-methods DELETE_N_END_TOKENS
     importing
       value(IV_N) type I
     changing
       !CV_SQL type CLIKE .
+  class-methods SPLIT_CONDITION_INTO_TOKENS
+    importing
+      !IV_SQL_CONDITION type CLIKE
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
   class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
     importing
       !IO_SALV type ref to CL_SALV_TABLE
@@ -93,6 +93,11 @@ public section.
       !IV_TABLE_NAME type CLIKE
     returning
       value(RV_TRANSPARENT_TABLE_EXISTS) type ABAP_BOOL .
+  class-methods IS_NUMBER
+    importing
+      !I_VARIABLE type ANY
+    returning
+      value(RV_IS_NUMBER) type ABAP_BOOL .
   class-methods IS_CHAR
     importing
       !I_VARIABLE type ANY
@@ -415,6 +420,17 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
       rv_is_internal_table = abap_true.
     ENDIF.
   endmethod.
+
+
+  METHOD IS_NUMBER.
+
+    DATA: lv_type TYPE char1.
+
+    DESCRIBE FIELD i_variable TYPE lv_type.
+    IF lv_type CA 'bsIPaeF'.
+      rv_is_number = abap_true.
+    ENDIF.
+  ENDMETHOD.
 
 
   METHOD IS_STRUCTURE.
