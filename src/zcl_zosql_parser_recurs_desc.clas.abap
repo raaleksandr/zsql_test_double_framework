@@ -45,6 +45,9 @@ public section.
                  expression_right_part          TYPE string VALUE 'EXPRESSION_RIGHT_PART',
                  expression_in                  TYPE string VALUE 'EXPRESSION_IN',
                  expression_exists              TYPE string VALUE 'EXISTS',
+                 expression_like                TYPE string VALUE 'EXPRESSION_LIKE',
+                 expression_like_escape         TYPE string VALUE 'EXPRESSION_LIKE_ESCAPE',
+                 expression_like_escape_symbol  TYPE string VALUE 'EXPRESSION_LIKE_ESCAPE_SYMBOL',
                  subquery_opening_bracket       TYPE string VALUE 'SUBQUERY_OPENING_BRACKET',
                  up_to_n_rows                   TYPE string VALUE 'UP_TO_N_ROWS',
                  up_to_n_rows_count             TYPE string VALUE 'UP_TO_N_ROWS_COUNT',
@@ -152,6 +155,12 @@ public section.
 protected section.
 private section.
 
+  types:
+    BEGIN OF TY_POS_AND_STATE_STACK_REC,
+           current_position   TYPE i,
+           parsed_tree        TYPE ty_tree,
+         END OF ty_pos_and_state_stack_rec .
+
   data MV_SQL type STRING .
   data MT_TOKENS type STRING_TABLE .
   data MV_CURRENT_TOKEN_INDEX type I .
@@ -159,17 +168,22 @@ private section.
   data MV_CURRENT_TOKEN type STRING .
   data MV_CURRENT_TOKEN_UCASE type STRING .
   data MV_REACHED_TO_END_FLAG type ABAP_BOOL .
+  data:
+    MT_POS_and_state_STACK   TYPE STANDARD TABLE OF ty_pos_and_state_stack_rec .
+  constants C_NOT type STRING value 'NOT' ##NO_TEXT.
 
-  methods _SUBQUERY
-    importing
-      value(IV_PARENT_ID) type I
-    returning
-      value(RV_IT_WAS_SUBQUERY) type ABAP_BOOL .
   methods _EXPRESSION_EXISTS
     importing
       value(IV_PARENT_ID) type I
     returning
       value(RV_IT_WAS_EXISTS_CONDITION) type ABAP_BOOL .
+  methods _POP_POSITION_AND_STATE .
+  methods _PUSH_POSITION_AND_STATE .
+  methods _SUBQUERY
+    importing
+      value(IV_PARENT_ID) type I
+    returning
+      value(RV_IT_WAS_SUBQUERY) type ABAP_BOOL .
   methods _DELETE_NODE
     importing
       !IV_NODE_ID type I .
@@ -235,6 +249,11 @@ private section.
     importing
       value(IV_PARENT_ID) type I
       value(IV_IN_JOIN) type ABAP_BOOL .
+  methods _EXPRESSION_LIKE
+    importing
+      !IV_PARENT_ID type I
+    returning
+      value(RV_IT_WAS_LIKE) type ABAP_BOOL .
   methods _EXPRESSION_BETWEEN
     importing
       !IV_PARENT_ID type I
@@ -272,6 +291,11 @@ private section.
   methods _SELECT_FIELDS
     importing
       !IV_PARENT_ID type I .
+  methods _STEP_TO_INDEX
+    importing
+      value(IV_NEW_INDEX) type I
+    returning
+      value(RV_MOVE_SUCCESSFUL) type ABAP_BOOL .
   methods _STEP_FORWARD
     returning
       value(RV_MOVE_SUCCESSFUL) type ABAP_BOOL .
@@ -486,7 +510,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     " <EXPRESSION_JOIN_OR> ::= <EXPRESSION_JOIN_AND> AND <EXPRESSION_JOIN_OR> | <EXPRESSION_JOIN_AND>
     " <EXPRESSION_JOIN_AND> ::= NOT <EXPRESSION_JOIN_NOT> | <EXPRESSION_JOIN_NOT>
     " <EXPRESSION_JOIN_NOT> ::= left_operand <OPERATION> right_operand |
-    "                           left_operand BETWEEN value1 AND value2 |
+    "                           left_operand [NOT] BETWEEN value1 AND value2 |
+    "                           left_operand [NOT] LIKE mask [ESCAPE esc] |
     "                           left_operand IN <RIGHT_OPERAND_LIST_OF_VALS> |
     "                           ( <EXPRESSION_JOIN> )
     " <OPERATION> ::= EQ | = | NE | <> | LE | <= | LT | < | GE | >= | GT | > | LIKE | IN
@@ -499,7 +524,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     " <EXPRESSION_AND> ::= NOT <EXPRESSION_NOT> | <EXPRESSION_NOT>
     " <EXPRESSION_NOT> ::= left_operand <OPERATION> right_operand |
     "                      left_operand <OPERATION> ( <SUBQUERY> ) |
-    "                      left_operand BETWEEN value1 AND value2 |
+    "                      left_operand [NOT] BETWEEN value1 AND value2 |
+    "                      left_operand [NOT] LIKE mask [ESCAPE esc] |
     "                      left_operand IN <RIGHT_OPERAND_IN> |
     "                      EXISTS ( <SUBQUERY> )
     "                      ( <EXPRESSION> )
@@ -684,7 +710,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_not_before_compare_node_id TYPE i.
 
-    IF mv_current_token_ucase = 'NOT'.
+    IF mv_current_token_ucase = c_not.
       lv_not_before_compare_node_id = _add_node( iv_parent_id = iv_parent_id
                                                  iv_node_type = node_type-expression_not ).
 
@@ -703,7 +729,19 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method _EXPRESSION_BETWEEN.
 
+    _push_position_and_state( ).
+
+    IF mv_current_token_ucase = c_not.
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-expression_not ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
     IF mv_current_token_ucase <> 'BETWEEN'.
+      _pop_position_and_state( ).
       RETURN.
     ENDIF.
 
@@ -809,6 +847,56 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   ENDMETHOD.
 
 
+  method _EXPRESSION_LIKE.
+
+    _push_position_and_state( ).
+
+    IF mv_current_token_ucase = c_not.
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-expression_not ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    IF mv_current_token_ucase <> 'LIKE'.
+      _pop_position_and_state( ).
+      RETURN.
+    ENDIF.
+
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_like ).
+
+    IF _step_forward( ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-expression_right_part ).
+
+    rv_it_was_like = abap_true.
+
+    IF _step_forward( ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    IF mv_current_token_ucase = 'ESCAPE'.
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-expression_like_escape ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+
+      _add_node( iv_parent_id = iv_parent_id
+                 iv_node_type = node_type-expression_like_escape_symbol ).
+
+      _step_forward( ).
+    ENDIF.
+  endmethod.
+
+
   METHOD _expression_not.
 
     DATA: lv_start_of_comparison_node_id TYPE i,
@@ -816,6 +904,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
           lv_is_operator_exists          TYPE abap_bool,
           lv_is_operator_between         TYPE abap_bool,
           lv_is_operator_in              TYPE abap_bool,
+          lv_is_operator_like            TYPE abap_bool,
           lv_is_subquery                 TYPE abap_bool.
 
     lv_is_expression_in_brackets = _expression_in_brackets( iv_parent_id = iv_parent_id
@@ -838,14 +927,17 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     lv_is_operator_between = _expression_between( lv_start_of_comparison_node_id ).
-
     IF lv_is_operator_between = abap_true.
+      RETURN.
+    ENDIF.
+
+    lv_is_operator_like = _expression_like( lv_start_of_comparison_node_id ).
+    IF lv_is_operator_like = abap_true.
       RETURN.
     ENDIF.
 
     lv_is_operator_in = _expression_in( iv_parent_id = lv_start_of_comparison_node_id
                                         iv_in_join   = iv_in_join ).
-
     IF lv_is_operator_in = abap_true.
       RETURN.
     ENDIF.
@@ -857,9 +949,11 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_is_subquery = _subquery( lv_start_of_comparison_node_id ).
-    IF lv_is_subquery = abap_true.
-      RETURN.
+    IF iv_in_join <> abap_true.
+      lv_is_subquery = _subquery( lv_start_of_comparison_node_id ).
+      IF lv_is_subquery = abap_true.
+        RETURN.
+      ENDIF.
     ENDIF.
 
     _add_node( iv_parent_id = lv_start_of_comparison_node_id
@@ -1176,6 +1270,28 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
+  method _POP_POSITION_AND_STATE.
+
+    DATA: ls_stack_rec TYPE ty_pos_and_state_stack_rec.
+
+    READ TABLE mt_pos_and_state_stack INDEX LINES( mt_pos_and_state_stack ) INTO ls_stack_rec.
+    IF sy-subrc = 0.
+      _step_to_index( ls_stack_rec-current_position ).
+      mt_parsed_tree = ls_stack_rec-parsed_tree.
+    ENDIF.
+  endmethod.
+
+
+  method _PUSH_POSITION_AND_STATE.
+
+    DATA: ls_stack_rec  TYPE ty_pos_and_state_stack_rec.
+
+    ls_stack_rec-current_position = mv_current_token_index.
+    ls_stack_rec-parsed_tree      = mt_parsed_tree.
+    APPEND ls_stack_rec TO mt_pos_and_state_stack.
+  endmethod.
+
+
   METHOD _right_operand_in.
 
     DATA: lv_is_subquery           TYPE abap_bool,
@@ -1334,8 +1450,13 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
 
   METHOD _step_forward.
+    rv_move_successful = _step_to_index( mv_current_token_index + 1 ).
+  ENDMETHOD.
 
-    mv_current_token_index = mv_current_token_index + 1.
+
+  METHOD _STEP_TO_INDEX.
+
+    mv_current_token_index = iv_new_index.
     READ TABLE mt_tokens INDEX mv_current_token_index INTO mv_current_token.
     IF sy-subrc <> 0.
       rv_move_successful = abap_false.
