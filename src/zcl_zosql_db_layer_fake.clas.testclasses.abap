@@ -49,7 +49,9 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       one_table_for_all_entries FOR TESTING RAISING zcx_zosql_error,
       one_table_group_by FOR TESTING RAISING zcx_zosql_error,
       one_table_distinct FOR TESTING RAISING zcx_zosql_error,
-      operator_like FOR TESTING RAISING zcx_zosql_error,
+      like FOR TESTING RAISING zcx_zosql_error,
+      not_like FOR TESTING RAISING zcx_zosql_error,
+      like_with_star FOR TESTING RAISING zcx_zosql_error,
       join FOR TESTING RAISING zcx_zosql_error,
       left_join FOR TESTING RAISING zcx_zosql_error,
       new_syntax FOR TESTING RAISING zcx_zosql_error,
@@ -71,6 +73,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
       select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
       select_between FOR TESTING RAISING zcx_zosql_error,
+      select_not_between FOR TESTING RAISING zcx_zosql_error,
+      select_like_escape FOR TESTING RAISING zcx_zosql_error,
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
@@ -779,7 +783,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD operator_like.
+  METHOD like.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
@@ -826,6 +830,110 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'AVALUE3_1'.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD not_like.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'AVALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select           TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE TEXT_FIELD1 NOT LIKE ''A%'''
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'VALUE1_1'.
+    ls_expected_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    ls_expected_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD like_with_star.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = '*VALUE2_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'AVALUE3_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select           TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE TEXT_FIELD1 LIKE ''*%'''
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field  TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1988,6 +2096,94 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_line TO lt_expected_table.
 
     SORT: lt_result, lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_not_between.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-amount      = 25.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST2'
+      'WHERE amount not between 20 AND 30'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+
+    DATA: lt_result       TYPE TABLE OF zosql_for_tst2.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst2,
+          lt_expected_table TYPE TABLE OF zosql_for_tst2.
+
+    ls_expected_line-mandt     = sy-mandt.
+    ls_expected_line-key_field = 'KEY1'.
+    ls_expected_line-amount    = 10.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_like_escape.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = '1002'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = '100%2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST'
+      'WHERE TEXT_FIELD1 LIKE ''100#%%'' ESCAPE ''#'''
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result       TYPE TABLE OF zosql_for_tst.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = '100%2'.
+    APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
   ENDMETHOD.
