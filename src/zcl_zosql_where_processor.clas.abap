@@ -267,8 +267,6 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
       _process_subquery( io_sql_parser                 = io_sql_parser
                          iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-    ELSE.
-      _clear_quotes_from_value( ).
     ENDIF.
   ENDMETHOD.
 

@@ -29,7 +29,7 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       one_table_no_conditions FOR TESTING RAISING zcx_zosql_error,
       one_table_where_static FOR TESTING RAISING zcx_zosql_error,
       one_table_where_param_eq FOR TESTING RAISING zcx_zosql_error,
-      one_table_where_param_range FOR TESTING RAISING zcx_zosql_error,
+      one_table_where_param_in FOR TESTING RAISING zcx_zosql_error,
       one_table_where_param_ref FOR TESTING RAISING zcx_zosql_error,
       one_table_2_params_with_or FOR TESTING RAISING zcx_zosql_error,
       one_table_for_all_entries FOR TESTING RAISING zcx_zosql_error,
@@ -50,7 +50,8 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       select_up_to_n_rows FOR TESTING RAISING zcx_zosql_error,
       select_up_to_n_rows_prm FOR TESTING RAISING zcx_zosql_error,
       select_single FOR TESTING RAISING zcx_zosql_error,
-      select_with_empty_range FOR TESTING RAISING zcx_zosql_error,
+      select_in_empty_range FOR TESTING RAISING zcx_zosql_error,
+      select_in_list_of_vals FOR TESTING RAISING zcx_zosql_error,
       select_into_sorted_table FOR TESTING RAISING zcx_zosql_error,
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
       select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
@@ -238,7 +239,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD one_table_where_param_range.
+  METHOD one_table_where_param_in.
 
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst.
@@ -1427,7 +1428,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD select_with_empty_range.
+  METHOD select_in_empty_range.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst,
           lv_select        TYPE string.
@@ -1469,6 +1470,65 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
+  ENDMETHOD.
+
+  METHOD select_in_list_of_vals.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
+
+    " WHEN
+
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_parameters   TYPE zosql_db_layer_params,
+          ls_parameter    LIKE LINE OF lt_parameters,
+          lt_Result_table TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST'
+      'WHERE KEY_FIELD IN (''KEY1'',''KEY3'')'
+      'ORDER BY PRIMARY KEY'
+      INTO lv_select SEPARATED BY space.
+
+    ls_parameter-param_name_in_select = ':KEY_FIELD_RANGE'.
+    REFRESH ls_parameter-parameter_value_range.
+    APPEND ls_parameter TO lt_parameters.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_parameters
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY1' TO lt_expected_table.
+    APPEND 'KEY3' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD select_into_sorted_table.

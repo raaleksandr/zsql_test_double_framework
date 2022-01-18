@@ -564,6 +564,12 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
 
     rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
                                                 iv_separator        = ',' ).
+
+    rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
+                                                iv_separator        = '(' ).
+
+    rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
+                                                iv_separator        = ')' ).
   endmethod.
 
 
