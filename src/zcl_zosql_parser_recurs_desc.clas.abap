@@ -463,12 +463,25 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method GET_SQL_AS_RANGE_OF_TOKENS.
 
-    DATA: lv_token TYPE string.
+    DATA: lv_token                  TYPE string,
+          ls_node_of_previous_token TYPE ty_node.
 
     LOOP AT mt_tokens INTO lv_token
       FROM iv_start_token_index TO iv_end_token_index.
 
-      CONCATENATE rv_sql_part lv_token INTO rv_sql_part SEPARATED BY space.
+      IF sy-tabix > 1.
+        READ TABLE mt_parsed_tree WITH KEY token_index = sy-tabix - 1 INTO ls_node_of_previous_token.
+        IF sy-subrc <> 0.
+          CLEAR ls_node_of_previous_token.
+        ENDIF.
+      ENDIF.
+
+      CASE ls_node_of_previous_token-node_type.
+        WHEN node_type-function.
+          CONCATENATE rv_sql_part lv_token INTO rv_sql_part.
+        WHEN OTHERS.
+          CONCATENATE rv_sql_part lv_token INTO rv_sql_part SEPARATED BY space.
+      ENDCASE.
     ENDLOOP.
 
     SHIFT rv_sql_part LEFT DELETING LEADING space.
@@ -1071,47 +1084,50 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_function_field_node_id TYPE i.
 
-    FIND FIRST OCCURRENCE OF '(' IN mv_current_token.
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
+    _push_position_and_state( ).
 
     lv_function_field_node_id = _add_node( iv_parent_id = iv_parent_id
                                            iv_node_type = node_type-function ).
 
-    IF mv_current_token_ucase = 'COUNT(*)'.
-      _step_forward( ).
-      rv_it_is_really_function = abap_true.
-    ELSE.
-
-      IF _step_forward( ) <> abap_true.
-        RETURN.
-      ENDIF.
-
-      IF mv_current_token_ucase = 'DISTINCT'.
-        _add_node( iv_parent_id = lv_function_field_node_id
-                   iv_node_type = node_type-distinct ).
-
-        IF _step_forward( ) <> abap_true.
-          RETURN.
-        ENDIF.
-      ENDIF.
-
-      _add_node( iv_parent_id = lv_function_field_node_id
-                 iv_node_type = node_type-function_argument ).
-
-      IF _step_forward( ) <> abap_true.
-        RETURN.
-      ENDIF.
-
-      IF mv_current_token = ')'.
-        _add_node( iv_parent_id = lv_function_field_node_id
-                   iv_node_type = node_type-closing_bracket ).
-        rv_it_is_really_function = abap_true.
-      ENDIF.
-
-      _step_forward( ).
+    IF _step_forward( ) <> abap_true.
+      RETURN.
     ENDIF.
+
+    IF mv_current_token <> '('.
+      _pop_position_and_state( ).
+      RETURN.
+    ENDIF.
+
+    _add_node( iv_parent_id = lv_function_field_node_id
+               iv_node_type = node_type-opening_bracket ).
+
+    IF _step_forward( ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    IF mv_current_token_ucase = 'DISTINCT'.
+      _add_node( iv_parent_id = lv_function_field_node_id
+                 iv_node_type = node_type-distinct ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    _add_node( iv_parent_id = lv_function_field_node_id
+               iv_node_type = node_type-function_argument ).
+
+    IF _step_forward( ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    IF mv_current_token = ')'.
+      _add_node( iv_parent_id = lv_function_field_node_id
+                 iv_node_type = node_type-closing_bracket ).
+      rv_it_is_really_function = abap_true.
+    ENDIF.
+
+    _step_forward( ).
 
     _alias( lv_function_field_node_id ).
   ENDMETHOD.
@@ -1329,15 +1345,13 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method _RIGHT_OPERAND_LIST_OF_VALS.
 
-    DATA: lv_list_of_values_node_id TYPE i.
-
     IF zcl_zosql_utils=>get_first_n_chars( iv_string              = mv_current_token
                                            iv_how_many_characters = 1 ) <> '('.
       RETURN.
     ENDIF.
 
-    lv_list_of_values_node_id = _add_node( iv_parent_id = iv_parent_id
-                                           iv_node_type = node_type-list_of_vals_opening_bracket ).
+    _add_node( iv_parent_id = iv_parent_id
+               iv_node_type = node_type-list_of_vals_opening_bracket ).
 
     DO.
 
@@ -1351,7 +1365,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
         EXIT.
       ENDIF.
 
-      _add_node( iv_parent_id = lv_list_of_values_node_id
+      _add_node( iv_parent_id = iv_parent_id
                  iv_node_type = node_type-list_of_vals_value ).
     ENDDO.
 
@@ -1475,6 +1489,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_node_subquery_open_bracket TYPE i.
 
+    _push_position_and_state( ).
+
     IF mv_current_token <> '('.
       RETURN.
     ENDIF.
@@ -1483,10 +1499,12 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                                                iv_node_type = node_type-subquery_opening_bracket ).
 
     IF _step_forward( ) <> abap_true.
+      _pop_position_and_state( ).
       RETURN.
     ENDIF.
 
     IF mv_current_token_ucase <> 'SELECT'.
+      _pop_position_and_state( ).
       RETURN.
     ENDIF.
 
