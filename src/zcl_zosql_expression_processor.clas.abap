@@ -44,6 +44,7 @@ protected section.
     TY_FIELDS   TYPE STANDARD TABLE OF ty_field WITH KEY dataset_name_or_alias fieldname_or_value .
 
   data MS_LEFT_OPERAND type TY_FIELD .
+  data MV_NOT_FLAG type ABAP_BOOL .
   data MV_OPERATION type STRING .
   data MS_RIGHT_OPERAND type TY_FIELD .
   data MS_BETWEEN_LOWER_BOUND type TY_FIELD .
@@ -54,11 +55,27 @@ protected section.
   constants C_IN type STRING value 'IN' ##NO_TEXT.
   data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
+  methods _COMPARE_VALUES
+    importing
+      !IV_VALUE_LEFT type ANY
+      !IV_OPERATION type CLIKE
+      !IV_VALUE_RIGHT type ANY
+    returning
+      value(RV_CONDITION_TRUE) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _GET_REF_TO_RIGHT_OPERAND
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RD_REF_TO_RIGHT_OPERAND) type ref to DATA
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_WITH_COMPARE_OPERATOR
+    importing
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
+    returning
+      value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
   methods _CHECK_ELEMENTARY
@@ -79,7 +96,6 @@ protected section.
       !IV_ID_OF_NODE_ELEMENTARY_COND type I .
 private section.
 
-  data MV_NOT_FLAG type ABAP_BOOL .
   data MV_ESCAPE_SYMBOL_FOR_LIKE type CHAR1 .
   data MT_LIST_OF_VALUES_FOR_IN type TY_FIELDS .
   data MV_EMPTY_CONDITION_FLAG type ABAP_BOOL .
@@ -106,6 +122,10 @@ private section.
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CONSIDER_NOT_IN_ELEMENTARY
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
   methods _PROCESS_LIKE
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -114,18 +134,15 @@ private section.
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+  methods _PROCESS_COMPARISON
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
   methods _CHECK_BETWEEN
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL .
-  methods _CHECK_WITH_COMPARE_OPERATOR
-    importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
-    returning
-      value(RV_CONDITIONS_TRUE) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _CONVERT_SQLFIELD_TO_OPERAND
     importing
       !IV_FIELDNAME_IN_SQL type CLIKE
@@ -263,6 +280,10 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
+  endmethod.
+
+
   METHOD zif_zosql_expression_processor~get_list_of_operands.
 
     DATA: lt_operands LIKE rt_operands.
@@ -336,7 +357,8 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
     IF ls_first_node-node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not
       AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_between
-      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_like.
+      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_like
+      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_in.
 
       ms_not_condition-processor = zif_zosql_expression_processor~create_new_instance( ).
       ms_not_condition-processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
@@ -528,38 +550,60 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
     ASSIGN ld_ref_to_left_operand->* TO <lv_value_of_left_operand>.
     ASSIGN ld_ref_to_right_operand->* TO <lv_value_of_right_operand>.
 
-    _raise_if_cannot_compare_vals( i_first_value  = <lv_value_of_left_operand>
-                                   i_second_value = <lv_value_of_right_operand> ).
+    rv_conditions_true = _compare_values( iv_value_left  = <lv_value_of_left_operand>
+                                          iv_operation   = mv_operation
+                                          iv_value_right = <lv_value_of_right_operand> ).
+  endmethod.
 
-    CASE mv_operation.
+
+  method _COMPARE_VALUES.
+
+    DATA: lv_operation TYPE string.
+
+    _raise_if_cannot_compare_vals( i_first_value  = iv_value_left
+                                   i_second_value = iv_value_right ).
+
+    lv_operation = zcl_zosql_utils=>to_upper_case( iv_operation ).
+
+    CASE lv_operation.
       WHEN 'EQ' OR '='.
-        IF <lv_value_of_left_operand> = <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left = iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN 'GE' OR '>='.
-        IF <lv_value_of_left_operand> >= <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left >= iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN 'GT' OR '>'.
-        IF <lv_value_of_left_operand> > <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left > iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN 'LE' OR '<='.
-        IF <lv_value_of_left_operand> <= <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left <= iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN 'LT' OR '<'.
-        IF <lv_value_of_left_operand> < <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left < iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN 'NE' OR '<>'.
-        IF <lv_value_of_left_operand> <> <lv_value_of_right_operand>.
-          rv_conditions_true = abap_true.
+        IF iv_value_left <> iv_value_right.
+          rv_condition_true = abap_true.
         ENDIF.
       WHEN OTHERS.
         MESSAGE e066 WITH mv_operation INTO zcl_zosql_utils=>dummy.
         zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDCASE.
+  endmethod.
+
+
+  method _CONSIDER_NOT_IN_ELEMENTARY.
+    IF io_sql_parser->exists_child_node_with_type(
+         iv_node_id   = iv_id_of_node_elementary_cond
+         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not ) = abap_true.
+
+      mv_not_flag = abap_true.
+    ENDIF.
   endmethod.
 
 
@@ -727,49 +771,62 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _PROCESS_ELEMENTARY.
+  method _PROCESS_COMPARISON.
 
     DATA: ls_node_left_operand  TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_operator      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_child_nodes        TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
-
-    FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
 
-    lt_child_nodes = io_sql_parser->get_child_nodes( iv_id_of_node_elementary_cond ).
+    ls_node_operator =
+      io_sql_parser->get_child_node_with_type(
+        iv_node_id   = iv_id_of_node_elementary_cond
+        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator ).
 
-    LOOP AT lt_child_nodes ASSIGNING <ls_node>.
-      CASE <ls_node>-node_type.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_not.
+    ls_node_right_operand =
+      io_sql_parser->get_child_node_with_type(
+        iv_node_id   = iv_id_of_node_elementary_cond
+        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
-          mv_not_flag = abap_true.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator.
-
-          ls_node_operator = <ls_node>.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_between.
-          _process_between( io_sql_parser                 = io_sql_parser
-                            iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-          RETURN.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_like.
-          _process_like( io_sql_parser                 = io_sql_parser
-                         iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-          RETURN.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_in.
-          _process_in( io_sql_parser                 = io_sql_parser
-                       iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-          RETURN.
-        WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_right_part.
-          ls_node_right_operand = <ls_node>.
-      ENDCASE.
-    ENDLOOP.
-
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+   ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
 
     mv_operation = ls_node_operator-token_ucase.
 
     ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
+  endmethod.
+
+
+  METHOD _process_elementary.
+
+    IF io_sql_parser->exists_child_node_with_type(
+         iv_node_id   = iv_id_of_node_elementary_cond
+         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator ) = abap_true.
+
+      _process_comparison( io_sql_parser                 = io_sql_parser
+                           iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    ELSEIF io_sql_parser->exists_child_node_with_type(
+              iv_node_id   = iv_id_of_node_elementary_cond
+              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between ) = abap_true.
+
+      _process_between( io_sql_parser                 = io_sql_parser
+                        iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    ELSEIF io_sql_parser->exists_child_node_with_type(
+              iv_node_id   = iv_id_of_node_elementary_cond
+              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_like ) = abap_true.
+
+      _process_like( io_sql_parser                 = io_sql_parser
+                     iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    ELSEIF io_sql_parser->exists_child_node_with_type(
+              iv_node_id   = iv_id_of_node_elementary_cond
+              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_in ) = abap_true.
+
+      _process_in( io_sql_parser                 = io_sql_parser
+                   iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    ENDIF.
+
+    _consider_not_in_elementary( io_sql_parser                 = io_sql_parser
+                                 iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
   ENDMETHOD.
 
 

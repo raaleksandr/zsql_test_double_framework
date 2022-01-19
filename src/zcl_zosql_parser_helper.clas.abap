@@ -43,6 +43,7 @@ public section.
       !ES_NODE_FOR_ALL_ENTRIES type ZCL_ZOSQL_PARSER_RECURS_DESC=>TY_NODE
       !ES_NODE_WHERE type ZCL_ZOSQL_PARSER_RECURS_DESC=>TY_NODE
       !ES_NODE_GROUP_BY type ZCL_ZOSQL_PARSER_RECURS_DESC=>TY_NODE
+      !ES_NODE_HAVING type ZCL_ZOSQL_PARSER_RECURS_DESC=>TY_NODE
       !ES_NODE_ORDER_BY type ZCL_ZOSQL_PARSER_RECURS_DESC=>TY_NODE
       value(EV_NEW_SYNTAX) type ABAP_BOOL .
   methods GET_KEY_NODES_OF_SQL_UPDATE
@@ -164,6 +165,8 @@ CLASS ZCL_ZOSQL_PARSER_HELPER IMPLEMENTATION.
           es_node_where = <ls_child_node_of_select>.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-group_by.
           es_node_group_by = <ls_child_node_of_select>.
+        WHEN zcl_zosql_parser_recurs_desc=>node_type-having.
+          es_node_having = <ls_child_node_of_select>.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-order_by.
           es_node_order_by = <ls_child_node_of_select>.
       ENDCASE.

@@ -43,7 +43,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       one_table_where_eq FOR TESTING RAISING zcx_zosql_error,
       one_table_where_eq_tabname FOR TESTING RAISING zcx_zosql_error,
       one_table_where_param_eq FOR TESTING RAISING zcx_zosql_error,
-      one_table_where_param_in FOR TESTING RAISING zcx_zosql_error,
+      select_in_range FOR TESTING RAISING zcx_zosql_error,
+      select_not_in_range FOR TESTING RAISING zcx_zosql_error,
       one_table_where_param_ref FOR TESTING RAISING zcx_zosql_error,
       one_table_2_params_with_or FOR TESTING RAISING zcx_zosql_error,
       one_table_for_all_entries FOR TESTING RAISING zcx_zosql_error,
@@ -70,13 +71,18 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       select_single FOR TESTING RAISING zcx_zosql_error,
       select_in_empty_range FOR TESTING RAISING zcx_zosql_error,
       select_in_list_of_vals FOR TESTING RAISING zcx_zosql_error,
+      select_not_in_list_of_vals FOR TESTING RAISING zcx_zosql_error,
       select_count_star FOR TESTING RAISING zcx_zosql_error,
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
       select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
+      select_subquery_all FOR TESTING RAISING zcx_zosql_error,
+      select_subquery_any FOR TESTING RAISING zcx_zosql_error,
       select_between FOR TESTING RAISING zcx_zosql_error,
       select_not_between FOR TESTING RAISING zcx_zosql_error,
       select_like_escape FOR TESTING RAISING zcx_zosql_error,
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
+      select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
+      select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
       where_with_brackets FOR TESTING RAISING zcx_zosql_error,
@@ -95,8 +101,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       group_by_without_alias FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
-      subquery_exists FOR TESTING RAISING zcx_zosql_error,
       subquery_in FOR TESTING RAISING zcx_zosql_error,
+      subquery_not_in FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
@@ -413,7 +419,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD one_table_where_param_in.
+  METHOD select_in_range.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst.
 
@@ -481,6 +487,73 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE3_1'.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_not_in_range.
+
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select           TYPE string,
+          lt_params           TYPE zosql_db_layer_params,
+          ls_param            TYPE zosql_db_layer_param,
+          ls_param_range_line TYPE zosql_db_layer_range_line.
+
+    ls_param-param_name_in_select   = ':TEXT_FIELD'.
+
+    ls_param_range_line-sign   = 'I'.
+    ls_param_range_line-option = 'EQ'.
+    ls_param_range_line-low    = 'VALUE1_1'.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+
+    ls_param_range_line-low    = 'VALUE3_1'.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+    APPEND ls_param TO lt_params.
+
+    CONCATENATE 'SELECT KEY_FIELD'
+      'FROM ZOSQL_FOR_TST'
+      'WHERE TEXT_FIELD1 NOT IN :TEXT_FIELD'
+      'ORDER BY PRIMARY KEY'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_params
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1984,6 +2057,57 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
+  METHOD select_not_in_list_of_vals.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST'
+      'WHERE KEY_FIELD NOT IN (''KEY1'',''KEY3'')'
+      'ORDER BY PRIMARY KEY'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
   METHOD select_count_star.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst,
@@ -2097,6 +2221,109 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = ls_result_line-key_field exp = 'KEY2' ).
+  ENDMETHOD.
+
+  METHOD select_subquery_all.
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    ls_line-amount    = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    ls_line-amount    = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY3'.
+    ls_line-amount    = 15.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST2'
+      'WHERE AMOUNT >= ALL ( SELECT AMOUNT'
+      '                        FROM ZOSQL_FOR_TST2 )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_subquery_any.
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    ls_line-amount    = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    ls_line-amount    = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY3'.
+    ls_line-amount    = 15.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST2'
+      'WHERE AMOUNT > ANY ( SELECT AMOUNT'
+      '                       FROM ZOSQL_FOR_TST2 )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
+    APPEND 'KEY3' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD select_between.
@@ -3458,7 +3685,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
-  METHOD subquery_exists.
+  METHOD select_exists_subquery.
     " Test for subquery in where
     " Limitation: Only new syntax supports subquery in dynamic WHERE
     " Therefore feature is available only with new syntax since 7.40 version
@@ -3508,6 +3735,62 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
           lt_expected TYPE TABLE OF ty_result.
 
     ls_expected-key_field = 'KEY2'.
+    APPEND ls_expected TO lt_expected.
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD select_not_exists_subquery.
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line           TYPE zosql_for_tst,
+          lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line2          TYPE zosql_for_tst2,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2,
+          lv_select         TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line2-mandt     = sy-mandt.
+    ls_line2-key_field = 'KEY2'.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+    mo_test_environment->insert_test_data( lt_initial_table2 ).
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST AS T1'
+      'WHERE NOT EXISTS ( SELECT *'
+      '                     FROM ZOSQL_FOR_TST2 AS T2'
+      '                     WHERE T2~KEY_FIELD = T1~KEY_FIELD )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: ls_result_line  TYPE ty_result,
+          lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected TYPE ty_result,
+          lt_expected TYPE TABLE OF ty_result.
+
+    ls_expected-key_field = 'KEY1'.
     APPEND ls_expected TO lt_expected.
 
     " THEN
@@ -3583,6 +3866,76 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     ls_expected-key_field = 'KEY3'.
     APPEND ls_expected TO lt_expected.
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD subquery_not_in.
+    " Test for subquery in where
+    " Limitation: Only new syntax supports subquery in dynamic WHERE
+    " Therefore feature is available only with new syntax since 7.40 version
+
+    DATA: ls_line           TYPE zosql_for_tst,
+          lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line2          TYPE zosql_for_tst2,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2,
+          lv_select         TYPE string.
+
+    " GIVEN
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt     = sy-mandt.
+    ls_line-key_field = 'KEY3'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line2-mandt     = sy-mandt.
+    ls_line2-key_field = 'KEY1'.
+    ls_line2-amount    = 20.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt     = sy-mandt.
+    ls_line2-key_field = 'KEY2'.
+    ls_line2-amount    = 10.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt     = sy-mandt.
+    ls_line2-key_field = 'KEY3'.
+    ls_line2-amount    = 30.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+    mo_test_environment->insert_test_data( lt_initial_table2 ).
+
+    CONCATENATE 'SELECT key_field'
+      'FROM ZOSQL_FOR_TST'
+      'WHERE KEY_FIELD NOT IN ( SELECT KEY_FIELD'
+      '                           FROM ZOSQL_FOR_TST2'
+      '                           WHERE AMOUNT > 15 )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: ls_result_line  TYPE ty_result,
+          lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected TYPE ty_result,
+          lt_expected TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).

@@ -17,11 +17,13 @@ public section.
     redefinition .
 protected section.
 
+  methods _CHECK_ELEMENTARY
+    redefinition .
   methods _GET_REF_TO_RIGHT_OPERAND
     redefinition .
   methods _PROCESS_ELEMENTARY
     redefinition .
-  methods _CHECK_ELEMENTARY
+  methods _CHECK_WITH_COMPARE_OPERATOR
     redefinition .
 private section.
 
@@ -34,7 +36,8 @@ private section.
     ty_field_parameter_mapping_tab TYPE STANDARD TABLE OF ty_field_parameter_mapping WITH KEY fieldname_in_sql .
 
   data MS_PARAMETER_FOR_VALUE type ZOSQL_DB_LAYER_PARAM .
-  data M_RIGHT_PART_SUBQUERY_SQL type STRING .
+  data MV_RIGHT_PART_SUBQUERY_SQL type STRING .
+  data MV_SUBQUERY_SPECIFICATOR type STRING .
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
   constants C_EXISTS type STRING value 'EXISTS' ##NO_TEXT.
 
@@ -45,6 +48,18 @@ private section.
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _GET_SUBQUERY_SPECIFICATOR
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I
+    returning
+      value(RV_SUBQUERY_SPECIFICATOR) type STRING .
+  methods _GET_SUBQUERY_SQL
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I
+    returning
+      value(RV_SUBQUERY_SQL) type STRING .
   methods _CHECK_IF_VALUE_IS_SUBQUERY
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -106,7 +121,9 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
     CREATE OBJECT ro_processor TYPE zcl_zosql_where_processor
       EXPORTING
-        io_parameters = mo_parameters.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_parameters             = mo_parameters
+        iv_new_syntax             = mv_new_syntax.
   endmethod.
 
 
@@ -137,18 +154,26 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   METHOD _check_elementary.
 
+    DATA: lv_processed TYPE abap_bool.
+
     CASE mv_operation.
       WHEN c_exists.
         rv_conditions_true = _if_subquery_returns_any_rec( io_iteration_position ).
-        RETURN.
+        lv_processed = abap_true.
       WHEN c_in.
-        IF m_right_part_subquery_sql IS NOT INITIAL.
+        IF mv_right_part_subquery_sql IS NOT INITIAL.
           rv_conditions_true = _check_for_in_when_subquery( io_iteration_position ).
-          RETURN.
+          lv_processed = abap_True.
         ENDIF.
     ENDCASE.
 
-    rv_conditions_true = super->_check_elementary( io_iteration_position ).
+    IF lv_processed = abap_true.
+      IF mv_not_flag = abap_true.
+        rv_conditions_true = zcl_zosql_utils=>boolean_not( rv_conditions_true ).
+      ENDIF.
+    ELSE.
+      rv_conditions_true = super->_check_elementary( io_iteration_position ).
+    ENDIF.
   ENDMETHOD.
 
 
@@ -207,8 +232,56 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  METHOD _check_with_compare_operator.
+
+    DATA: lv_all_values_should_match TYPE abap_bool,
+          ld_result_of_subquery      TYPE REF TO data,
+          lv_all_values_match        TYPE abap_bool,
+          lv_any_value_matches       TYPE abap_bool,
+          ld_ref_to_left_operand     TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_result_of_subquery>       TYPE STANDARD TABLE,
+                   <ls_result_of_subquery>       TYPE any,
+                   <lv_first_column_of_subquery> TYPE any,
+                   <lv_value_of_left_operand>    TYPE any.
+
+    IF mv_subquery_specificator IS NOT INITIAL.
+      IF mv_subquery_specificator = 'ALL'.
+        lv_all_values_should_match = abap_true.
+      ENDIF.
+
+      ld_result_of_subquery = _run_subquery_and_get_result( io_iteration_position ).
+      ASSIGN ld_result_of_subquery->* TO <lt_result_of_subquery>.
+
+      ld_ref_to_left_operand = _get_ref_to_left_operand( io_iteration_position ).
+      ASSIGN ld_ref_to_left_operand->* TO <lv_value_of_left_operand>.
+
+      lv_all_values_match = abap_true.
+      LOOP AT <lt_result_of_subquery> ASSIGNING <ls_result_of_subquery>.
+        ASSIGN COMPONENT 1 OF STRUCTURE <ls_result_of_subquery> TO <lv_first_column_of_subquery>.
+        IF _compare_values( iv_value_left  = <lv_value_of_left_operand>
+                            iv_operation   = mv_operation
+                            iv_value_right = <lv_first_column_of_subquery> ) = abap_true.
+
+          lv_any_value_matches = abap_true.
+        ELSE.
+          lv_all_values_match = abap_false.
+        ENDIF.
+      ENDLOOP.
+
+      IF lv_all_values_should_match = abap_true.
+        rv_conditions_true = lv_all_values_match.
+      ELSE.
+        rv_conditions_true = lv_any_value_matches.
+      ENDIF.
+    ELSE.
+      rv_conditions_true = super->_check_with_compare_operator( io_iteration_position ).
+    ENDIF.
+  ENDMETHOD.
+
+
   method _GET_REF_TO_RIGHT_OPERAND.
-    IF m_right_part_subquery_sql IS NOT INITIAL.
+    IF mv_right_part_subquery_sql IS NOT INITIAL.
       rd_ref_to_right_operand = _get_ref_to_right_operand_subq( io_iteration_position ).
     ELSE.
       rd_ref_to_right_operand = super->_get_ref_to_right_operand( io_iteration_position ).
@@ -241,6 +314,46 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  method _GET_SUBQUERY_SPECIFICATOR.
+    rv_subquery_specificator =
+      io_sql_parser->get_child_node_token_with_type(
+        iv_node_id   = iv_id_of_node_elementary_cond
+        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-subquery_specificator
+        iv_ucase     = abap_true ).
+  endmethod.
+
+
+  method _GET_SUBQUERY_SQL.
+
+    DATA: lt_nodes_of_subquery  TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+
+    FIELD-SYMBOLS: <ls_end_node_closing_bracket> TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+                   <ls_start_node_of_subquery>   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+                   <ls_end_node_of_subquery>     TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    lt_nodes_of_subquery = io_sql_parser->get_child_nodes_recursive( iv_id_of_node_elementary_cond ).
+
+    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_closing_bracket>.
+    IF sy-subrc = 0.
+      IF <ls_end_node_closing_bracket>-node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket.
+        DELETE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ).
+      ENDIF.
+    ENDIF.
+
+    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_of_subquery>.
+    IF sy-subrc = 0.
+      READ TABLE lt_nodes_of_subquery WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-select
+        ASSIGNING <ls_start_node_of_subquery>.
+      IF sy-subrc = 0.
+        rv_subquery_sql =
+          io_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_start_node_of_subquery>-token_index
+                                                     iv_end_token_index   = <ls_end_node_of_subquery>-token_index ).
+      ENDIF.
+    ENDIF.
+
+  endmethod.
+
+
   METHOD _if_subquery_returns_any_rec.
     DATA: ld_result  TYPE REF TO data.
 
@@ -263,7 +376,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
                                 iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
     IF _check_if_value_is_subquery( io_sql_parser                 = io_sql_parser
-                                        iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ) = abap_true.
+                                    iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ) = abap_true.
 
       _process_subquery( io_sql_parser                 = io_sql_parser
                          iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
@@ -273,39 +386,21 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   method _PROCESS_EXISTS.
     CLEAR ms_left_operand-fieldname_or_value.
+
     mv_operation = c_exists.
+
     _process_subquery( io_sql_parser                 = io_sql_parser
                        iv_id_of_node_elementary_cond = iv_id_of_node_exists ).
   endmethod.
 
 
   method _PROCESS_SUBQUERY.
+    mv_right_part_subquery_sql = _get_subquery_sql( io_sql_parser                 = io_sql_parser
+                                                    iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
-    DATA: lt_nodes_of_subquery  TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
 
-    FIELD-SYMBOLS: <ls_end_node_closing_bracket> TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-                   <ls_start_node_of_subquery>   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-                   <ls_end_node_of_subquery>     TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    lt_nodes_of_subquery = io_sql_parser->get_child_nodes_recursive( iv_id_of_node_elementary_cond ).
-
-    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_closing_bracket>.
-    IF sy-subrc = 0.
-      IF <ls_end_node_closing_bracket>-node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket.
-        DELETE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ).
-      ENDIF.
-    ENDIF.
-
-    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_of_subquery>.
-    IF sy-subrc = 0.
-      READ TABLE lt_nodes_of_subquery WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-select
-        ASSIGNING <ls_start_node_of_subquery>.
-      IF sy-subrc = 0.
-        m_right_part_subquery_sql =
-          io_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_start_node_of_subquery>-token_index
-                                                     iv_end_token_index   = <ls_end_node_of_subquery>-token_index ).
-      ENDIF.
-    ENDIF.
+    mv_subquery_specificator = _get_subquery_specificator( io_sql_parser                 = io_sql_parser
+                                                           iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
   endmethod.
 
 
@@ -316,7 +411,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
     CREATE OBJECT lo_subquery
       EXPORTING
         io_zosql_test_environment     = mo_zosql_test_environment
-        iv_subquery_sql               = m_right_part_subquery_sql
+        iv_subquery_sql               = mv_right_part_subquery_sql
         io_iteration_position_parent  = io_iteration_position
         io_parameters_of_parent_query = mo_parameters
         iv_new_syntax                 = mv_new_syntax.
