@@ -96,6 +96,7 @@ private section.
       !EV_FOR_ALL_ENTRIES_TABNAME type CLIKE
       !EV_WHERE type CLIKE
       !EV_GROUP_BY type CLIKE
+      !EV_HAVING type CLIKE
       !EV_ORDER_BY type CLIKE
       value(EV_DISTINCT) type ABAP_BOOL
       value(EV_NEW_SYNTAX) type ABAP_BOOL
@@ -109,6 +110,7 @@ private section.
       !IV_FROM type STRING
       !IV_WHERE type STRING optional
       !IV_GROUP_BY type STRING optional
+      !IV_HAVING type STRING optional
       !IV_ORDER_BY type STRING optional
       value(IV_DISTINCT) type ABAP_BOOL default ABAP_FALSE
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
@@ -207,6 +209,7 @@ private section.
       !IV_FROM type STRING
       !IV_WHERE type STRING
       !IV_GROUP_BY type STRING
+      !IV_HAVING type STRING
       !IV_ORDER_BY type STRING
       value(IV_DISTINCT) type ABAP_BOOL
       !IV_NEW_SYNTAX type ABAP_BOOL
@@ -224,6 +227,7 @@ private section.
       !IV_FROM type STRING
       !IV_WHERE type STRING
       !IV_GROUP_BY type STRING
+      !IV_HAVING type STRING
       !IV_ORDER_BY type STRING
       value(IV_DISTINCT) type ABAP_BOOL
       !IV_NEW_SYNTAX type ABAP_BOOL
@@ -280,6 +284,7 @@ private section.
     changing
       !CV_FROM type STRING
       !CV_WHERE type STRING
+      !CV_HAVING type STRING
     raising
       ZCX_ZOSQL_ERROR .
   methods _PREPARE_FOR_UPDATE_DELETE
@@ -447,12 +452,14 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
           lv_for_all_entries_tabname  TYPE string,
           lv_where                    TYPE string,
           lv_group_by                 TYPE string,
+          lv_having                   TYPE string,
           lv_order_by                 TYPE string,
           lv_distinct                 TYPE abap_bool,
           lv_new_syntax               TYPE abap_bool,
           lv_number_of_rows_expr      TYPE string,
           lv_from_ready_for_select    TYPE string,
           lv_where_ready_for_select   TYPE string,
+          lv_having_ready_for_seleft  TYPE string,
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
           lv_number_of_rows_to_select TYPE i,
@@ -469,14 +476,16 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_for_all_entries_tabname = lv_for_all_entries_tabname
                                         ev_where                   = lv_where
                                         ev_group_by                = lv_group_by
+                                        ev_having                  = lv_having
                                         ev_order_by                = lv_order_by
                                         ev_distinct                = lv_distinct
                                         ev_new_syntax              = lv_new_syntax
                                         ev_number_of_rows_expr     = lv_number_of_rows_expr
                                         eo_sql_parser              = lo_sql_parser ).
 
-    lv_from_ready_for_select = lv_from.
-    lv_where_ready_for_select = lv_where.
+    lv_from_ready_for_select   = lv_from.
+    lv_where_ready_for_select  = lv_where.
+    lv_having_ready_for_seleft = lv_having.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
                                    iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
                                    iv_name_of_for_all_ent_in_sel = lv_for_all_entries_tabname
@@ -488,6 +497,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
                          CHANGING  cv_from                       = lv_from_ready_for_select
                                    cv_where                      = lv_where_ready_for_select
+                                   cv_having                     = lv_having_ready_for_seleft
                          ).
 
     ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
@@ -496,6 +506,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                               iv_from                       = lv_from_ready_for_select
                               iv_where                      = lv_where_ready_for_select
                               iv_group_by                   = lv_group_by
+                              iv_having                     = lv_having_ready_for_seleft
                               iv_order_by                   = lv_order_by
                               iv_distinct                   = lv_distinct
                               iv_new_syntax                 = lv_new_syntax
@@ -517,6 +528,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
           lv_for_all_entries_tabname TYPE string,
           lv_where                   TYPE string,
           lv_group_by                TYPE string,
+          lv_having                  TYPE string,
           lv_order_by                TYPE string,
           lv_distinct                TYPE abap_bool,
           lv_new_syntax              TYPE abap_bool,
@@ -529,6 +541,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_for_all_entries_tabname = lv_for_all_entries_tabname
                                         ev_where                   = lv_where
                                         ev_group_by                = lv_group_by
+                                        ev_having                  = lv_having
                                         ev_order_by                = lv_order_by
                                         ev_distinct                = lv_distinct
                                         ev_new_syntax              = lv_new_syntax
@@ -539,6 +552,7 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                     iv_from                    = lv_from
                                     iv_where                   = lv_where
                                     iv_group_by                = lv_group_by
+                                    iv_having                  = lv_having
                                     iv_order_by                = lv_order_by
                                     iv_distinct                = lv_distinct
                                     iv_new_syntax              = lv_new_syntax
@@ -877,6 +891,7 @@ endmethod.
             UP TO iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ELSE.
           SELECT DISTINCT (iv_select)
@@ -885,6 +900,7 @@ endmethod.
             UP TO iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ENDIF.
       ELSE.
@@ -895,6 +911,7 @@ endmethod.
             UP TO iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ELSE.
           SELECT (iv_select)
@@ -903,6 +920,7 @@ endmethod.
             UP TO iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ENDIF.
       ENDIF.
@@ -984,6 +1002,7 @@ endmethod.
           UP TO iv_number_of_rows_to_select ROWS
           WHERE (iv_where)
           GROUP BY (iv_group_by)
+          HAVING (iv_having)
           ORDER BY (iv_order_by).
 
       ELSE.
@@ -994,6 +1013,7 @@ endmethod.
           UP TO iv_number_of_rows_to_select ROWS
           WHERE (iv_where)
           GROUP BY (iv_group_by)
+          HAVING (iv_having)
           ORDER BY (iv_order_by).
 
       ENDIF.
@@ -1021,6 +1041,11 @@ METHOD _PREPARE_FOR_SELECT.
                                        iv_name_of_for_all_ent_var    = iv_name_of_for_all_ent_var
                                        iv_new_syntax                 = iv_new_syntax
                              CHANGING  cv_where                      = cv_where ).
+
+  _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
+                                         iv_name_of_struct_with_params = iv_name_of_struct_with_params
+                                         iv_new_syntax                 = iv_new_syntax
+                               CHANGING  cv_sql                        = cv_having ).
 
   ev_number_of_rows_to_select = prepare_n_of_rows_for_select( it_parameters          = it_parameters
                                                               iv_number_of_rows_expr = iv_number_of_rows_expr ).
@@ -1139,6 +1164,7 @@ ENDMETHOD.
   METHOD _SELECT_BY_SQL_PARTS.
     DATA: lv_from_ready_for_select    TYPE string,
           lv_where_ready_for_select   TYPE string,
+          lv_having_ready_for_select  TYPE string,
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
           lv_number_of_rows_to_select TYPE i.
@@ -1149,8 +1175,9 @@ ENDMETHOD.
 
     CLEAR: et_result_table, es_result_line, ev_subrc.
 
-    lv_from_ready_for_select  = iv_from.
-    lv_where_ready_for_select = iv_where.
+    lv_from_ready_for_select   = iv_from.
+    lv_where_ready_for_select  = iv_where.
+    lv_having_ready_for_select = iv_having.
     _prepare_for_select( EXPORTING it_parameters                 = it_parameters
                                    iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
                                    iv_name_of_for_all_ent_in_sel = iv_for_all_entries_tabname
@@ -1162,6 +1189,7 @@ ENDMETHOD.
                                    ev_number_of_rows_to_select   = lv_number_of_rows_to_select
                          CHANGING  cv_from                       = lv_from_ready_for_select
                                    cv_where                      = lv_where_ready_for_select
+                                   cv_having                     = lv_having_ready_for_select
                          ).
 
     ASSIGN ld_struct_with_params->* TO <ls_struct_with_params>.
@@ -1175,6 +1203,7 @@ ENDMETHOD.
                                iv_from                       = lv_from_ready_for_select
                                iv_where                      = lv_where_ready_for_select
                                iv_group_by                   = iv_group_by
+                               iv_having                     = lv_having_ready_for_select
                                iv_order_by                   = iv_order_by
                                iv_distinct                   = iv_distinct
                                iv_new_syntax                 = iv_new_syntax
@@ -1250,6 +1279,7 @@ ENDMETHOD.
           ls_node_for_all_entries    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_group_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_having             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_order_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     FIELD-SYMBOLS: <ls_node>                TYPE zcl_zosql_parser_recurs_desc=>ty_node.
@@ -1268,6 +1298,7 @@ ENDMETHOD.
                                                                  es_node_for_all_entries       = ls_node_for_all_entries
                                                                  es_node_where                 = ls_node_where
                                                                  es_node_group_by              = ls_node_group_by
+                                                                 es_node_having                = ls_node_having
                                                                  es_node_order_by              = ls_node_order_by
                                                                  ev_new_syntax                 = ev_new_syntax ).
 
@@ -1317,6 +1348,11 @@ ENDMETHOD.
     IF ls_node_group_by IS NOT INITIAL.
       ev_group_by = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_group_by-id
                                                                  iv_number_of_tokens_offset = 2 ).
+    ENDIF.
+
+    IF ls_node_having IS NOT INITIAL.
+      ev_having = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_having-id
+                                                               iv_number_of_tokens_offset = 1 ).
     ENDIF.
 
     IF ls_node_order_by IS NOT INITIAL.
