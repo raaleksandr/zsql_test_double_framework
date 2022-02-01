@@ -185,6 +185,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>079</MSGNR>
+     <TEXT>Critical error class &amp; method &amp; error number &amp;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>

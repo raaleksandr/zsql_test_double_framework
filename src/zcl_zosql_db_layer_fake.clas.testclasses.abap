@@ -100,6 +100,10 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_with_avg FOR TESTING RAISING zcx_zosql_error,
       group_by_count_distinct FOR TESTING RAISING zcx_zosql_error,
       group_by_without_alias FOR TESTING RAISING zcx_zosql_error,
+      group_by_having FOR TESTING RAISING zcx_zosql_error,
+      group_by_having_with_param FOR TESTING RAISING zcx_zosql_error,
+      group_by_having_subquery FOR TESTING RAISING zcx_zosql_error,
+      group_by_without_aggr_funcs FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
       subquery_in FOR TESTING RAISING zcx_zosql_error,
       subquery_not_in FOR TESTING RAISING zcx_zosql_error,
@@ -3614,6 +3618,249 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-qty       = 1.
     ls_expected_line-cnt       = 1.
     APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_having.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_1'.
+    ls_line-amount      = 5.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field sum( amount ) as amount'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      'HAVING SUM( AMOUNT ) = 30'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+             amount    TYPE zosql_for_tst2-amount,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE ty_result,
+          lt_expected_table TYPE TABLE OF ty_result.
+
+    ls_expected_line-key_field = 'KEY1'.
+    ls_expected_line-amount    = 30.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_having_with_param.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_1'.
+    ls_line-amount      = 5.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field sum( amount ) as amount'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      'HAVING SUM( AMOUNT ) = :TOTAL_AMOUNT'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+             amount    TYPE zosql_for_tst2-amount,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result,
+          lt_parameters   TYPE zosql_db_layer_params,
+          ls_parameter    TYPE zosql_db_layer_param.
+
+    ls_parameter-param_name_in_select   = ':TOTAL_AMOUNT'.
+    ls_parameter-parameter_value_single = '30'.
+    APPEND ls_parameter TO lt_parameters.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                                        it_parameters   = lt_parameters
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE ty_result,
+          lt_expected_table TYPE TABLE OF ty_result.
+
+    ls_expected_line-key_field = 'KEY1'.
+    ls_expected_line-amount    = 30.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_having_subquery.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_1'.
+    ls_line-amount      = 5.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_2'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-key_field2  = 'KEY3_1'.
+    ls_line-amount      = 3.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-key_field2  = 'KEY3_2'.
+    ls_line-amount      = 7.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      'HAVING SUM( AMOUNT ) = ( SELECT amount'
+      '                           FROM zosql_for_tst2'
+      '                           WHERE key_field = ''KEY1'''
+      '                             AND key_field2 = ''KEY1_1'' )'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY3' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD group_by_without_aggr_funcs.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_1'.
+    ls_line-amount      = 10.
+    ls_line-qty         = 2.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_2'.
+    ls_line-amount      = 20.
+    ls_line-qty         = 4.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_1'.
+    ls_line-amount      = 5.
+    ls_line-qty         = 1.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT key_field'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field  TYPE zosql_for_tst2-key_field,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
+                                              IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY1' TO lt_expected_table.
+    APPEND 'KEY2' TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.

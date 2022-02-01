@@ -51,6 +51,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
+     <CMPNAME>GET_ITER_POSITIONS_OF_LINES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns from iteration position objects for lines of result</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
      <CMPNAME>GET_RESULT_AS_REF_TO_DATA</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns ref to result data set of select</DESCRIPT>

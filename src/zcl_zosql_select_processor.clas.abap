@@ -4,6 +4,25 @@ class ZCL_ZOSQL_SELECT_PROCESSOR definition
 
 public section.
 
+  types:
+    BEGIN OF TY_SELECT_PARAMETER,
+           parameter_type TYPE char20,
+           dataset_name   TYPE string,
+           field_name     TYPE string,
+           field_alias    TYPE string,
+           function_name  TYPE string,
+           distinct_flag  TYPE abap_bool,
+           field_name_in_result TYPE string,
+         END OF ty_select_parameter .
+  types:
+    ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
+                                   WITH KEY dataset_name field_name .
+  types:
+    TY_ITERATOR_POSITIONS  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
+
+  methods GET_ITER_POSITIONS_OF_LINES
+    returning
+      value(RT_ITERATOR_POSITIONS) type TY_ITERATOR_POSITIONS .
   methods APPLY_AGGR_FUNC_NO_GROUP_BY
     raising
       ZCX_ZOSQL_ERROR .
@@ -36,27 +55,17 @@ public section.
 protected section.
 private section.
 
-  types:
-    BEGIN OF TY_SELECT_PARAMETER,
-           parameter_type TYPE char20,
-           dataset_name   TYPE string,
-           field_name     TYPE string,
-           field_alias    TYPE string,
-           function_name  TYPE string,
-           distinct_flag  TYPE abap_bool,
-           field_name_in_result TYPE string,
-         END OF ty_select_parameter .
-
   constants:
     BEGIN OF PARAMETER_TYPE,
                field  TYPE char20 VALUE 'FIELD',
                groupby_function TYPE char20 VALUE 'GROUPBY_FUNCTION',
              END OF parameter_type .
   data:
-    MT_SELECT_PARAMETERS  TYPE STANDARD TABLE OF ty_select_parameter WITH KEY field_name .
+    MT_SELECT_PARAMETERS  TYPE ty_select_parameters .
   data MD_DATA_SET type ref to DATA .
   constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
+  data MT_ITER_POSITIONS_OF_DATA_SET type TY_ITERATOR_POSITIONS .
 
   methods _FILL_SELECT_FIELD
     importing
@@ -159,6 +168,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
       <lv_result_field_value> = <lv_dataset_field_value>.
     ENDLOOP.
+
+    APPEND io_iteration_position TO mt_iter_positions_of_data_set.
   ENDMETHOD.
 
 
@@ -209,19 +220,19 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   METHOD APPLY_GROUP_BY.
 
-    DATA: lt_fields_with_aggr_func TYPE zcl_zosql_aggr_func_processor=>ty_fields_with_aggr_func.
-
     FIELD-SYMBOLS: <lt_data_set>             TYPE STANDARD TABLE.
-
-    lt_fields_with_aggr_func = _get_aggr_func_fields( ).
 
     ASSIGN md_data_set->* TO <lt_data_set>.
 
-    IF lt_fields_with_aggr_func IS NOT INITIAL.
-      io_group_by->apply_group_by( EXPORTING it_fields_with_aggr_func = lt_fields_with_aggr_func
-                                   CHANGING  ct_data_set              = <lt_data_set> ).
-    ENDIF.
+    io_group_by->apply_group_by( EXPORTING io_select                = me
+                                           it_select_parameters     = mt_select_parameters
+                                 CHANGING  ct_data_set              = <lt_data_set> ).
   ENDMETHOD.
+
+
+  method GET_ITER_POSITIONS_OF_LINES.
+    rt_iterator_positions = mt_iter_positions_of_data_set.
+  endmethod.
 
 
   method GET_RESULT_AS_REF_TO_DATA.
@@ -261,7 +272,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _CREATE_DATA_SET_FOR_SELECT.
+  METHOD _create_data_set_for_select.
 
     DATA: lo_struct                TYPE REF TO cl_abap_structdescr,
           lt_target_set_components TYPE cl_abap_structdescr=>component_table,
@@ -286,6 +297,11 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
       APPEND ls_new_component TO lt_target_set_components.
     ENDLOOP.
+
+*    CLEAR ls_new_component.
+*    ls_new_component-name = c_special_field_with_datasets.
+*    ls_new_component-type ?= cl_abap_typedescr=>describe_by_name( 'ZCL_ZOSQL_ITERATOR_POSITION' ).
+*    APPEND ls_new_component TO lt_target_set_components.
 
     lo_struct = cl_abap_structdescr=>create( lt_target_set_components ).
     lo_table = cl_abap_tabledescr=>create( lo_struct ).

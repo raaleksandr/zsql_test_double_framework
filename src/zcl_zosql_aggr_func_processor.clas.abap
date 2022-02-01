@@ -5,13 +5,23 @@ class ZCL_ZOSQL_AGGR_FUNC_PROCESSOR definition
 public section.
 
   types:
+    BEGIN OF ty_group_by_key_field,
+           dataset_name_or_alias TYPE string,
+           fieldname TYPE fieldname,
+         END OF ty_group_by_key_field .
+  types:
+    ty_group_by_key_fields TYPE STANDARD TABLE OF ty_group_by_key_field WITH DEFAULT KEY .
+  types:
     BEGIN OF TY_FIELD_WITH_AGGR_FUNC,
+           dataset_name_or_alias TYPE string,
            fieldname TYPE fieldname,
            aggregation_function TYPE string,
            distinct_flag        TYPE abap_bool,
          END OF TY_FIELD_WITH_AGGR_FUNC .
   types:
     TY_FIELDS_WITH_AGGR_FUNC  TYPE STANDARD TABLE OF ty_field_with_aggr_func WITH KEY fieldname .
+
+  constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
 
   methods APPLY_AGGREGATION
     importing
@@ -32,7 +42,6 @@ protected section.
       ZCX_ZOSQL_ERROR .
 private section.
 
-  constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
 ENDCLASS.
 

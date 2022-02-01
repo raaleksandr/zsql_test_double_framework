@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Iterator object for GROUP BY clause</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>INIT_GROUPBY_ITERATOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initializing method for GROUP BY iterator</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>MD_GROUP_BY_KEY_VALUES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Dataset lines with key values (unique)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>MD_TABLE_NOT_GROUPED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Dataset before group by</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>MV_CURRENT_RECORD_NUM</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Index of current record of iterator</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_FILL_KEY_VALUES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills lines with key values of group by keys</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_GET_COUNT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns number of records</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
