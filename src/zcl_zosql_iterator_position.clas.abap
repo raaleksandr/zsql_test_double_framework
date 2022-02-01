@@ -43,7 +43,6 @@ public section.
     returning
       value(RV_EXISTS) type ABAP_BOOL .
 protected section.
-private section.
 
   types:
     BEGIN OF ty_data_set_data .
@@ -51,7 +50,15 @@ private section.
            TYPES: ref_to_data TYPE REF TO data,
          END OF ty_data_set_data .
 
-  data MT_DATA_SETS_DATA  TYPE TABLE OF ty_data_set_data.
+  data:
+    MT_DATA_SETS_DATA  TYPE TABLE OF ty_data_set_data .
+
+  methods GET_DATA_SET_STRUCT
+    importing
+      !IV_DATASET_NAME_OR_ALIAS type CLIKE
+    returning
+      value(RS_DATASET_STRUCT) type TY_DATA_SET_DATA .
+private section.
 ENDCLASS.
 
 
@@ -78,17 +85,11 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
 
   method CHECK_DATA_SET_EXISTS.
 
-    DATA: lv_dataset_name_or_alias_ucase TYPE string.
+    DATA: ls_data_set_struct TYPE ty_data_set_data.
 
-    lv_dataset_name_or_alias_ucase = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
-    READ TABLE mt_data_sets_data WITH KEY dataset_name = lv_dataset_name_or_alias_ucase
-      TRANSPORTING NO FIELDS.
-    IF sy-subrc <> 0.
-      READ TABLE mt_data_sets_data WITH KEY dataset_alias = lv_dataset_name_or_alias_ucase
-        TRANSPORTING NO FIELDS.
-    ENDIF.
+    ls_data_set_struct = get_data_set_struct( iv_dataset_name_or_alias ).
 
-    IF sy-subrc = 0.
+    IF ls_data_set_struct IS NOT INITIAL.
       rv_exists = abap_true.
     ENDIF.
   endmethod.
@@ -99,6 +100,21 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
     zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = mt_data_sets_data
                                                IMPORTING et_table_dest = rt_data_set_list ).
 
+  endmethod.
+
+
+  method GET_DATA_SET_STRUCT.
+
+    DATA: lv_dataset_name_or_alias_ucase TYPE string.
+
+    lv_dataset_name_or_alias_ucase = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+
+    READ TABLE mt_data_sets_data WITH KEY dataset_name = lv_dataset_name_or_alias_ucase
+      INTO rs_dataset_struct.
+    IF sy-subrc <> 0.
+      READ TABLE mt_data_sets_data WITH KEY dataset_alias = lv_dataset_name_or_alias_ucase
+        INTO rs_dataset_struct.
+    ENDIF.
   endmethod.
 
 
@@ -143,20 +159,9 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
 
   method GET_LINE_FOR_DATA_SET_REF.
 
-    DATA: lv_dataset_name_or_alias_ucase TYPE string.
+    DATA: ls_data_set_struct TYPE ty_data_set_data.
 
-    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_data_sets_data,
-                   <ls_data_set_line> TYPE any.
-
-    lv_dataset_name_or_alias_ucase = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
-
-    READ TABLE mt_data_sets_data WITH KEY dataset_name = lv_dataset_name_or_alias_ucase ASSIGNING <ls_data_set_data>.
-    IF sy-subrc <> 0.
-      READ TABLE mt_data_sets_data WITH KEY dataset_alias = lv_dataset_name_or_alias_ucase ASSIGNING <ls_data_set_data>.
-    ENDIF.
-
-    IF <ls_data_set_data> IS ASSIGNED.
-      rd_ref_to_line = <ls_data_set_data>-ref_to_data.
-    ENDIF.
+    ls_data_set_struct = get_data_set_struct( iv_dataset_name_or_alias ).
+    rd_ref_to_line = ls_data_set_struct-ref_to_data.
   endmethod.
 ENDCLASS.

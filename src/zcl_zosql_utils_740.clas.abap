@@ -11,6 +11,7 @@ public section.
       !IV_FROM type STRING
       !IV_WHERE type STRING
       !IV_GROUP_BY type STRING
+      !IV_HAVING type STRING
       !IV_ORDER_BY type STRING
       value(IV_DISTINCT) type ABAP_BOOL
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
@@ -105,6 +106,7 @@ CLASS ZCL_ZOSQL_UTILS_740 IMPLEMENTATION.
             UP TO @iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ELSE.
           SELECT DISTINCT (iv_select)
@@ -113,6 +115,7 @@ CLASS ZCL_ZOSQL_UTILS_740 IMPLEMENTATION.
             UP TO @iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ENDIF.
       ELSE.
@@ -124,6 +127,7 @@ CLASS ZCL_ZOSQL_UTILS_740 IMPLEMENTATION.
             UP TO @iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ELSE.
           SELECT (iv_select)
@@ -132,6 +136,7 @@ CLASS ZCL_ZOSQL_UTILS_740 IMPLEMENTATION.
             UP TO @iv_number_of_rows_to_select ROWS
             WHERE (iv_where)
             GROUP BY (iv_group_by)
+            HAVING (iv_having)
             ORDER BY (iv_order_by).
         ENDIF.
       ENDIF.

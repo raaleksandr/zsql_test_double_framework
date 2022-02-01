@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Parser of SQL logical expression (in where or join after ON)</DESCRIPT>
+    <DESCRIPT>Class to process SQL logical expression (where,join,having)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -177,6 +177,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
+     <CMPNAME>_GET_REF_TO_OPERAND_DS_DIRECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns ref to left operand from dataset that is mandatory</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
      <CMPNAME>_GET_REF_TO_RIGHT_OPERAND</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns reference to value of right operand after all oper.s</DESCRIPT>
@@ -204,6 +210,12 @@
      <CMPNAME>_PROCESS_IN</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Initializes object for IN operator</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
+     <CMPNAME>_PROCESS_LEFT_PART</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Processes left part of elementary expression</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>

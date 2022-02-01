@@ -821,6 +821,7 @@ endmethod.
           iv_from                       = iv_from
           iv_where                      = iv_where
           iv_group_by                   = iv_group_by
+          iv_having                     = iv_having
           iv_order_by                   = iv_order_by
           iv_distinct                   = iv_distinct
           it_for_all_entries_table      = it_for_all_entries_table

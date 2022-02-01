@@ -571,9 +571,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_sql_executor_for_line TYPE REF TO zif_zosql_sql_exec_line,
           lo_sql_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
           ls_node_group_by         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          ls_node_having           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_distinct         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           lv_new_syntax            TYPE abap_bool,
-          lo_parameters            TYPE REF TO zcl_zosql_parameters.
+          lo_parameters            TYPE REF TO zcl_zosql_parameters,
+          lo_having                TYPE REF TO zif_zosql_expression_processor.
 
     REFRESH et_result_table.
 
@@ -601,6 +603,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser    = io_sql_parser
                                                        IMPORTING es_node_distinct = ls_node_distinct
                                                                  es_node_group_by = ls_node_group_by
+                                                                 es_node_having   = ls_node_having
                                                                  ev_new_syntax    = lv_new_syntax ).
 
     _execute_sql( io_parameters            = lo_parameters
@@ -610,9 +613,26 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                   io_sql_parser            = io_sql_parser ).
 
     IF ls_node_group_by IS NOT INITIAL.
-      CREATE OBJECT lo_group_by.
+
+      IF ls_node_having IS NOT INITIAL.
+        CREATE OBJECT lo_having TYPE zcl_zosql_having_processor
+          EXPORTING
+            io_zosql_test_environment = mo_zosql_test_environment
+            io_parameters             = lo_parameters
+            iv_new_syntax             = lv_new_syntax.
+
+        lo_having->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
+                                             iv_id_of_node_to_parse = ls_node_having-id ).
+      ENDIF.
+
+      CREATE OBJECT lo_group_by
+        EXPORTING
+          io_having_processor = lo_having.
+
       lo_group_by->initialize_by_parsed_sql( io_sql_parser       = io_sql_parser
-                                             iv_group_by_node_id = ls_node_group_by-id ).
+                                             iv_group_by_node_id = ls_node_group_by-id
+                                             io_from_iterator    = lo_from_iterator ).
+
       lo_select->apply_group_by( lo_group_by ).
     ELSEIF lo_select->has_aggregation_functions( ) = abap_true.
       lo_select->apply_aggr_func_no_group_by( ).

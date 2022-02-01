@@ -304,6 +304,12 @@ private section.
   methods _FROM
     importing
       !IV_PARENT_ID type I .
+  methods _FUNCTION_WITHOUT_ALIAS
+    importing
+      value(IV_PARENT_ID) type I
+    exporting
+      value(EV_IT_IS_REALLY_FUNCTION) type ABAP_BOOL
+      value(EV_FUNCTION_FIELD_NODE_ID) type I .
   methods _FUNCTION
     importing
       !IV_PARENT_ID type I
@@ -1026,7 +1032,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
           lv_is_operator_between         TYPE abap_bool,
           lv_is_operator_in              TYPE abap_bool,
           lv_is_operator_like            TYPE abap_bool,
-          lv_is_subquery                 TYPE abap_bool.
+          lv_is_subquery                 TYPE abap_bool,
+          lv_is_aggr_function_having     TYPE abap_bool.
 
     lv_is_expression_in_brackets = _expression_in_brackets( iv_parent_id       = iv_parent_id
                                                             iv_expression_type = iv_expression_type ).
@@ -1043,8 +1050,16 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    lv_start_of_comparison_node_id = _expression_left_part( iv_parent_id       = iv_parent_id
-                                                            iv_expression_type = iv_expression_type ).
+    IF iv_expression_type = expression_type-having.
+      _function_without_alias( EXPORTING iv_parent_id              = iv_parent_id
+                               IMPORTING ev_it_is_really_function  = lv_is_aggr_function_having
+                                         ev_function_field_node_id = lv_start_of_comparison_node_id ).
+    ENDIF.
+
+    IF lv_start_of_comparison_node_id IS INITIAL.
+      lv_start_of_comparison_node_id = _expression_left_part( iv_parent_id       = iv_parent_id
+                                                              iv_expression_type = iv_expression_type ).
+    ENDIF.
 
     lv_is_operator_between = _expression_between( lv_start_of_comparison_node_id ).
     IF lv_is_operator_between = abap_true.
@@ -1191,21 +1206,38 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DATA: lv_function_field_node_id TYPE i.
 
+    _function_without_alias( EXPORTING iv_parent_id              = iv_parent_id
+                             IMPORTING ev_it_is_really_function  = rv_it_is_really_function
+                                       ev_function_field_node_id = lv_function_field_node_id ).
+
+    IF rv_it_is_really_function <> abap_true.
+      RETURN.
+    ENDIF.
+
+    _alias( lv_function_field_node_id ).
+  ENDMETHOD.
+
+
+  METHOD _FUNCTION_WITHOUT_ALIAS.
+
     _push_position_and_state( ).
 
-    lv_function_field_node_id = _add_node( iv_parent_id = iv_parent_id
+    ev_function_field_node_id = _add_node( iv_parent_id = iv_parent_id
                                            iv_node_type = node_type-function ).
 
     IF _step_forward( ) <> abap_true.
+      _pop_position_and_state( ).
+      CLEAR ev_function_field_node_id.
       RETURN.
     ENDIF.
 
     IF mv_current_token <> '('.
       _pop_position_and_state( ).
+      CLEAR ev_function_field_node_id.
       RETURN.
     ENDIF.
 
-    _add_node( iv_parent_id = lv_function_field_node_id
+    _add_node( iv_parent_id = ev_function_field_node_id
                iv_node_type = node_type-opening_bracket ).
 
     IF _step_forward( ) <> abap_true.
@@ -1213,7 +1245,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF mv_current_token_ucase = 'DISTINCT'.
-      _add_node( iv_parent_id = lv_function_field_node_id
+      _add_node( iv_parent_id = ev_function_field_node_id
                  iv_node_type = node_type-distinct ).
 
       IF _step_forward( ) <> abap_true.
@@ -1221,7 +1253,7 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    _add_node( iv_parent_id = lv_function_field_node_id
+    _add_node( iv_parent_id = ev_function_field_node_id
                iv_node_type = node_type-function_argument ).
 
     IF _step_forward( ) <> abap_true.
@@ -1229,14 +1261,12 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF mv_current_token = ')'.
-      _add_node( iv_parent_id = lv_function_field_node_id
+      _add_node( iv_parent_id = ev_function_field_node_id
                  iv_node_type = node_type-closing_bracket ).
-      rv_it_is_really_function = abap_true.
+      ev_it_is_really_function = abap_true.
     ENDIF.
 
     _step_forward( ).
-
-    _alias( lv_function_field_node_id ).
   ENDMETHOD.
 
 

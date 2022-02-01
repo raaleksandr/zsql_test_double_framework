@@ -17,13 +17,15 @@ public section.
     redefinition .
 protected section.
 
+  data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
+
   methods _CHECK_ELEMENTARY
+    redefinition .
+  methods _CHECK_WITH_COMPARE_OPERATOR
     redefinition .
   methods _GET_REF_TO_RIGHT_OPERAND
     redefinition .
   methods _PROCESS_ELEMENTARY
-    redefinition .
-  methods _CHECK_WITH_COMPARE_OPERATOR
     redefinition .
 private section.
 
@@ -38,7 +40,6 @@ private section.
   data MS_PARAMETER_FOR_VALUE type ZOSQL_DB_LAYER_PARAM .
   data MV_RIGHT_PART_SUBQUERY_SQL type STRING .
   data MV_SUBQUERY_SPECIFICATOR type STRING .
-  data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
   constants C_EXISTS type STRING value 'EXISTS' ##NO_TEXT.
 
   methods _CHECK_FOR_IN_WHEN_SUBQUERY

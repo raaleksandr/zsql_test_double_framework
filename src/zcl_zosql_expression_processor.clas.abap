@@ -55,6 +55,18 @@ protected section.
   constants C_IN type STRING value 'IN' ##NO_TEXT.
   data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
+  methods _PROCESS_LEFT_PART
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_LEFT_PART) type I .
+  methods _GET_REF_TO_OPERAND_DS_DIRECT
+    importing
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
+      !IS_OPERAND type TY_FIELD
+    returning
+      value(RD_REF_TO_OPERAND) type ref to DATA
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _COMPARE_VALUES
     importing
       !IV_VALUE_LEFT type ANY
@@ -85,11 +97,18 @@ protected section.
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CONVERT_SQLFIELD_TO_OPERAND
+    importing
+      !IV_FIELDNAME_IN_SQL type CLIKE
+    returning
+      value(RS_FIELD) type TY_FIELD .
   methods _GET_REF_TO_LEFT_OPERAND
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
-      value(RD_REF_TO_LEFT_OPERAND) type ref to DATA .
+      value(RD_REF_TO_LEFT_OPERAND) type ref to DATA
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _PROCESS_ELEMENTARY
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -103,18 +122,10 @@ private section.
   constants C_BETWEEN type STRING value 'BETWEEN' ##NO_TEXT.
   constants C_LIKE type STRING value 'LIKE' ##NO_TEXT.
 
-  methods _TRY_TO_GET_PARAMETER_NAME
+  methods _CONSIDER_NOT_IN_ELEMENTARY
     importing
-      !IS_OPERAND type TY_FIELD
-    returning
-      value(RV_PARAMETER_NAME) type STRING .
-  methods _CHECK_IN
-    importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
-    returning
-      value(RV_CONDITIONS_TRUE) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
   methods _CHECK_LIKE
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -122,11 +133,14 @@ private section.
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _CONSIDER_NOT_IN_ELEMENTARY
+  methods _CHECK_IN
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
-  methods _PROCESS_LIKE
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
+    returning
+      value(RV_CONDITIONS_TRUE) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _PROCESS_COMPARISON
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
@@ -134,20 +148,20 @@ private section.
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
-  methods _PROCESS_COMPARISON
+  methods _PROCESS_LIKE
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+  methods _TRY_TO_GET_PARAMETER_NAME
+    importing
+      !IS_OPERAND type TY_FIELD
+    returning
+      value(RV_PARAMETER_NAME) type STRING .
   methods _CHECK_BETWEEN
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL .
-  methods _CONVERT_SQLFIELD_TO_OPERAND
-    importing
-      !IV_FIELDNAME_IN_SQL type CLIKE
-    returning
-      value(RS_FIELD) type TY_FIELD .
   methods _PROCESS_BETWEEN
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -722,10 +736,16 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
       ls_operand-dataset_name_or_alias = ls_data_set-dataset_name.
     ENDIF.
 
-    rd_ref_to_operand = io_iteration_position->get_field_ref_of_data_set(
-      iv_dataset_name_or_alias = ls_operand-dataset_name_or_alias
-      iv_fieldname             = ls_operand-fieldname_or_value ).
+    rd_ref_to_operand = _get_ref_to_operand_ds_direct( io_iteration_position = io_iteration_position
+                                                       is_operand            = ls_operand ).
   ENDMETHOD.
+
+
+  method _GET_REF_TO_OPERAND_DS_DIRECT.
+    rd_ref_to_operand = io_iteration_position->get_field_ref_of_data_set(
+      iv_dataset_name_or_alias = is_operand-dataset_name_or_alias
+      iv_fieldname             = is_operand-fieldname_or_value ).
+  endmethod.
 
 
   method _GET_REF_TO_RIGHT_OPERAND.
@@ -736,14 +756,14 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
   method _PROCESS_BETWEEN.
 
-    DATA: ls_node_left_operand        TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_not                 TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+    DATA: ls_node_not                 TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_between_lower_bound TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_between_upper_bound TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
+    _process_left_part( io_sql_parser           = io_sql_parser
+                        iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
 
     ls_node_not =
       io_sql_parser->get_child_node_with_type(
@@ -756,28 +776,24 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
     ls_node_between_lower_bound =
       io_sql_parser->get_child_node_with_type(
-        iv_node_id   = ls_node_left_operand-id
+        iv_node_id   = iv_id_of_node_elementary_cond
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between_lower_bound ).
 
     ls_node_between_upper_bound =
       io_sql_parser->get_child_node_with_type(
-        iv_node_id   = ls_node_left_operand-id
+        iv_node_id   = iv_id_of_node_elementary_cond
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between_upper_bound ).
 
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
     mv_operation = c_between.
     ms_between_lower_bound = _convert_sqlfield_to_operand( ls_node_between_lower_bound-token ).
     ms_between_upper_bound = _convert_sqlfield_to_operand( ls_node_between_upper_bound-token ).
   endmethod.
 
 
-  method _PROCESS_COMPARISON.
+  METHOD _process_comparison.
 
-    DATA: ls_node_left_operand  TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_operator      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+    DATA: ls_node_operator      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
 
     ls_node_operator =
       io_sql_parser->get_child_node_with_type(
@@ -789,12 +805,13 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
         iv_node_id   = iv_id_of_node_elementary_cond
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
-   ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+    _process_left_part( io_sql_parser           = io_sql_parser
+                        iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
 
     mv_operation = ls_node_operator-token_ucase.
 
     ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD _process_elementary.
@@ -832,8 +849,7 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
   METHOD _process_in.
 
-    DATA: ls_node_left_operand    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_escape_symbol   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+    DATA: ls_node_escape_symbol   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_right_operand   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           lt_child_nodes          TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
           lt_nodes_values_of_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
@@ -842,8 +858,8 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
     FIELD-SYMBOLS: <ls_child_node>      LIKE LINE OF lt_child_nodes,
                    <ls_node_with_value> LIKE LINE OF lt_nodes_values_of_list.
 
-    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+    _process_left_part( io_sql_parser           = io_sql_parser
+                        iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
 
     mv_operation = c_in.
 
@@ -867,7 +883,7 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
       ls_node_right_operand =
         io_sql_parser->get_child_node_with_type(
-          iv_node_id   = ls_node_left_operand-id
+          iv_node_id   = iv_id_of_node_elementary_cond
           iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
       ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
@@ -875,20 +891,28 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
+  method _PROCESS_LEFT_PART.
+
+    DATA: ls_node_left_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_left_part ).
+    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+  endmethod.
+
+
   METHOD _process_like.
 
-    DATA: ls_node_left_operand  TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_escape_symbol TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+    DATA: ls_node_escape_symbol TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_elementary_cond ).
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+    _process_left_part( io_sql_parser           = io_sql_parser
+                        iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
 
     mv_operation = c_like.
 
     ls_node_right_operand =
       io_sql_parser->get_child_node_with_type(
-        iv_node_id   = ls_node_left_operand-id
+        iv_node_id   = iv_id_of_node_elementary_cond
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
     ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
