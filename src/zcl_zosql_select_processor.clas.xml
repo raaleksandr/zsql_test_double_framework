@@ -69,6 +69,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
+     <CMPNAME>GET_SELECT_PARAMETERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns select field/function list with parameters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
      <CMPNAME>HAS_AGGREGATION_FUNCTIONS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if there are aggregation functions among field list</DESCRIPT>
@@ -120,12 +126,6 @@
      <CMPNAME>_FILL_SELECT_FIELD_AS_FUNCTION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fills select field in case it contains a function</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
-     <CMPNAME>_GET_AGGR_FUNC_FIELDS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns list of aggregation function format for aggr classes</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>

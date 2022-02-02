@@ -12,6 +12,11 @@ public section.
       !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR
     raising
       ZCX_ZOSQL_ERROR .
+  methods INIT_ITERATOR_WHEN_NO_GROUP_BY
+    importing
+      !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR
+    raising
+      ZCX_ZOSQL_ERROR .
 protected section.
 private section.
 
@@ -56,6 +61,26 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
   endmethod.
 
 
+  method INIT_ITERATOR_WHEN_NO_GROUP_BY.
+
+    DATA: ld_table_not_grouped TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_table_not_grouped>      TYPE STANDARD TABLE,
+                   <lt_table_not_grouped_copy> TYPE STANDARD TABLE.
+
+    REFRESH mt_group_by_key_fields.
+
+    ld_table_not_grouped = io_select->get_result_as_ref_to_data( ).
+    ASSIGN ld_table_not_grouped->* TO <lt_table_not_grouped>.
+
+    CREATE DATA md_table_not_grouped LIKE <lt_table_not_grouped>.
+    ASSIGN md_table_not_grouped->* TO <lt_table_not_grouped_copy>.
+    <lt_table_not_grouped_copy> = <lt_table_not_grouped>.
+
+    mt_iter_positions_of_lines = io_select->get_iter_positions_of_lines( ).
+  endmethod.
+
+
   METHOD zif_zosql_iterator~get_iterator_position_object.
 
     DATA: lo_iterator_pos_groupby     TYPE REF TO zcl_zosql_groupby_iter_pos,
@@ -74,13 +99,15 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
                    <lv_value_in_table>      TYPE any,
                    <ls_data_set>            LIKE LINE OF lt_data_sets.
 
-    ASSIGN md_group_by_key_values->* TO <lt_group_by_key_values>.
-    READ TABLE <lt_group_by_key_values> INDEX mv_current_record_num ASSIGNING <ls_current_key>.
-    IF sy-subrc <> 0.
-      MESSAGE e079 WITH 'ZCL_ZOSQL_GROUPBY_ITERATOR'
-                        'ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT'
-                        '1' INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    IF mt_group_by_key_fields IS NOT INITIAL.
+      ASSIGN md_group_by_key_values->* TO <lt_group_by_key_values>.
+      READ TABLE <lt_group_by_key_values> INDEX mv_current_record_num ASSIGNING <ls_current_key>.
+      IF sy-subrc <> 0.
+        MESSAGE e079 WITH 'ZCL_ZOSQL_GROUPBY_ITERATOR'
+                          'ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT'
+                          '1' INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
     ENDIF.
 
     CREATE OBJECT lo_iterator_pos_groupby.
@@ -246,7 +273,11 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
   method _GET_COUNT.
     FIELD-SYMBOLS: <lt_table_with_keys> TYPE STANDARD TABLE.
 
-    ASSIGN md_group_by_key_values->* TO <lt_table_with_keys>.
-    rv_count = LINES( <lt_table_with_keys> ).
+    IF mt_group_by_key_fields IS NOT INITIAL.
+      ASSIGN md_group_by_key_values->* TO <lt_table_with_keys>.
+      rv_count = LINES( <lt_table_with_keys> ).
+    ELSE.
+      rv_count = 1.
+    ENDIF.
   endmethod.
 ENDCLASS.

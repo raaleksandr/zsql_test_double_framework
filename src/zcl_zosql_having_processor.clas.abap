@@ -11,7 +11,7 @@ protected section.
 
   methods _GET_REF_TO_LEFT_OPERAND
     redefinition .
-  methods _PROCESS_LEFT_PART
+  methods _INIT_LEFT_PART
     redefinition .
 private section.
 
@@ -57,16 +57,15 @@ CLASS ZCL_ZOSQL_HAVING_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _process_left_part.
-
+  method _INIT_LEFT_PART.
     DATA: ls_node_left_part         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           ls_node_function_argument TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     ls_node_left_part = io_sql_parser->get_node_info( iv_id_of_node_left_part ).
 
     IF ls_node_left_part-node_type <> zcl_zosql_parser_recurs_desc=>node_type-function.
-      super->_process_left_part( io_sql_parser           = io_sql_parser
-                                 iv_id_of_node_left_part = iv_id_of_node_left_part ).
+      super->_init_left_part( io_sql_parser           = io_sql_parser
+                              iv_id_of_node_left_part = iv_id_of_node_left_part ).
       RETURN.
     ENDIF.
 
@@ -78,5 +77,5 @@ CLASS ZCL_ZOSQL_HAVING_PROCESSOR IMPLEMENTATION.
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-function_argument ).
 
     ms_left_operand = _convert_sqlfield_to_operand( ls_node_function_argument-token ).
-  ENDMETHOD.
+  endmethod.
 ENDCLASS.

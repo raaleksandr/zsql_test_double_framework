@@ -15,6 +15,12 @@
    <DESCRIPTIONS>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
+     <CMPNAME>ADD_RECORD_TO_GROUPED_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Adds record to table with grouped lines</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
      <CMPNAME>APPLY_AGGREGATION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Performs aggregation functions on fields</DESCRIPT>
@@ -30,12 +36,6 @@
      <CMPNAME>C_FUNCTION_COUNT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Aggregation function &apos;COUNT&apos;</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_AGGR_FUNC_PROCESSOR</CLSNAME>
-     <CMPNAME>FILL_AGGREGATION_FUNCTIONS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Executes all aggregation functions for one set of keys</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
