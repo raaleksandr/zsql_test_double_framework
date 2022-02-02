@@ -5,6 +5,8 @@ class ZCL_ZOSQL_GROUPBY_ITER_POS definition
 
 public section.
 
+  constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
+
   methods GET_GROUPED_VALUE_OF_DATA_SET
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
@@ -22,6 +24,27 @@ public section.
     redefinition .
 protected section.
 private section.
+
+  types:
+    BEGIN OF TY_FIELD_WITH_AGGR_FUNC,
+           dataset_name_or_alias TYPE string,
+           fieldname TYPE fieldname,
+           aggregation_function TYPE string,
+           distinct_flag        TYPE abap_bool,
+         END OF TY_FIELD_WITH_AGGR_FUNC .
+  types:
+    TY_FIELDS_WITH_AGGR_FUNC  TYPE STANDARD TABLE OF ty_field_with_aggr_func WITH KEY fieldname .
+
+  constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
+
+  methods _FILL_AGGREGATION_FUNCTIONS
+    importing
+      !IT_TABLE_LINES_BY_KEY type STANDARD TABLE
+      !IT_FIELDS_WITH_AGGR_FUNC type TY_FIELDS_WITH_AGGR_FUNC
+    changing
+      !CS_RESULT_LINE type ANY
+    raising
+      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
@@ -83,7 +106,8 @@ CLASS ZCL_ZOSQL_GROUPBY_ITER_POS IMPLEMENTATION.
     DATA: ls_data_set_struct      TYPE ty_data_set_data,
           ld_copy_of_dataset_data TYPE REF TO data,
           lo_aggr_func            TYPE REF TO zcl_zosql_aggr_func_processor,
-          lt_fields_of_aggr_func  TYPE zcl_zosql_aggr_func_processor=>ty_fields_with_aggr_func.
+          lt_fields_of_aggr_func  TYPE zcl_zosql_aggr_func_processor=>ty_fields_with_aggr_func,
+          ld_aggregated_line      TYPE REF TO data.
 
     FIELD-SYMBOLS: <lt_dataset_data>         TYPE STANDARD TABLE,
                    <lt_copy_of_dataset_data> TYPE STANDARD TABLE,
@@ -102,6 +126,9 @@ CLASS ZCL_ZOSQL_GROUPBY_ITER_POS IMPLEMENTATION.
     ASSIGN ld_copy_of_dataset_data->* TO <lt_copy_of_dataset_data>.
     <lt_copy_of_dataset_data> = <lt_dataset_data>.
 
+    CREATE DATA ld_aggregated_line LIKE LINE OF <lt_dataset_data>.
+    ASSIGN ld_aggregated_line->* TO <ls_aggregated_line>.
+
     CREATE OBJECT lo_aggr_func.
 
     APPEND INITIAL LINE TO lt_fields_of_aggr_func ASSIGNING <ls_field_with_aggr_func>.
@@ -119,13 +146,91 @@ CLASS ZCL_ZOSQL_GROUPBY_ITER_POS IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lo_aggr_func->apply_aggregation( EXPORTING it_fields_with_aggr_func = lt_fields_of_aggr_func
-                                     CHANGING  ct_data_set              = <lt_copy_of_dataset_data> ).
+    _fill_aggregation_functions( EXPORTING it_table_lines_by_key    = <lt_copy_of_dataset_data>
+                                           it_fields_with_aggr_func = lt_fields_of_aggr_func
+                                 CHANGING  cs_result_line           = <ls_aggregated_line> ).
 
-    READ TABLE <lt_copy_of_dataset_data> INDEX 1 ASSIGNING <ls_aggregated_line>.
+    "lo_aggr_func->apply_aggregation( EXPORTING it_fields_with_aggr_func = lt_fields_of_aggr_func
+    "                                 CHANGING  ct_data_set              = <lt_copy_of_dataset_data> ).
+
+    "READ TABLE <lt_copy_of_dataset_data> INDEX 1 ASSIGNING <ls_aggregated_line>.
     ASSIGN COMPONENT iv_fieldname OF STRUCTURE <ls_aggregated_line> TO <lv_aggregated_value>.
     IF sy-subrc = 0.
       GET REFERENCE OF <lv_aggregated_value> INTO rd_ref_to_aggregated_value.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD _FILL_AGGREGATION_FUNCTIONS.
+
+    TYPES: BEGIN OF ty_count_distinct_buffer,
+             fieldname    TYPE fieldname,
+             values_table TYPE string_table,
+           END OF ty_count_distinct_buffer.
+
+    DATA: lt_count_distinct_buffer TYPE TABLE OF ty_count_distinct_buffer.
+
+    FIELD-SYMBOLS: <ls_field_with_aggr_func>   LIKE LINE OF it_fields_with_aggr_func,
+                   <lv_grouped_value>          TYPE any,
+                   <ls_table_line_not_grouped> TYPE any,
+                   <lv_not_grouped_value>      TYPE any,
+                   <ls_count_distinct_buffer>  TYPE ty_count_distinct_buffer.
+
+    LOOP AT it_fields_with_aggr_func ASSIGNING <ls_field_with_aggr_func>.
+
+      ASSIGN COMPONENT <ls_field_with_aggr_func>-fieldname OF STRUCTURE cs_result_line TO <lv_grouped_value>.
+      IF sy-subrc <> 0.
+        MESSAGE e076 WITH <ls_field_with_aggr_func>-fieldname INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
+      CLEAR <lv_grouped_value>.
+
+      LOOP AT it_table_lines_by_key ASSIGNING <ls_table_line_not_grouped>.
+        ASSIGN COMPONENT <ls_field_with_aggr_func>-fieldname OF STRUCTURE <ls_table_line_not_grouped> TO <lv_not_grouped_value>.
+
+        CASE zcl_zosql_utils=>to_upper_case( <ls_field_with_aggr_func>-aggregation_function ).
+          WHEN 'SUM'.
+            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
+          WHEN 'MIN'.
+            IF <lv_not_grouped_value> < <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
+              <lv_grouped_value> = <lv_not_grouped_value>.
+            ENDIF.
+          WHEN 'MAX'.
+            IF <lv_not_grouped_value> > <lv_grouped_value> OR <lv_grouped_value> IS INITIAL.
+              <lv_grouped_value> = <lv_not_grouped_value>.
+            ENDIF.
+          WHEN c_function_count.
+            IF <ls_field_with_aggr_func>-distinct_flag = abap_true.
+              READ TABLE lt_count_distinct_buffer WITH KEY fieldname = <ls_field_with_aggr_func>-fieldname
+                ASSIGNING <ls_count_distinct_buffer>.
+              IF sy-subrc <> 0.
+                APPEND INITIAL LINE TO lt_count_distinct_buffer ASSIGNING <ls_count_distinct_buffer>.
+                <ls_count_distinct_buffer>-fieldname = <ls_field_with_aggr_func>-fieldname.
+              ENDIF.
+
+              READ TABLE <ls_count_distinct_buffer>-values_table WITH KEY table_line = <lv_not_grouped_value>
+                TRANSPORTING NO FIELDS.
+              IF sy-subrc <> 0.
+                APPEND <lv_not_grouped_value> TO <ls_count_distinct_buffer>-values_table.
+                <lv_grouped_value> = <lv_grouped_value> + 1.
+              ENDIF.
+            ELSE.
+              <lv_grouped_value> = <lv_grouped_value> + 1.
+            ENDIF.
+          WHEN c_function_avg.
+            <lv_grouped_value> = <lv_grouped_value> + <lv_not_grouped_value>.
+          WHEN OTHERS.
+            MESSAGE e060 WITH <ls_field_with_aggr_func>-aggregation_function INTO zcl_zosql_utils=>dummy.
+            zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+        ENDCASE.
+      ENDLOOP.
+    ENDLOOP.
+
+    LOOP AT it_fields_with_aggr_func ASSIGNING <ls_field_with_aggr_func>
+      WHERE aggregation_function  = c_function_avg.
+
+      ASSIGN COMPONENT <ls_field_with_aggr_func>-fieldname OF STRUCTURE cs_result_line TO <lv_grouped_value>.
+      <lv_grouped_value> = <lv_grouped_value> / LINES( it_table_lines_by_key ).
+    ENDLOOP.
   ENDMETHOD.
 ENDCLASS.

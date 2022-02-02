@@ -25,7 +25,7 @@ protected section.
     redefinition .
   methods _GET_REF_TO_RIGHT_OPERAND
     redefinition .
-  methods _PROCESS_ELEMENTARY
+  methods _INIT_ELEMENTARY
     redefinition .
 private section.
 
@@ -81,11 +81,11 @@ private section.
       value(RV_SUBQUERY_RETURNS_ANY_REC) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _PROCESS_EXISTS
+  methods _INIT_EXISTS
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_EXISTS) type I .
-  methods _PROCESS_SUBQUERY
+  methods _INIT_SUBQUERY
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
@@ -142,8 +142,8 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
     CASE ls_first_node-node_type.
       WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_exists.
-        _process_exists( io_sql_parser        = io_sql_parser
-                         iv_id_of_node_exists = ls_first_node-id ).
+        _init_exists( io_sql_parser        = io_sql_parser
+                      iv_id_of_node_exists = ls_first_node-id ).
       WHEN OTHERS.
         CALL METHOD super->zif_zosql_expression_processor~initialize_by_parsed_sql
           EXPORTING
@@ -372,30 +372,30 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _process_elementary.
-    super->_process_elementary( io_sql_parser                 = io_sql_parser
-                                iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+  method _INIT_ELEMENTARY.
+    super->_init_elementary( io_sql_parser                 = io_sql_parser
+                             iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 
     IF _check_if_value_is_subquery( io_sql_parser                 = io_sql_parser
                                     iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ) = abap_true.
 
-      _process_subquery( io_sql_parser                 = io_sql_parser
-                         iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+      _init_subquery( io_sql_parser                 = io_sql_parser
+                      iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
     ENDIF.
-  ENDMETHOD.
+  endmethod.
 
 
-  method _PROCESS_EXISTS.
+  method _INIT_EXISTS.
     CLEAR ms_left_operand-fieldname_or_value.
 
     mv_operation = c_exists.
 
-    _process_subquery( io_sql_parser                 = io_sql_parser
-                       iv_id_of_node_elementary_cond = iv_id_of_node_exists ).
+    _init_subquery( io_sql_parser                 = io_sql_parser
+                    iv_id_of_node_elementary_cond = iv_id_of_node_exists ).
   endmethod.
 
 
-  method _PROCESS_SUBQUERY.
+  method _INIT_SUBQUERY.
     mv_right_part_subquery_sql = _get_subquery_sql( io_sql_parser                 = io_sql_parser
                                                     iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
 

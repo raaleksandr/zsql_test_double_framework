@@ -20,6 +20,9 @@ public section.
   types:
     TY_ITERATOR_POSITIONS  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
 
+  methods GET_SELECT_PARAMETERS
+    returning
+      value(RT_SELECT_PARAMETERS) type TY_SELECT_PARAMETERS .
   methods GET_ITER_POSITIONS_OF_LINES
     returning
       value(RT_ITERATOR_POSITIONS) type TY_ITERATOR_POSITIONS .
@@ -60,8 +63,7 @@ private section.
                field  TYPE char20 VALUE 'FIELD',
                groupby_function TYPE char20 VALUE 'GROUPBY_FUNCTION',
              END OF parameter_type .
-  data:
-    MT_SELECT_PARAMETERS  TYPE ty_select_parameters .
+  data MT_SELECT_PARAMETERS type TY_SELECT_PARAMETERS .
   data MD_DATA_SET type ref to DATA .
   constants C_FUNCTION_COUNT type STRING value 'COUNT' ##NO_TEXT.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
@@ -99,9 +101,6 @@ private section.
   methods _FILL_SELECT_FIELDS
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
-  methods _GET_AGGR_FUNC_FIELDS
-    returning
-      value(RT_FIELDS_WITH_AGGR_FUNC) type ZCL_ZOSQL_AGGR_FUNC_PROCESSOR=>TY_FIELDS_WITH_AGGR_FUNC .
   methods _GET_COMPONENT_FOR_FIELD
     importing
       !IS_SELECT_PARAMETER type TY_SELECT_PARAMETER
@@ -175,18 +174,15 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   method APPLY_AGGR_FUNC_NO_GROUP_BY.
 
-    DATA: lo_aggregation_function  TYPE REF TO zcl_zosql_aggr_func_processor,
-          lt_fields_with_aggr_func TYPE zcl_zosql_aggr_func_processor=>ty_fields_with_aggr_func.
+    DATA: lo_aggregation_function  TYPE REF TO zcl_zosql_aggr_func_processor.
 
     FIELD-SYMBOLS: <lt_data_set> TYPE STANDARD TABLE.
-
-    lt_fields_with_aggr_func = _get_aggr_func_fields( ).
 
     ASSIGN md_data_set->* TO <lt_data_set>.
 
     CREATE OBJECT lo_aggregation_function.
-    lo_aggregation_function->apply_aggregation( EXPORTING it_fields_with_aggr_func = lt_fields_with_aggr_func
-                                                CHANGING  ct_data_set              = <lt_data_set> ).
+    lo_aggregation_function->apply_aggregation( EXPORTING io_select   = me
+                                                CHANGING  ct_data_set = <lt_data_set> ).
   endmethod.
 
 
@@ -224,9 +220,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     ASSIGN md_data_set->* TO <lt_data_set>.
 
-    io_group_by->apply_group_by( EXPORTING io_select                = me
-                                           it_select_parameters     = mt_select_parameters
-                                 CHANGING  ct_data_set              = <lt_data_set> ).
+    io_group_by->apply_group_by( EXPORTING io_select   = me
+                                 CHANGING  ct_data_set = <lt_data_set> ).
   ENDMETHOD.
 
 
@@ -251,6 +246,11 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     ASSIGN md_data_set->* TO <lt_result>.
     zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result>
                                                IMPORTING et_table_dest = ct_result_table ).
+  endmethod.
+
+
+  method GET_SELECT_PARAMETERS.
+    rt_select_parameters = mt_select_parameters.
   endmethod.
 
 
@@ -432,22 +432,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     ENDLOOP.
 
     rs_select_field_parameters-parameter_type = parameter_type-groupby_function.
-  endmethod.
-
-
-  method _GET_AGGR_FUNC_FIELDS.
-
-    FIELD-SYMBOLS: <ls_select_parameter>     LIKE LINE OF mt_select_parameters,
-                   <ls_field_with_aggr_func> LIKE LINE OF rt_fields_with_aggr_func.
-
-    LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
-      WHERE parameter_type = parameter_type-groupby_function.
-
-      APPEND INITIAL LINE TO rt_fields_with_aggr_func ASSIGNING <ls_field_with_aggr_func>.
-      <ls_field_with_aggr_func>-fieldname            = <ls_select_parameter>-field_name_in_result.
-      <ls_field_with_aggr_func>-aggregation_function = <ls_select_parameter>-function_name.
-      <ls_field_with_aggr_func>-distinct_flag        = <ls_select_parameter>-distinct_flag.
-    ENDLOOP.
   endmethod.
 
 

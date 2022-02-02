@@ -21,6 +21,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>INIT_ITERATOR_WHEN_NO_GROUP_BY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initializes when there aggregation funcs without group by</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
      <CMPNAME>MD_GROUP_BY_KEY_VALUES</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Dataset lines with key values (unique)</DESCRIPT>
