@@ -9,7 +9,9 @@ public section.
 
   methods CONSTRUCTOR
     importing
-      !IO_HAVING_PROCESSOR type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR optional .
+      !IO_HAVING_PROCESSOR type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR optional
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR .
   methods APPLY_GROUP_BY
     importing
       !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR
@@ -18,18 +20,22 @@ public section.
       !CT_DATA_SET type STANDARD TABLE
     raising
       ZCX_ZOSQL_ERROR .
-  methods INITIALIZE_BY_PARSED_SQL
-    importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_GROUP_BY_NODE_ID type I
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
 protected section.
 private section.
 
   data MO_HAVING_PROCESSOR type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR .
 
+  methods _GET_GROUP_BY_NODE
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RO_NODE_GROUP_BY) type ref to ZCL_ZOSQL_PARSER_NODE .
+  methods _INITIALIZE_BY_PARSED_SQL
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _FILL_DATASET_WHERE_EMPTY
     importing
       !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
@@ -91,32 +97,9 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
   method CONSTRUCTOR.
     super->constructor( ).
     mo_having_processor = io_having_processor.
+    _initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
+                               io_from_iterator = io_from_iterator ).
   endmethod.
-
-
-  METHOD initialize_by_parsed_sql.
-
-    DATA: lt_child_nodes_of_group_by TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
-
-    FIELD-SYMBOLS: <ls_child_node>         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-                   <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields.
-
-    lt_child_nodes_of_group_by = io_sql_parser->get_child_nodes( iv_group_by_node_id ).
-
-    LOOP AT lt_child_nodes_of_group_by ASSIGNING <ls_child_node>
-      WHERE node_type = zcl_zosql_parser_recurs_desc=>node_type-select_field.
-
-      APPEND INITIAL LINE TO mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>.
-      FIND FIRST OCCURRENCE OF '~' IN <ls_child_node>-token.
-      IF sy-subrc = 0.
-        SPLIT <ls_child_node>-token_ucase AT '~' INTO <ls_group_by_key_field>-dataset_name_or_alias <ls_group_by_key_field>-fieldname.
-      ELSE.
-        <ls_group_by_key_field>-fieldname = <ls_child_node>-token_ucase.
-      ENDIF.
-    ENDLOOP.
-
-    _fill_dataset_where_empty( io_from_iterator ).
-  ENDMETHOD.
 
 
   METHOD _FILL_DATASET_WHERE_EMPTY.
@@ -146,5 +129,46 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
         zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
     ENDLOOP.
+  ENDMETHOD.
+
+
+  method _GET_GROUP_BY_NODE.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_group_by TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    CREATE OBJECT lo_parser_helper.
+    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser    = io_sql_parser
+                                                   IMPORTING es_node_group_by = ls_node_group_by ).
+
+    ro_node_group_by = io_sql_parser->get_node_as_object( ls_node_group_by-id ).
+  endmethod.
+
+
+  METHOD _initialize_by_parsed_sql.
+
+    DATA: lo_group_by_node           TYPE REF TO zcl_zosql_parser_node,
+          lt_child_nodes_of_group_by TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_child_node              TYPE REF TO zcl_zosql_parser_node.
+
+    FIELD-SYMBOLS: <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields.
+
+    lo_group_by_node = _get_group_by_node( io_sql_parser ).
+
+    lt_child_nodes_of_group_by = lo_group_by_node->get_child_nodes( ).
+
+    LOOP AT lt_child_nodes_of_group_by INTO lo_child_node
+      WHERE table_line->node_type = zcl_zosql_parser_recurs_desc=>node_type-select_field.
+
+      APPEND INITIAL LINE TO mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>.
+      FIND FIRST OCCURRENCE OF '~' IN lo_child_node->token.
+      IF sy-subrc = 0.
+        SPLIT lo_child_node->token_ucase AT '~' INTO <ls_group_by_key_field>-dataset_name_or_alias <ls_group_by_key_field>-fieldname.
+      ELSE.
+        <ls_group_by_key_field>-fieldname = lo_child_node->token_ucase.
+      ENDIF.
+    ENDLOOP.
+
+    _fill_dataset_where_empty( io_from_iterator ).
   ENDMETHOD.
 ENDCLASS.

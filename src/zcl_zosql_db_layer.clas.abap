@@ -714,8 +714,11 @@ endmethod.
                                                      IMPORTING es_node_where = ls_node_where ).
     ENDIF.
 
-    lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                                                                 iv_id_of_node_to_parse = ls_node_where-id ).
+    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
+
+    lo_node_where = io_sql_parser->get_node_as_object( ls_node_where-id ).
+
+    lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( lo_node_where ).
 
     LOOP AT it_parameters_with_name ASSIGNING <ls_parameter_with_name>.
       ls_dynamic_component-name = <ls_parameter_with_name>-param_name.

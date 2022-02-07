@@ -70,6 +70,11 @@ public section.
                  list_of_vals_value             TYPE string VALUE 'LIST_OF_VALS_VALUE',
                END OF node_type .
 
+  methods GET_NODE_AS_OBJECT
+    importing
+      !IV_NODE_ID type I
+    returning
+      value(RO_NODE) type ref to ZCL_ZOSQL_PARSER_NODE .
   methods EXISTS_CHILD_NODE_WITH_TYPE
     importing
       value(IV_NODE_ID) type I
@@ -429,6 +434,14 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     READ TABLE lt_child_nodes WITH KEY node_type = iv_node_type INTO rs_child_node.
   endmethod.
+
+
+  METHOD get_node_as_object.
+    CREATE OBJECT ro_node
+      EXPORTING
+        io_sql_parser = me
+        iv_node_id    = iv_node_id.
+  ENDMETHOD.
 
 
   METHOD GET_NODE_END_TOKEN_INDEX.

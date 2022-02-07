@@ -17,15 +17,13 @@ public section.
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
-      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS optional .
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS optional
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
+    raising
+      ZCX_ZOSQL_ERROR .
   methods GET_DATA_SET_LIST
     returning
       value(RT_DATA_SET_LIST) type TY_DATA_SETS .
-  methods INIT_BY_SQL_PARSER
-    importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-    raising
-      ZCX_ZOSQL_ERROR .
   methods GET_LINE_FOR_DATA_SET_REF
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
@@ -100,15 +98,13 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _GET_DATASET_NAME_AND_ALIAS
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_PARENT_NODE_ID_OF_JOIN) type I
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
     exporting
       !EV_NAME type CLIKE
       !EV_ALIAS type CLIKE .
   methods _ADD_ANOTHER_JOIN
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_MAIN_NODE_ID_JOIN_DATASET type I
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
     raising
       ZCX_ZOSQL_ERROR .
   methods _ADD_LEFT_JOIN_ITER
@@ -123,6 +119,11 @@ private section.
     importing
       !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
       !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
+  methods _INIT_BY_SQL_PARSER
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _INIT_OUTER_JOIN_ADD_MODE
     returning
       value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
@@ -133,12 +134,10 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _CONSIDER_TYPE_OF_JOIN
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_PARENT_NODE_ID_OF_JOIN type I .
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _ADD_JOIN_CONDITION
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_PARENT_NODE_ID_OF_JOIN type I
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
     raising
       ZCX_ZOSQL_ERROR .
   methods _CONDITIONS_FAIL_FOR_ALL_LINES
@@ -158,8 +157,7 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _ADD_DATASET
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_PARENT_NODE_ID_OF_JOIN type I
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
     raising
       ZCX_ZOSQL_ERROR .
   methods _MOVE_TO_NEXT_POSITION
@@ -197,6 +195,10 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     ELSE.
       CREATE OBJECT lo_factory TYPE zcl_zosql_factory.
       mo_zosql_test_environment = lo_factory->get_test_environment( ).
+    ENDIF.
+
+    IF io_sql_parser IS BOUND.
+      _init_by_sql_parser( io_sql_parser ).
     ENDIF.
   ENDMETHOD.
 
@@ -236,27 +238,6 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
       MESSAGE e075 WITH iv_dataset_name_or_alias INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
-  endmethod.
-
-
-  method INIT_BY_SQL_PARSER.
-
-    DATA: lo_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_from            TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_nodes_from_tables    TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
-
-    FIELD-SYMBOLS: <ls_node_from_table>     LIKE LINE OF lt_nodes_from_tables.
-
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
-                                                   IMPORTING es_node_from  = ls_node_from ).
-
-    lt_nodes_from_tables = io_sql_parser->get_child_nodes( ls_node_from-id ).
-
-    LOOP AT lt_nodes_from_tables ASSIGNING <ls_node_from_table>.
-      _add_another_join( io_sql_parser = io_sql_parser
-                         iv_main_node_id_join_dataset = <ls_node_from_table>-id ).
-    ENDLOOP.
   endmethod.
 
 
@@ -376,12 +357,8 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
 
   METHOD _ADD_ANOTHER_JOIN.
-
-    _add_dataset( io_sql_parser             = io_sql_parser
-                  iv_parent_node_id_of_join = iv_main_node_id_join_dataset ).
-
-    _add_join_condition( io_sql_parser             = io_sql_parser
-                         iv_parent_node_id_of_join = iv_main_node_id_join_dataset ).
+    _add_dataset( io_parent_node_of_join ).
+    _add_join_condition( io_parent_node_of_join ).
   ENDMETHOD.
 
 
@@ -389,8 +366,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     DATA: ls_dataset_with_position  LIKE LINE OF mt_datasets_with_position.
 
-    _get_dataset_name_and_alias( EXPORTING io_sql_parser             = io_sql_parser
-                                           iv_parent_node_id_of_join = iv_parent_node_id_of_join
+    _get_dataset_name_and_alias( EXPORTING io_parent_node_of_join    = io_parent_node_of_join
                                  IMPORTING ev_name                   = ls_dataset_with_position-dataset_name
                                            ev_alias                  = ls_dataset_with_position-dataset_alias ).
 
@@ -398,42 +374,35 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     APPEND ls_dataset_with_position TO mt_datasets_with_position.
 
-    _consider_type_of_join( io_sql_parser             = io_sql_parser
-                            iv_parent_node_id_of_join = iv_parent_node_id_of_join ).
+    _consider_type_of_join( io_parent_node_of_join ).
   endmethod.
 
 
-  method _ADD_JOIN_CONDITION.
+  METHOD _add_join_condition.
 
-    DATA: ls_join_condition TYPE ty_join_condition,
-          lv_index          TYPE i,
-          ls_pre_last_dataset LIKE LINE OF mt_datasets_with_position,
-          ls_last_dataset     LIKE LINE OF mt_datasets_with_position,
-          lv_id_of_expression_parent TYPE i,
-          lt_child_nodes             TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+    DATA: ls_join_condition          TYPE ty_join_condition,
+          lv_index                   TYPE i,
+          ls_pre_last_dataset        LIKE LINE OF mt_datasets_with_position,
+          ls_last_dataset            LIKE LINE OF mt_datasets_with_position,
+          lo_node_join_on            TYPE REF TO zcl_zosql_parser_node.
 
-    FIELD-SYMBOLS: <ls_node_join_on> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    lt_child_nodes = io_sql_parser->get_child_nodes( iv_parent_node_id_of_join ).
-    READ TABLE lt_child_nodes WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-join_on ASSIGNING <ls_node_join_on>.
-    IF sy-subrc = 0.
-      lv_id_of_expression_parent = <ls_node_join_on>-id.
-    ENDIF.
+    lo_node_join_on =
+      io_parent_node_of_join->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-join_on ).
 
     CREATE OBJECT ls_join_condition-expression_processor TYPE zcl_zosql_join_processor
       EXPORTING
         io_parameters = mo_parameters.
 
-    ls_join_condition-expression_processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                                                      iv_id_of_node_to_parse = lv_id_of_expression_parent ).
+    ls_join_condition-expression_processor->initialize_by_parsed_sql( lo_node_join_on ).
 
-    lv_index = LINES( mt_datasets_with_position ) - 1.
+    lv_index = lines( mt_datasets_with_position ) - 1.
     READ TABLE mt_datasets_with_position INDEX lv_index INTO ls_pre_last_dataset.
 
     ls_join_condition-left_dataset_name = ls_pre_last_dataset-dataset_name.
     ls_join_condition-left_dataset_alias = ls_pre_last_dataset-dataset_alias.
 
-    lv_index = LINES( mt_datasets_with_position ).
+    lv_index = lines( mt_datasets_with_position ).
     READ TABLE mt_datasets_with_position INDEX lv_index INTO ls_last_dataset.
 
     ls_join_condition-right_dataset_name = ls_last_dataset-dataset_name.
@@ -442,7 +411,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     ls_join_condition-type_of_join = ls_last_dataset-type_of_join.
 
     APPEND ls_join_condition TO mt_join_conditions.
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD _ADD_LEFT_JOIN_ITER.
@@ -537,29 +506,31 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   endmethod.
 
 
-  method _CONSIDER_TYPE_OF_JOIN.
+  METHOD _consider_type_of_join.
 
-    DATA: lv_datasets_count    TYPE i,
-          lv_pre_last_dataset  TYPE i,
-          lt_nodes_of_join     TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_main_node_of_join TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lv_type_of_join      TYPE i.
+    DATA: lv_datasets_count   TYPE i,
+          lv_pre_last_dataset TYPE i,
+          lt_nodes_of_join    TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node             TYPE REF TO zcl_zosql_parser_node,
+          lv_type_of_join     TYPE i.
 
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position.
 
-    ls_main_node_of_join = io_sql_parser->get_node_info( iv_parent_node_id_of_join ).
-    lt_nodes_of_join = io_sql_parser->get_child_nodes( iv_parent_node_id_of_join ).
+    lt_nodes_of_join = io_parent_node_of_join->get_child_nodes( ).
+    INSERT io_parent_node_of_join INTO lt_nodes_of_join INDEX 1.
 
-    INSERT ls_main_node_of_join INTO lt_nodes_of_join INDEX 1.
+    READ TABLE lt_nodes_of_join
+      WITH KEY table_line->node_type   = zcl_zosql_parser_recurs_desc=>node_type-join
+               table_line->token_ucase = 'LEFT'
+               TRANSPORTING NO FIELDS.
 
-    READ TABLE lt_nodes_of_join WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-join token_ucase = 'LEFT' TRANSPORTING NO FIELDS.
     IF sy-subrc = 0.
       lv_type_of_join = c_left_join.
     ELSE.
       lv_type_of_join = c_inner_join.
     ENDIF.
 
-    lv_datasets_count = LINES( mt_datasets_with_position ).
+    lv_datasets_count = lines( mt_datasets_with_position ).
     lv_pre_last_dataset = lv_datasets_count - 1.
 
     CASE lv_type_of_join.
@@ -572,7 +543,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     IF <ls_dataset_with_position> IS ASSIGNED.
       <ls_dataset_with_position>-type_of_join = lv_type_of_join.
     ENDIF.
-  endmethod.
+  ENDMETHOD.
 
 
   method _CREATE_DATASET_ITERATOR.
@@ -657,21 +628,25 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
   method _GET_DATASET_NAME_AND_ALIAS.
 
-    DATA: ls_main_node_of_join      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_nodes_of_join          TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+    DATA: lt_nodes_of_join          TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node_with_dataset      TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
-    ls_main_node_of_join = io_sql_parser->get_node_info( iv_parent_node_id_of_join ).
-    lt_nodes_of_join = io_sql_parser->get_child_nodes( iv_parent_node_id_of_join ).
-    INSERT ls_main_node_of_join INTO lt_nodes_of_join INDEX 1.
+    IF io_parent_node_of_join->node_type = zcl_zosql_parser_recurs_desc=>node_type-table.
+      lo_node_with_dataset = io_parent_node_of_join.
+    ELSE.
+      lo_node_with_dataset =
+        io_parent_node_of_join->get_child_node_with_type(
+          zcl_zosql_parser_recurs_desc=>node_type-table ).
+    ENDIF.
 
-    READ TABLE lt_nodes_of_join WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-table ASSIGNING <ls_node>.
-    IF sy-subrc = 0.
-      ev_name = <ls_node>-token_ucase.
-      ev_alias = io_sql_parser->get_child_node_token_with_type( iv_node_id = <ls_node>-id
-                                                                iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-alias
-                                                                iv_ucase     = abap_true ).
+    IF lo_node_with_dataset IS BOUND.
+      ev_name  = lo_node_with_dataset->token_ucase.
+      ev_alias =
+        lo_node_with_dataset->get_child_node_token_with_type(
+          iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-alias
+          iv_ucase     = abap_true ).
     ENDIF.
   endmethod.
 
@@ -679,6 +654,30 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   method _INIT_BY_ATTRIBUTES.
     mt_datasets_with_position = it_datasets_with_position.
     mt_join_conditions        = it_join_conditions.
+  endmethod.
+
+
+  method _INIT_BY_SQL_PARSER.
+
+    DATA: lo_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
+          ls_node_from            TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lt_nodes_from_tables    TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node_from            TYPE REF TO zcl_zosql_parser_node,
+          lo_child_node_of_from   TYPE REF TO zcl_zosql_parser_node.
+
+    FIELD-SYMBOLS: <ls_node_from_table>     LIKE LINE OF lt_nodes_from_tables.
+
+    CREATE OBJECT lo_parser_helper.
+    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
+                                                   IMPORTING es_node_from  = ls_node_from ).
+
+    lo_node_from = io_sql_parser->get_node_as_object( ls_node_from-id ).
+
+    lt_nodes_from_tables = lo_node_from->get_child_nodes( ).
+
+    LOOP AT lt_nodes_from_tables INTO lo_child_node_of_from.
+      _add_another_join( lo_child_node_of_from ).
+    ENDLOOP.
   endmethod.
 
 

@@ -48,6 +48,7 @@ protected section.
   data MV_OPERATION type STRING .
   data MS_RIGHT_OPERAND type TY_FIELD .
   data MS_BETWEEN_LOWER_BOUND type TY_FIELD .
+  data MV_EMPTY_CONDITION_FLAG type ABAP_BOOL .
   data MS_BETWEEN_UPPER_BOUND type TY_FIELD .
   data MT_OR_CONDITIONS type TY_BLOCKS .
   data MT_AND_CONDITIONS type TY_BLOCKS .
@@ -57,8 +58,7 @@ protected section.
 
   methods _INIT_LEFT_PART
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_LEFT_PART) type I .
+      !IO_NODE_LEFT_PART type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _COMPARE_VALUES
     importing
       !IV_VALUE_LEFT type ANY
@@ -103,21 +103,18 @@ protected section.
       ZCX_ZOSQL_ERROR .
   methods _INIT_ELEMENTARY
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_ID_OF_NODE_ELEMENTARY_COND type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
 private section.
 
   data MV_ESCAPE_SYMBOL_FOR_LIKE type CHAR1 .
   data MT_LIST_OF_VALUES_FOR_IN type TY_FIELDS .
-  data MV_EMPTY_CONDITION_FLAG type ABAP_BOOL .
   constants C_NOT type STRING value 'NOT' ##NO_TEXT.
   constants C_BETWEEN type STRING value 'BETWEEN' ##NO_TEXT.
   constants C_LIKE type STRING value 'LIKE' ##NO_TEXT.
 
   methods _CONSIDER_NOT_IN_ELEMENTARY
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _CHECK_LIKE
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -134,16 +131,13 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _INIT_COMPARISON
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _INIT_IN
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _INIT_LIKE
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _TRY_TO_GET_PARAMETER_NAME
     importing
       !IS_OPERAND type TY_FIELD
@@ -158,8 +152,7 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _INIT_BETWEEN
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_ID_OF_NODE_ELEMENTARY_COND type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _RAISE_IF_CANNOT_COMPARE_VALS
     importing
       !I_FIRST_VALUE type ANY
@@ -168,8 +161,7 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _INIT_LOGICAL_CONDITION
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_PARENT_NODE_ID_OF_CONDITION type I
+      !IO_PARENT_NODE_OF_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
     raising
       ZCX_ZOSQL_ERROR .
   methods _CONVERT_LIKE_TO_CP
@@ -343,48 +335,54 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
   METHOD zif_zosql_expression_processor~initialize_by_parsed_sql.
 
-    DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_first_node             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_second_node            TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_third_node             TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_first_node             TYPE REF TO zcl_zosql_parser_node,
+          lo_second_node            TYPE REF TO zcl_zosql_parser_node,
+          lo_third_node             TYPE REF TO zcl_zosql_parser_node,
+          lv_second_node_type       TYPE string,
+          lv_third_node_type        TYPE string.
 
-    IF iv_id_of_node_to_parse IS INITIAL.
+    IF io_parent_node_of_expr IS NOT BOUND.
       mv_empty_condition_flag = abap_true.
       RETURN.
     ENDIF.
 
-    lt_child_nodes_next_level = io_sql_parser->get_child_nodes( iv_id_of_node_to_parse ).
+    lt_child_nodes_next_level = io_parent_node_of_expr->get_child_nodes( ).
 
-    READ TABLE lt_child_nodes_next_level INDEX 1 INTO ls_first_node.
+    READ TABLE lt_child_nodes_next_level INDEX 1 INTO lo_first_node.
     IF sy-subrc <> 0.
       RETURN.
     ENDIF.
 
-    READ TABLE lt_child_nodes_next_level INDEX 2 INTO ls_second_node.
-    READ TABLE lt_child_nodes_next_level INDEX 3 INTO ls_third_node.
+    READ TABLE lt_child_nodes_next_level INDEX 2 INTO lo_second_node.
+    IF sy-subrc = 0.
+      lv_second_node_type = lo_second_node->node_type.
+    ENDIF.
 
-    IF ls_first_node-node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not
-      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_between
-      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_like
-      AND ls_second_node-node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_in.
+    READ TABLE lt_child_nodes_next_level INDEX 3 INTO lo_third_node.
+    IF sy-subrc = 0.
+      lv_third_node_type = lo_third_node->node_type.
+    ENDIF.
+
+    IF lo_first_node->node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not
+      AND lv_second_node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_between
+      AND lv_second_node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_like
+      AND lv_second_node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_in.
 
       ms_not_condition-processor = zif_zosql_expression_processor~create_new_instance( ).
-      ms_not_condition-processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                                            iv_id_of_node_to_parse = ls_first_node-id ).
+      ms_not_condition-processor->initialize_by_parsed_sql( lo_first_node ).
 
     ELSEIF lines( lt_child_nodes_next_level ) = 1
-        OR ( ls_second_node-node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket AND ls_third_node IS INITIAL ).
+        OR ( lv_second_node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket
+             AND lo_third_node IS NOT BOUND ).
 
-      zif_zosql_expression_processor~initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                                               iv_id_of_node_to_parse = ls_first_node-id ).
+      zif_zosql_expression_processor~initialize_by_parsed_sql( lo_first_node ).
 
-    ELSEIF ls_second_node-node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator.
+    ELSEIF lv_second_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator.
 
-      _init_logical_condition( io_sql_parser                  = io_sql_parser
-                               iv_parent_node_id_of_condition = iv_id_of_node_to_parse ).
+      _init_logical_condition( io_parent_node_of_expr ).
     ELSE.
-      _init_elementary( io_sql_parser                 = io_sql_parser
-                        iv_id_of_node_elementary_cond = iv_id_of_node_to_parse ).
+      _init_elementary( io_parent_node_of_expr ).
     ENDIF.
   ENDMETHOD.
 
@@ -606,9 +604,8 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
 
   method _CONSIDER_NOT_IN_ELEMENTARY.
-    IF io_sql_parser->exists_child_node_with_type(
-         iv_node_id   = iv_id_of_node_elementary_cond
-         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not ) = abap_true.
+    IF io_node_elementary_condition->exists_child_node_with_type(
+         zcl_zosql_parser_recurs_desc=>node_type-expression_not ) = abap_true.
 
       mv_not_flag = abap_true.
     ENDIF.
@@ -744,208 +741,173 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
   method _INIT_BETWEEN.
 
-    DATA: ls_node_not                 TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_between_lower_bound TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_between_upper_bound TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lo_node_between_lower_bound TYPE REF TO zcl_zosql_parser_node,
+          lo_node_between_upper_bound TYPE REF TO zcl_zosql_parser_node.
 
-    FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    _init_left_part( io_node_elementary_condition ).
 
-    _init_left_part( io_sql_parser           = io_sql_parser
-                     iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
+    lo_node_between_lower_bound =
+      io_node_elementary_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_between_lower_bound ).
 
-    ls_node_not =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_not ).
-
-    IF ls_node_not IS NOT INITIAL.
-      mv_not_flag = abap_true.
-    ENDIF.
-
-    ls_node_between_lower_bound =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between_lower_bound ).
-
-    ls_node_between_upper_bound =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between_upper_bound ).
+    lo_node_between_upper_bound =
+      io_node_elementary_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_between_upper_bound ).
 
     mv_operation = c_between.
-    ms_between_lower_bound = _convert_sqlfield_to_operand( ls_node_between_lower_bound-token ).
-    ms_between_upper_bound = _convert_sqlfield_to_operand( ls_node_between_upper_bound-token ).
+    ms_between_lower_bound = _convert_sqlfield_to_operand( lo_node_between_lower_bound->token ).
+    ms_between_upper_bound = _convert_sqlfield_to_operand( lo_node_between_upper_bound->token ).
   endmethod.
 
 
   METHOD _INIT_COMPARISON.
 
-    DATA: ls_node_operator      TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lo_node_right_operand TYPE REF TO zcl_zosql_parser_node.
 
-    ls_node_operator =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator ).
+    _init_left_part( io_node_elementary_condition ).
 
-    ls_node_right_operand =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
+    mv_operation =
+      io_node_elementary_condition->get_child_node_token_with_type(
+        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator
+        iv_ucase     = abap_true ).
 
-    _init_left_part( io_sql_parser           = io_sql_parser
-                     iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
+    lo_node_right_operand =
+      io_node_elementary_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
-    mv_operation = ls_node_operator-token_ucase.
-
-    ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
+    IF lo_node_right_operand IS BOUND.
+      ms_right_operand = _convert_sqlfield_to_operand( lo_node_right_operand->token ).
+    ENDIF.
   ENDMETHOD.
 
 
   METHOD _INIT_ELEMENTARY.
 
-    IF io_sql_parser->exists_child_node_with_type(
-         iv_node_id   = iv_id_of_node_elementary_cond
-         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator ) = abap_true.
+    IF io_node_elementary_condition->exists_child_node_with_type(
+         zcl_zosql_parser_recurs_desc=>node_type-expression_comparison_operator ) = abap_true.
 
-      _init_comparison( io_sql_parser                 = io_sql_parser
-                        iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-    ELSEIF io_sql_parser->exists_child_node_with_type(
-              iv_node_id   = iv_id_of_node_elementary_cond
-              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_between ) = abap_true.
+      _init_comparison( io_node_elementary_condition ).
+    ELSEIF io_node_elementary_condition->exists_child_node_with_type(
+              zcl_zosql_parser_recurs_desc=>node_type-expression_between ) = abap_true.
 
-      _init_between( io_sql_parser                 = io_sql_parser
-                     iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-    ELSEIF io_sql_parser->exists_child_node_with_type(
-              iv_node_id   = iv_id_of_node_elementary_cond
-              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_like ) = abap_true.
+      _init_between( io_node_elementary_condition ).
+    ELSEIF io_node_elementary_condition->exists_child_node_with_type(
+              zcl_zosql_parser_recurs_desc=>node_type-expression_like ) = abap_true.
 
-      _init_like( io_sql_parser                 = io_sql_parser
-                  iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-    ELSEIF io_sql_parser->exists_child_node_with_type(
-              iv_node_id   = iv_id_of_node_elementary_cond
-              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_in ) = abap_true.
+      _init_like( io_node_elementary_condition ).
+    ELSEIF io_node_elementary_condition->exists_child_node_with_type(
+              zcl_zosql_parser_recurs_desc=>node_type-expression_in ) = abap_true.
 
-      _init_in( io_sql_parser                 = io_sql_parser
-                iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+      _init_in( io_node_elementary_condition ).
     ENDIF.
 
-    _consider_not_in_elementary( io_sql_parser                 = io_sql_parser
-                                 iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    _consider_not_in_elementary( io_node_elementary_condition ).
   ENDMETHOD.
 
 
   METHOD _INIT_IN.
 
-    DATA: ls_node_escape_symbol   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_right_operand   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_child_nodes          TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          lt_nodes_values_of_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_list_item            TYPE ty_field.
+    DATA: lo_node_right_operand   TYPE REF TO zcl_zosql_parser_node,
+          lt_child_nodes          TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lt_nodes_values_of_list TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          ls_list_item            TYPE ty_field,
+          lo_node                 TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_child_node>      LIKE LINE OF lt_child_nodes,
                    <ls_node_with_value> LIKE LINE OF lt_nodes_values_of_list.
 
-    _init_left_part( io_sql_parser           = io_sql_parser
-                     iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
+    _init_left_part( io_node_elementary_condition ).
 
     mv_operation = c_in.
 
-    lt_child_nodes = io_sql_parser->get_child_nodes( iv_id_of_node_elementary_cond ).
+    lt_child_nodes = io_node_elementary_condition->get_child_nodes( ).
 
-    LOOP AT lt_child_nodes ASSIGNING <ls_child_node>.
-      CASE <ls_child_node>-node_type.
+    LOOP AT lt_child_nodes INTO lo_node.
+      CASE lo_node->node_type.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_right_part.
-          ls_node_right_operand = <ls_child_node>.
+          lo_node_right_operand = lo_node.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-list_of_vals_value.
-          APPEND <ls_child_node> TO lt_nodes_values_of_list.
+          APPEND lo_node TO lt_nodes_values_of_list.
       ENDCASE.
     ENDLOOP.
 
     IF lt_nodes_values_of_list IS NOT INITIAL.
-      LOOP AT lt_nodes_values_of_list ASSIGNING <ls_node_with_value>.
-        ls_list_item = _convert_sqlfield_to_operand( <ls_node_with_value>-token ).
+      LOOP AT lt_nodes_values_of_list INTO lo_node.
+        ls_list_item = _convert_sqlfield_to_operand( lo_node->token ).
         APPEND ls_list_item TO mt_list_of_values_for_in.
       ENDLOOP.
     ELSE.
-
-      ls_node_right_operand =
-        io_sql_parser->get_child_node_with_type(
-          iv_node_id   = iv_id_of_node_elementary_cond
-          iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
-
-      ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
+      IF lo_node_right_operand IS BOUND.
+        ms_right_operand = _convert_sqlfield_to_operand( lo_node_right_operand->token ).
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 
 
   method _INIT_LEFT_PART.
-
-    DATA: ls_node_left_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    ls_node_left_operand = io_sql_parser->get_node_info( iv_id_of_node_left_part ).
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_left_operand-token ).
+    ms_left_operand = _convert_sqlfield_to_operand( io_node_left_part->token ).
   endmethod.
 
 
   METHOD _INIT_LIKE.
 
-    DATA: ls_node_escape_symbol TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_right_operand TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lo_node_escape_symbol TYPE REF TO zcl_zosql_parser_node,
+          lo_node_right_operand TYPE REF TO zcl_zosql_parser_node.
 
-    _init_left_part( io_sql_parser           = io_sql_parser
-                     iv_id_of_node_left_part = iv_id_of_node_elementary_cond ).
+    _init_left_part( io_node_elementary_condition ).
 
     mv_operation = c_like.
 
-    ls_node_right_operand =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
+    lo_node_right_operand =
+      io_node_elementary_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_right_part ).
 
-    ms_right_operand = _convert_sqlfield_to_operand( ls_node_right_operand-token ).
+    ms_right_operand = _convert_sqlfield_to_operand( lo_node_right_operand->token ).
 
-    ls_node_escape_symbol =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id = iv_id_of_node_elementary_cond
-        iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_like_escape_symbol ).
+    lo_node_escape_symbol =
+      io_node_elementary_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_like_escape_symbol ).
 
-    IF ls_node_escape_symbol IS NOT INITIAL.
-      mv_escape_symbol_for_like = zcl_zosql_utils=>clear_quotes_from_value( ls_node_escape_symbol-token ).
+    IF lo_node_escape_symbol IS NOT INITIAL.
+      mv_escape_symbol_for_like = zcl_zosql_utils=>clear_quotes_from_value( lo_node_escape_symbol->token ).
     ENDIF.
   ENDMETHOD.
 
 
   METHOD _INIT_LOGICAL_CONDITION.
 
-    DATA: lt_nodes_of_logical_condition TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+    DATA: lo_node_logical_operator      TYPE REF TO zcl_zosql_parser_node,
+          lt_nodes_of_logical_condition TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node_operand               TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node>       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
                    <lt_conditions> LIKE mt_or_conditions,
                    <ls_condition>  LIKE LINE OF mt_or_conditions.
 
-    lt_nodes_of_logical_condition = io_sql_parser->get_child_nodes( iv_parent_node_id_of_condition ).
+    lo_node_logical_operator =
+      io_parent_node_of_condition->get_child_node_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator ).
 
-    READ TABLE lt_nodes_of_logical_condition WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator ASSIGNING <ls_node>.
-    IF sy-subrc <> 0.
+    IF lo_node_logical_operator IS NOT BOUND.
       MESSAGE e077 INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    CASE <ls_node>-token_ucase.
+    CASE lo_node_logical_operator->token_ucase.
       WHEN 'OR'.
         ASSIGN mt_or_conditions TO <lt_conditions>.
       WHEN 'AND'.
         ASSIGN mt_and_conditions TO <lt_conditions>.
     ENDCASE.
 
-    LOOP AT lt_nodes_of_logical_condition ASSIGNING <ls_node>
-      WHERE node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator.
+    lt_nodes_of_logical_condition = io_parent_node_of_condition->get_child_nodes( ).
+
+    LOOP AT lt_nodes_of_logical_condition INTO lo_node_operand
+      WHERE table_line->node_type <> zcl_zosql_parser_recurs_desc=>node_type-expression_logical_operator.
 
       APPEND INITIAL LINE TO <lt_conditions> ASSIGNING <ls_condition>.
       <ls_condition>-processor = zif_zosql_expression_processor~create_new_instance( ).
-      <ls_condition>-processor->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                                          iv_id_of_node_to_parse = <ls_node>-id ).
+      <ls_condition>-processor->initialize_by_parsed_sql( lo_node_operand ).
     ENDLOOP.
   ENDMETHOD.
 

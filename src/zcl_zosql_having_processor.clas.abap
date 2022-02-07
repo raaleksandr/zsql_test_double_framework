@@ -58,24 +58,19 @@ CLASS ZCL_ZOSQL_HAVING_PROCESSOR IMPLEMENTATION.
 
 
   method _INIT_LEFT_PART.
-    DATA: ls_node_left_part         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_function_argument TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lo_node_function_argument TYPE REF TO zcl_zosql_parser_node.
 
-    ls_node_left_part = io_sql_parser->get_node_info( iv_id_of_node_left_part ).
-
-    IF ls_node_left_part-node_type <> zcl_zosql_parser_recurs_desc=>node_type-function.
-      super->_init_left_part( io_sql_parser           = io_sql_parser
-                              iv_id_of_node_left_part = iv_id_of_node_left_part ).
+    IF io_node_left_part->node_type <> zcl_zosql_parser_recurs_desc=>node_type-function.
+      super->_init_left_part( io_node_left_part ).
       RETURN.
     ENDIF.
 
-    mv_left_part_function_name = ls_node_left_part-token_ucase.
+    mv_left_part_function_name = io_node_left_part->token_ucase.
 
-    ls_node_function_argument =
-      io_sql_parser->get_child_node_with_type(
-        iv_node_id = iv_id_of_node_left_part
+    lo_node_function_argument =
+      io_node_left_part->get_child_node_with_type(
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-function_argument ).
 
-    ms_left_operand = _convert_sqlfield_to_operand( ls_node_function_argument-token ).
+    ms_left_operand = _convert_sqlfield_to_operand( lo_node_function_argument->token ).
   endmethod.
 ENDCLASS.

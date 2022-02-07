@@ -134,14 +134,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_from_iterator
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_sql_parser             = lo_sql_parser.
 
-    lo_from_iterator->init_by_sql_parser( lo_sql_parser ).
-
-    CREATE OBJECT lo_select.
-
-    lo_select->initialize_by_parsed_sql( io_sql_parser    = lo_sql_parser
-                                         io_from_iterator = lo_from_iterator ).
+    CREATE OBJECT lo_select
+      EXPORTING
+        io_sql_parser    = lo_sql_parser
+        io_from_iterator = lo_from_iterator.
 
     rd_data_set_for_select = lo_select->get_result_as_ref_to_data( ).
   ENDMETHOD.
@@ -394,9 +393,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_set
       EXPORTING
-        io_parameters = lo_parameters.
-
-    lo_set->initialize_by_parsed_sql( lo_sql_parser ).
+        io_parameters = lo_parameters
+        io_sql_parser = lo_sql_parser.
 
     CREATE OBJECT lo_table_iterator
       EXPORTING
@@ -469,8 +467,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
                                                          IMPORTING es_node_where = ls_node_where ).
 
-    lo_where->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                        iv_id_of_node_to_parse = ls_node_where-id ).
+    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
+
+    IF ls_node_where IS NOT INITIAL.
+      lo_node_where = io_sql_parser->get_node_as_object( ls_node_where-id ).
+    ENDIF.
+
+    lo_where->initialize_by_parsed_sql( lo_node_where ).
 
     lv_not_end_of_data = io_iterator->move_to_first( ).
 
@@ -586,14 +589,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     CREATE OBJECT lo_from_iterator
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
-        io_parameters             = lo_parameters.
+        io_parameters             = lo_parameters
+        io_sql_parser             = io_sql_parser.
 
-    lo_from_iterator->init_by_sql_parser( io_sql_parser ).
-
-    CREATE OBJECT lo_select.
-
-    lo_select->initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
-                                         io_from_iterator = lo_from_iterator ).
+    CREATE OBJECT lo_select
+      EXPORTING
+        io_sql_parser    = io_sql_parser
+        io_from_iterator = lo_from_iterator.
 
     CREATE OBJECT lo_sql_executor_for_line TYPE zcl_zosql_sql_exec_select
       EXPORTING
@@ -621,17 +623,18 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
             io_parameters             = lo_parameters
             iv_new_syntax             = lv_new_syntax.
 
-        lo_having->initialize_by_parsed_sql( io_sql_parser          = io_sql_parser
-                                             iv_id_of_node_to_parse = ls_node_having-id ).
+        DATA: lo_node_having TYPE REF TO zcl_zosql_parser_node.
+
+        lo_node_having = io_sql_parser->get_node_as_object( ls_node_having-id ).
+
+        lo_having->initialize_by_parsed_sql( lo_node_having ).
       ENDIF.
 
       CREATE OBJECT lo_group_by
         EXPORTING
-          io_having_processor = lo_having.
-
-      lo_group_by->initialize_by_parsed_sql( io_sql_parser       = io_sql_parser
-                                             iv_group_by_node_id = ls_node_group_by-id
-                                             io_from_iterator    = lo_from_iterator ).
+          io_having_processor = lo_having
+          io_sql_parser       = io_sql_parser
+          io_from_iterator    = lo_from_iterator.
 
       lo_select->apply_group_by( lo_group_by ).
     ELSEIF lo_select->has_aggregation_functions( ) = abap_true.
