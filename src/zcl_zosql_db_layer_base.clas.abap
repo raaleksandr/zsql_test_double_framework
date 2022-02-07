@@ -126,12 +126,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
-    CREATE OBJECT lo_from_iter.
-    lo_from_iter->init_by_sql_parser( io_sql_parser ).
+    CREATE OBJECT lo_from_iter
+      EXPORTING
+        io_sql_parser = io_sql_parser.
 
-    CREATE OBJECT lo_select.
-    lo_select->initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
-                                         io_from_iterator = lo_from_iter ).
+    CREATE OBJECT lo_select
+      EXPORTING
+        io_sql_parser    = io_sql_parser
+        io_from_iterator = lo_from_iter.
 
     rd_dynamic_table_select_result = lo_select->get_result_as_ref_to_data( ).
 

@@ -186,9 +186,8 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
 
     CREATE OBJECT lo_subquery_from
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment.
-
-    lo_subquery_from->init_by_sql_parser( mo_subquery_sql_parser ).
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_sql_parser             = mo_subquery_sql_parser.
 
     rt_data_set_list_of_subquery = lo_subquery_from->get_data_set_list( ).
   ENDMETHOD.
@@ -215,8 +214,11 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
     lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = mo_subquery_sql_parser
                                                          IMPORTING es_node_where = ls_node_where ).
 
-    lo_subquery_where->initialize_by_parsed_sql( io_sql_parser          = mo_subquery_sql_parser
-                                                 iv_id_of_node_to_parse = ls_node_where-id ).
+    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
+
+    lo_node_where = mo_subquery_sql_parser->get_node_as_object( ls_node_where-id ).
+
+    lo_subquery_where->initialize_by_parsed_sql( lo_node_where ).
 
     rt_operands_with_datasets = lo_subquery_where->get_list_of_operands( ).
   endmethod.

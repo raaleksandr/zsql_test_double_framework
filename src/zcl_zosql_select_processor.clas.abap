@@ -20,6 +20,12 @@ public section.
   types:
     TY_ITERATOR_POSITIONS  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
 
+  methods CONSTRUCTOR
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods GET_SELECT_PARAMETERS
     returning
       value(RT_SELECT_PARAMETERS) type TY_SELECT_PARAMETERS .
@@ -49,12 +55,6 @@ public section.
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     raising
       ZCX_ZOSQL_ERROR .
-  methods INITIALIZE_BY_PARSED_SQL
-    importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
 protected section.
 private section.
 
@@ -71,26 +71,22 @@ private section.
 
   methods _FILL_SELECT_FIELD
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_NODE_ID_OF_SELECT_FIELD type I
+      !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RS_SELECT_FIELD_PARAMETERS) type TY_SELECT_PARAMETER .
   methods _FILL_SELECT_FIELD_AS_FIELD
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_NODE_ID_OF_SELECT_FIELD type I
+      !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RS_SELECT_FIELD_PARAMETERS) type TY_SELECT_PARAMETER .
   methods _FILL_SELECT_FIELD_AS_FUNCTION
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_NODE_ID_OF_SELECT_FIELD) type I
+      !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RS_SELECT_FIELD_PARAMETERS) type TY_SELECT_PARAMETER .
   methods _GET_ALIAS
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IV_NODE_ID_OF_SELECT_FIELD type I
+      !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RV_ALIAS) type STRING .
   methods _GET_FUNCTION_NAME_FROM_TOKEN
@@ -225,6 +221,14 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   ENDMETHOD.
 
 
+  method CONSTRUCTOR.
+    _fill_select_fields( io_sql_parser ).
+    _star_to_field_list( io_from_iterator ).
+    _fill_dataset_where_empty( io_from_iterator ).
+    _create_data_set_for_select( io_from_iterator ).
+  endmethod.
+
+
   method GET_ITER_POSITIONS_OF_LINES.
     rt_iterator_positions = mt_iter_positions_of_data_set.
   endmethod.
@@ -262,14 +266,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
       rv_has_aggregation_functions = abap_true.
     ENDIF.
   endmethod.
-
-
-  METHOD INITIALIZE_BY_PARSED_SQL.
-    _fill_select_fields( io_sql_parser ).
-    _star_to_field_list( io_from_iterator ).
-    _fill_dataset_where_empty( io_from_iterator ).
-    _create_data_set_for_select( io_from_iterator ).
-  ENDMETHOD.
 
 
   METHOD _create_data_set_for_select.
@@ -342,22 +338,16 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   METHOD _fill_select_field.
 
-    DATA: ls_main_node_of_select_field TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
-    ls_main_node_of_select_field = io_sql_parser->get_node_info( iv_node_id_of_select_field ).
-    CASE ls_main_node_of_select_field-node_type.
+    CASE io_sql_parser_node->node_type.
       WHEN 'SELECT_FIELD'.
         rs_select_field_parameters =
-          _fill_select_field_as_field( io_sql_parser              = io_sql_parser
-                                       iv_node_id_of_select_field = iv_node_id_of_select_field ).
+          _fill_select_field_as_field( io_sql_parser_node ).
       WHEN 'FUNCTION'.
         rs_select_field_parameters =
-          _fill_select_field_as_function( io_sql_parser              = io_sql_parser
-                                          iv_node_id_of_select_field = iv_node_id_of_select_field ).
+          _fill_select_field_as_function( io_sql_parser_node ).
     ENDCASE.
 
-    rs_select_field_parameters-field_alias = _get_alias( io_sql_parser              = io_sql_parser
-                                                         iv_node_id_of_select_field = iv_node_id_of_select_field ).
+    rs_select_field_parameters-field_alias = _get_alias( io_sql_parser_node ).
   ENDMETHOD.
 
 
@@ -365,7 +355,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     DATA: lo_sql_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
           lt_nodes_with_select_fields TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_parameter                TYPE ty_select_parameter.
+          ls_parameter                TYPE ty_select_parameter,
+          lo_node_select_field        TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node_select_field> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
@@ -375,8 +366,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     LOOP AT lt_nodes_with_select_fields ASSIGNING <ls_node_select_field>.
 
-      ls_parameter = _fill_select_field( io_sql_parser              = io_sql_parser
-                                         iv_node_id_of_select_field = <ls_node_select_field>-id ).
+      lo_node_select_field = io_sql_parser->get_node_as_object( <ls_node_select_field>-id ).
+      ls_parameter = _fill_select_field( lo_node_select_field ).
 
       APPEND ls_parameter TO mt_select_parameters.
     ENDLOOP.
@@ -386,14 +377,11 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   method _FILL_SELECT_FIELD_AS_FIELD.
 
     DATA: lv_dataset_name_or_alias TYPE string,
-          lv_field_name            TYPE string,
-          ls_node_with_field_name  TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lv_field_name            TYPE string.
 
     rs_select_field_parameters-parameter_type = parameter_type-field.
 
-    ls_node_with_field_name = io_sql_parser->get_node_info( iv_node_id_of_select_field ).
-
-    SPLIT ls_node_with_field_name-token AT '~' INTO lv_dataset_name_or_alias lv_field_name.
+    SPLIT io_sql_parser_node->token AT '~' INTO lv_dataset_name_or_alias lv_field_name.
     IF lv_field_name IS INITIAL.
       lv_field_name = lv_dataset_name_or_alias.
       CLEAR lv_dataset_name_or_alias.
@@ -404,26 +392,25 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  method _FILL_SELECT_FIELD_AS_FUNCTION.
+  METHOD _fill_select_field_as_function.
 
-    DATA: lt_nodes_of_select_field TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_argument_parameters   TYPE ty_select_parameter.
+    DATA: lt_nodes_of_select_field     TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          ls_argument_parameters       TYPE ty_select_parameter,
+          lo_node_part_of_select_field TYPE REF TO zcl_zosql_parser_node.
 
-    FIELD-SYMBOLS: <ls_node> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    lt_nodes_of_select_field = io_sql_parser_node->get_child_nodes_with_self( ).
 
-    lt_nodes_of_select_field = io_sql_parser->get_child_nodes_with_self( iv_node_id_of_select_field ).
-
-    LOOP AT lt_nodes_of_select_field ASSIGNING <ls_node>.
-      CASE <ls_node>-node_type.
+    LOOP AT lt_nodes_of_select_field INTO lo_node_part_of_select_field.
+      CASE lo_node_part_of_select_field->node_type.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-function.
-          rs_select_field_parameters-function_name = _get_function_name_from_token( <ls_node>-token_ucase ).
+          rs_select_field_parameters-function_name =
+            _get_function_name_from_token( lo_node_part_of_select_field->token_ucase ).
 
           IF rs_select_field_parameters-function_name = 'COUNT(*)'.
             rs_select_field_parameters-field_name = '*'.
           ENDIF.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-function_argument.
-          ls_argument_parameters = _fill_select_field_as_field( io_sql_parser              = io_sql_parser
-                                                                iv_node_id_of_select_field = <ls_node>-id ).
+          ls_argument_parameters = _fill_select_field_as_field( lo_node_part_of_select_field ).
           rs_select_field_parameters-dataset_name = ls_argument_parameters-dataset_name.
           rs_select_field_parameters-field_name   = ls_argument_parameters-field_name.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-distinct.
@@ -432,12 +419,13 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     ENDLOOP.
 
     rs_select_field_parameters-parameter_type = parameter_type-groupby_function.
-  endmethod.
+  ENDMETHOD.
 
 
   method _GET_ALIAS.
-    rv_alias = io_sql_parser->get_child_node_token_with_type( iv_node_id   = iv_node_id_of_select_field
-                                                              iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-alias ).
+    rv_alias =
+      io_sql_parser_node->get_child_node_token_with_type(
+        zcl_zosql_parser_recurs_desc=>node_type-alias ).
   endmethod.
 
 

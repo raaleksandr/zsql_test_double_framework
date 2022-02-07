@@ -13,8 +13,7 @@ interface ZIF_ZOSQL_EXPRESSION_PROCESSOR
 
   methods INITIALIZE_BY_PARSED_SQL
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_TO_PARSE) type I
+      !IO_PARENT_NODE_OF_EXPR type ref to ZCL_ZOSQL_PARSER_NODE
     raising
       ZCX_ZOSQL_ERROR .
   methods CREATE_NEW_INSTANCE

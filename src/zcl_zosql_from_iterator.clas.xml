@@ -57,12 +57,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>INIT_BY_SQL_PARSER</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Initialize iterator by SELECT SQL FROM clause(with join etc)</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>MO_PARAMETERS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Instance that stores parameters for dynamic SQL Query</DESCRIPT>
@@ -144,6 +138,12 @@
      <CMPNAME>_INIT_BY_ATTRIBUTES</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Private initialization that lets to pass attributes directly</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_INIT_BY_SQL_PARSER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initialize iterator by SELECT SQL FROM clause(with join etc)</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>

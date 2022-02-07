@@ -21,12 +21,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
-     <CMPNAME>INITIALIZE_BY_PARSED_SQL</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Initializes class from SQL Parser</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
      <CMPNAME>MO_PARAMETERS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Instance that stores parameters for dynamic SQL Query</DESCRIPT>
@@ -36,6 +30,12 @@
      <CMPNAME>UPDATE_RECORD</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Updates one record according to &apos;SET&apos; condition</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SET_PROCESSOR</CLSNAME>
+     <CMPNAME>_INITIALIZE_BY_PARSED_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initializes class from SQL Parser</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

@@ -51,20 +51,17 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _GET_SUBQUERY_SPECIFICATOR
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RV_SUBQUERY_SPECIFICATOR) type STRING .
   methods _GET_SUBQUERY_SQL
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RV_SUBQUERY_SQL) type STRING .
   methods _CHECK_IF_VALUE_IS_SUBQUERY
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
     returning
       value(RV_VALUE_IS_SUBQUERY) type ABAP_BOOL .
   methods _GET_REF_TO_RIGHT_OPERAND_SUBQ
@@ -83,12 +80,10 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _INIT_EXISTS
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_EXISTS) type I .
+      !IO_NODE_EXISTS type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _INIT_SUBQUERY
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      value(IV_ID_OF_NODE_ELEMENTARY_COND) type I .
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _RUN_SUBQUERY_AND_GET_RESULT
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -130,25 +125,28 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   METHOD zif_zosql_expression_processor~initialize_by_parsed_sql.
 
-    DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_first_node             TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_first_node             TYPE REF TO zcl_zosql_parser_node.
 
-    lt_child_nodes_next_level = io_sql_parser->get_child_nodes( iv_id_of_node_to_parse ).
+    IF io_parent_node_of_expr IS NOT BOUND.
+      mv_empty_condition_flag = abap_true.
+      RETURN.
+    ENDIF.
 
-    READ TABLE lt_child_nodes_next_level INDEX 1 INTO ls_first_node.
+    lt_child_nodes_next_level = io_parent_node_of_expr->get_child_nodes( ).
+
+    READ TABLE lt_child_nodes_next_level INDEX 1 INTO lo_first_node.
     IF sy-subrc <> 0.
       RETURN.
     ENDIF.
 
-    CASE ls_first_node-node_type.
+    CASE lo_first_node->node_type.
       WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_exists.
-        _init_exists( io_sql_parser        = io_sql_parser
-                      iv_id_of_node_exists = ls_first_node-id ).
+        _init_exists( io_parent_node_of_expr ).
       WHEN OTHERS.
         CALL METHOD super->zif_zosql_expression_processor~initialize_by_parsed_sql
           EXPORTING
-            io_sql_parser          = io_sql_parser
-            iv_id_of_node_to_parse = iv_id_of_node_to_parse.
+            io_parent_node_of_expr = io_parent_node_of_expr.
     ENDCASE.
   ENDMETHOD.
 
@@ -216,18 +214,13 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
 
   method _CHECK_IF_VALUE_IS_SUBQUERY.
-
-    DATA: ls_node_subquery TYPE zcl_zosql_parser_recurs_desc=>ty_node.
-
     IF ms_right_operand-fieldname_or_value IS NOT INITIAL.
       RETURN.
     ENDIF.
 
-    ls_node_subquery =
-      io_sql_parser->get_child_node_with_type( iv_node_id   = iv_id_of_node_elementary_cond
-                                               iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-subquery_opening_bracket ).
+    IF io_node_elementary_condition->exists_child_node_with_type(
+          zcl_zosql_parser_recurs_desc=>node_type-subquery_opening_bracket ) = abap_true.
 
-    IF ls_node_subquery IS NOT INITIAL.
       rv_value_is_subquery = abap_true.
     ENDIF.
   endmethod.
@@ -317,8 +310,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   method _GET_SUBQUERY_SPECIFICATOR.
     rv_subquery_specificator =
-      io_sql_parser->get_child_node_token_with_type(
-        iv_node_id   = iv_id_of_node_elementary_cond
+      io_node_elementary_condition->get_child_node_token_with_type(
         iv_node_type = zcl_zosql_parser_recurs_desc=>node_type-subquery_specificator
         iv_ucase     = abap_true ).
   endmethod.
@@ -326,32 +318,31 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
   method _GET_SUBQUERY_SQL.
 
-    DATA: lt_nodes_of_subquery  TYPE zcl_zosql_parser_recurs_desc=>ty_tree.
+    DATA: lt_nodes_of_subquery        TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_end_node_closing_bracket TYPE REF TO zcl_zosql_parser_node,
+          lo_start_node_of_subquery   TYPE REF TO zcl_zosql_parser_node,
+          lo_end_node_of_subquery     TYPE REF TO zcl_zosql_parser_node.
 
-    FIELD-SYMBOLS: <ls_end_node_closing_bracket> TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-                   <ls_start_node_of_subquery>   TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-                   <ls_end_node_of_subquery>     TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    lt_nodes_of_subquery = io_node_elementary_condition->get_child_nodes_recursive( ).
 
-    lt_nodes_of_subquery = io_sql_parser->get_child_nodes_recursive( iv_id_of_node_elementary_cond ).
-
-    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_closing_bracket>.
+    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) INTO lo_end_node_closing_bracket.
     IF sy-subrc = 0.
-      IF <ls_end_node_closing_bracket>-node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket.
+      IF lo_end_node_closing_bracket->node_type = zcl_zosql_parser_recurs_desc=>node_type-closing_bracket.
         DELETE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ).
       ENDIF.
     ENDIF.
 
-    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) ASSIGNING <ls_end_node_of_subquery>.
+    READ TABLE lt_nodes_of_subquery INDEX LINES( lt_nodes_of_subquery ) INTO lo_end_node_of_subquery.
     IF sy-subrc = 0.
-      READ TABLE lt_nodes_of_subquery WITH KEY node_type = zcl_zosql_parser_recurs_desc=>node_type-select
-        ASSIGNING <ls_start_node_of_subquery>.
+      READ TABLE lt_nodes_of_subquery WITH KEY table_line->node_type = zcl_zosql_parser_recurs_desc=>node_type-select
+        INTO lo_start_node_of_subquery.
       IF sy-subrc = 0.
         rv_subquery_sql =
-          io_sql_parser->get_sql_as_range_of_tokens( iv_start_token_index = <ls_start_node_of_subquery>-token_index
-                                                     iv_end_token_index   = <ls_end_node_of_subquery>-token_index ).
+          io_node_elementary_condition->get_sql_as_range_of_tokens(
+            iv_start_token_index = lo_start_node_of_subquery->token_index
+            iv_end_token_index   = lo_end_node_of_subquery->token_index ).
       ENDIF.
     ENDIF.
-
   endmethod.
 
 
@@ -373,35 +364,24 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
 
   method _INIT_ELEMENTARY.
-    super->_init_elementary( io_sql_parser                 = io_sql_parser
-                             iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    super->_init_elementary( io_node_elementary_condition ).
 
-    IF _check_if_value_is_subquery( io_sql_parser                 = io_sql_parser
-                                    iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ) = abap_true.
-
-      _init_subquery( io_sql_parser                 = io_sql_parser
-                      iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    IF _check_if_value_is_subquery( io_node_elementary_condition ) = abap_true.
+      _init_subquery( io_node_elementary_condition ).
     ENDIF.
   endmethod.
 
 
   method _INIT_EXISTS.
     CLEAR ms_left_operand-fieldname_or_value.
-
     mv_operation = c_exists.
-
-    _init_subquery( io_sql_parser                 = io_sql_parser
-                    iv_id_of_node_elementary_cond = iv_id_of_node_exists ).
+    _init_subquery( io_node_exists ).
   endmethod.
 
 
   method _INIT_SUBQUERY.
-    mv_right_part_subquery_sql = _get_subquery_sql( io_sql_parser                 = io_sql_parser
-                                                    iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
-
-
-    mv_subquery_specificator = _get_subquery_specificator( io_sql_parser                 = io_sql_parser
-                                                           iv_id_of_node_elementary_cond = iv_id_of_node_elementary_cond ).
+    mv_right_part_subquery_sql = _get_subquery_sql( io_node_elementary_condition ).
+    mv_subquery_specificator = _get_subquery_specificator( io_node_elementary_condition ).
   endmethod.
 
 

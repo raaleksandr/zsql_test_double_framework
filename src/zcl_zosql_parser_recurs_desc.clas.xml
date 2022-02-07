@@ -56,6 +56,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>GET_NODE_AS_OBJECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns parser tree node as object</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
      <CMPNAME>GET_NODE_END_TOKEN_INDEX</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns index of end token of node and all its descendants</DESCRIPT>

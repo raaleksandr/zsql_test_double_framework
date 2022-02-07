@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Node of SQL Parser tree</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>EXISTS_CHILD_NODE_WITH_TYPE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if child node with specified type exists</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns child nodes for the node in syntax tree</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODES_RECURSIVE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns all childs on all levels recursively</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODES_WITH_SELF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns child nodes for the node including top node itself</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODE_TOKEN_WITH_TYPE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns child node with certain node_type</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODE_WITH_TYPE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns child node with certain node_type</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_CHILD_NODE_WITH_TYPE_RECUR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns child node with certain node_type search recursively</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_END_TOKEN_INDEX</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns index of end token of node and all its descendants</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_INFO</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns full node info from parser tree</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_SQL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns SQL part that corresponds to node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_SQL_START_AT_OFFSET</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns SQL part that start at nth token after the node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_SQL_WITHOUT_SELF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns SQL part that corresponds to node with text of node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_NODE_TOKEN_INDEX</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns index of token corresponding to the node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_SQL_AS_RANGE_OF_TOKENS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns SQL part set as range of token (start index/end ind)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_SQL_PARSER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns main SQL parser object</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>GET_TOKEN_OF_NTH_CHILD_NODE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns token of nth child node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>ID</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Node ID</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>MO_SQL_PARSER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>SQL recursive descent parser</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>NODE_TYPE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Node Type</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>PARENT_ID</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Node ID of parent node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>TOKEN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>SQL token for node</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>TOKEN_INDEX</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Token index in SQL expression</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>TOKEN_UCASE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>SQL token for node in upper case</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>_TY_TREE_TO_OBJECTS_TAB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts ty_tree type of parser into table of node objects</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
