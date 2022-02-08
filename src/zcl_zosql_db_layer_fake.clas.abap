@@ -168,11 +168,12 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     lo_sql_parser->set_sql( iv_delete_statement ).
     lo_sql_parser->run_recursive_descent_parser( ).
 
-    CREATE OBJECT lo_parser_helper.
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
     lv_table_name = zcl_zosql_utils=>to_upper_case(
-      lo_parser_helper->get_delete_table_name( lo_sql_parser ) ).
-    lo_parser_helper->get_key_nodes_of_sql_delete( EXPORTING io_sql_parser = lo_sql_parser
-                                                   IMPORTING ev_new_syntax = lv_new_syntax ).
+      lo_parser_helper->get_delete_table_name( ) ).
+    lo_parser_helper->get_key_nodes_of_sql_delete( IMPORTING ev_new_syntax = lv_new_syntax ).
 
     CREATE OBJECT lo_table_iterator
       EXPORTING
@@ -317,7 +318,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_sql_parser             TYPE REF TO zcl_zosql_parser_recurs_desc,
           lo_parser_helper          TYPE REF TO zcl_zosql_parser_helper,
           lv_up_to_n_rows_as_string TYPE string,
-          ls_node_select_single     TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_select_single     TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <lt_result_table>      TYPE STANDARD TABLE,
                    <ls_result_first_line> TYPE any.
@@ -340,12 +341,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                IMPORTING et_result_table            = <lt_result_table> ).
     ENDIF.
 
-    CREATE OBJECT lo_parser_helper.
-    lv_up_to_n_rows_as_string = lo_parser_helper->get_up_to_n_rows_value( lo_sql_parser ).
-    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser  = lo_sql_parser
-                                                   IMPORTING es_node_single = ls_node_select_single ).
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
+    lv_up_to_n_rows_as_string = lo_parser_helper->get_up_to_n_rows_value( ).
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_single = lo_node_select_single ).
 
-    IF ls_node_select_single IS NOT INITIAL.
+    IF lo_node_select_single IS NOT INITIAL.
       lv_up_to_n_rows_as_string = '1'.
     ENDIF.
 
@@ -382,10 +384,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     lo_sql_parser->set_sql( iv_update_statement ).
     lo_sql_parser->run_recursive_descent_parser( ).
 
-    CREATE OBJECT lo_parser_helper.
-    lv_table_name = lo_parser_helper->get_update_table_name( lo_sql_parser ).
-    lo_parser_helper->get_key_nodes_of_sql_update( EXPORTING io_sql_parser = lo_sql_parser
-                                                   IMPORTING ev_new_syntax = lv_new_syntax ).
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
+    lv_table_name = lo_parser_helper->get_update_table_name( ).
+    lo_parser_helper->get_key_nodes_of_sql_update( IMPORTING ev_new_syntax = lv_new_syntax ).
 
     CREATE OBJECT lo_parameters
       EXPORTING
@@ -455,7 +458,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_where               TYPE REF TO zif_zosql_expression_processor,
           lv_not_end_of_data     TYPE abap_bool,
           lo_zosql_parser_helper TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_where          TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_where          TYPE REF TO zcl_zosql_parser_node.
 
     CREATE OBJECT lo_where TYPE zcl_zosql_where_processor
       EXPORTING
@@ -463,15 +466,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         io_parameters             = io_parameters
         iv_new_syntax             = iv_new_syntax.
 
-    CREATE OBJECT lo_zosql_parser_helper.
-    lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
-                                                         IMPORTING es_node_where = ls_node_where ).
-
-    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
-
-    IF ls_node_where IS NOT INITIAL.
-      lo_node_where = io_sql_parser->get_node_as_object( ls_node_where-id ).
-    ENDIF.
+    CREATE OBJECT lo_zosql_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_zosql_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
 
     lo_where->initialize_by_parsed_sql( lo_node_where ).
 
@@ -493,25 +491,27 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   method _FIND_FOR_ALL_ENTRIES_CONDS.
 
     DATA: lo_parser_helper           TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lo_node_where              TYPE REF TO zcl_zosql_parser_node,
           lv_for_all_entries_tabname TYPE string,
-          lt_all_nodes_of_where      TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          lv_search_substring        TYPE string.
+          lt_all_nodes_of_where      TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lv_search_substring        TYPE string,
+          lo_child_node_of_where     TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node_of_where> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
     REFRESH et_found_parameters.
 
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
-                                                   IMPORTING es_node_where = ls_node_where ).
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
 
-    IF ls_node_where IS INITIAL.
+    IF lo_node_where IS INITIAL.
       RETURN.
     ENDIF.
 
     lv_for_all_entries_tabname = zcl_zosql_utils=>to_upper_case(
-      lo_parser_helper->get_for_all_entries_tabname( io_sql_parser ) ).
+      lo_parser_helper->get_for_all_entries_tabname( ) ).
 
     IF lv_for_all_entries_tabname IS INITIAL.
       lv_for_all_entries_tabname = 'IT_FOR_ALL_ENTRIES_TABLE'.
@@ -519,32 +519,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CONCATENATE lv_for_all_entries_tabname '-' INTO lv_search_substring.
 
-    lt_all_nodes_of_where = io_sql_parser->get_child_nodes_recursive( ls_node_where-id ).
-    LOOP AT lt_all_nodes_of_where ASSIGNING <ls_node_of_where>.
-      FIND FIRST OCCURRENCE OF lv_search_substring IN <ls_node_of_where>-token_ucase.
+    lt_all_nodes_of_where = lo_node_where->get_child_nodes_recursive( ).
+    LOOP AT lt_all_nodes_of_where INTO lo_child_node_of_where.
+      FIND FIRST OCCURRENCE OF lv_search_substring IN lo_child_node_of_where->token_ucase.
       IF sy-subrc = 0.
-        COLLECT <ls_node_of_where>-token_ucase INTO et_found_parameters.
+        COLLECT lo_child_node_of_where->token_ucase INTO et_found_parameters.
       ENDIF.
     ENDLOOP.
-
-*    DATA: lt_words            TYPE TABLE OF string,
-*          lv_search_substring TYPE string,
-*          lt_results          TYPE TABLE OF match_result,
-*          lv_for_all_entries_param TYPE string.
-*
-*    FIELD-SYMBOLS: <ls_result> LIKE LINE OF lt_results.
-*
-*    REFRESH et_found_parameters.
-*
-*    SPLIT iv_where AT space INTO TABLE lt_words.
-*    CONCATENATE iv_for_all_entries_tabname '-' INTO lv_search_substring.
-*    CONDENSE lv_search_substring NO-GAPS.
-*
-*    FIND ALL OCCURRENCES OF lv_search_substring IN TABLE lt_words IGNORING CASE RESULTS lt_results.
-*    LOOP AT lt_results ASSIGNING <ls_result>.
-*      READ TABLE lt_words INDEX <ls_result>-line INTO lv_for_all_entries_param.
-*      APPEND lv_for_all_entries_param TO et_found_parameters.
-*    ENDLOOP.
   endmethod.
 
 
@@ -573,9 +554,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_group_by              TYPE REF TO zcl_zosql_groupby_processor,
           lo_sql_executor_for_line TYPE REF TO zif_zosql_sql_exec_line,
           lo_sql_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_group_by         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_having           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_distinct         TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lo_node_group_by         TYPE REF TO zcl_zosql_parser_node,
+          lo_node_having           TYPE REF TO zcl_zosql_parser_node,
+          lo_node_distinct         TYPE REF TO zcl_zosql_parser_node,
           lv_new_syntax            TYPE abap_bool,
           lo_parameters            TYPE REF TO zcl_zosql_parameters,
           lo_having                TYPE REF TO zif_zosql_expression_processor.
@@ -601,11 +582,12 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       EXPORTING
         io_select = lo_select.
 
-    CREATE OBJECT lo_sql_parser_helper.
-    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser    = io_sql_parser
-                                                       IMPORTING es_node_distinct = ls_node_distinct
-                                                                 es_node_group_by = ls_node_group_by
-                                                                 es_node_having   = ls_node_having
+    CREATE OBJECT lo_sql_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_distinct = lo_node_distinct
+                                                                 eo_node_group_by = lo_node_group_by
+                                                                 eo_node_having   = lo_node_having
                                                                  ev_new_syntax    = lv_new_syntax ).
 
     _execute_sql( io_parameters            = lo_parameters
@@ -614,18 +596,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                   io_sql_executor_for_line = lo_sql_executor_for_line
                   io_sql_parser            = io_sql_parser ).
 
-    IF ls_node_group_by IS NOT INITIAL.
+    IF lo_node_group_by IS BOUND.
 
-      IF ls_node_having IS NOT INITIAL.
+      IF lo_node_having IS BOUND.
         CREATE OBJECT lo_having TYPE zcl_zosql_having_processor
           EXPORTING
             io_zosql_test_environment = mo_zosql_test_environment
             io_parameters             = lo_parameters
             iv_new_syntax             = lv_new_syntax.
-
-        DATA: lo_node_having TYPE REF TO zcl_zosql_parser_node.
-
-        lo_node_having = io_sql_parser->get_node_as_object( ls_node_having-id ).
 
         lo_having->initialize_by_parsed_sql( lo_node_having ).
       ENDIF.
@@ -641,7 +619,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       lo_select->apply_aggr_func_no_group_by( ).
     ENDIF.
 
-    IF ls_node_distinct IS NOT INITIAL.
+    IF lo_node_distinct IS BOUND.
       lo_select->apply_distinct( ).
     ENDIF.
 

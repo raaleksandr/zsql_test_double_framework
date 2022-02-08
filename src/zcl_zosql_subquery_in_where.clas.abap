@@ -201,7 +201,7 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
   method _GET_SUBQUERY_DATASET_USAGES.
 
     DATA: lo_subquery_where              TYPE REF TO zif_zosql_expression_processor,
-          ls_node_where                  TYPE zcl_zosql_parser_recurs_desc=>ty_node,
+          lo_node_where                  TYPE REF TO zcl_zosql_parser_node,
           lo_zosql_parser_helper         TYPE REF TO zcl_zosql_parser_helper.
 
     CREATE OBJECT lo_subquery_where TYPE zcl_zosql_where_processor
@@ -210,13 +210,10 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
         io_parameters             = mo_parameters_of_parent_query
         iv_new_syntax             = mv_new_syntax.
 
-    CREATE OBJECT lo_zosql_parser_helper.
-    lo_zosql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = mo_subquery_sql_parser
-                                                         IMPORTING es_node_where = ls_node_where ).
-
-    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
-
-    lo_node_where = mo_subquery_sql_parser->get_node_as_object( ls_node_where-id ).
+    CREATE OBJECT lo_zosql_parser_helper
+      EXPORTING
+        io_sql_parser = mo_subquery_sql_parser.
+    lo_zosql_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
 
     lo_subquery_where->initialize_by_parsed_sql( lo_node_where ).
 

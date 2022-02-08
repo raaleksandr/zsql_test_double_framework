@@ -74,25 +74,24 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _INITIALIZE_BY_PARSED_SQL.
+  METHOD _initialize_by_parsed_sql.
 
     DATA: lo_sql_parser_helper    TYPE REF TO zcl_zosql_parser_helper,
           lo_node_set             TYPE REF TO zcl_zosql_parser_node,
-          ls_node_set             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           lt_nodes_set_fields     TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           ls_set_field            TYPE ty_set_field,
           lt_child_nodes_of_field TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           ls_node_equation        TYPE zcl_zosql_parser_recurs_desc=>ty_node,
           lo_node_new_value       TYPE REF TO zcl_zosql_parser_node,
-          lV_is_parameter         TYPE abap_bool,
+          lv_is_parameter         TYPE abap_bool,
           lo_node_set_field       TYPE REF TO zcl_zosql_parser_node.
 
-    CREATE OBJECT lo_sql_parser_helper.
-    lo_sql_parser_helper->get_key_nodes_of_sql_update( EXPORTING io_sql_parser = io_sql_parser
-                                                       IMPORTING es_node_set   = ls_node_set
+    CREATE OBJECT lo_sql_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_sql_parser_helper->get_key_nodes_of_sql_update( IMPORTING eo_node_set   = lo_node_set
                                                                  ev_new_syntax = mv_new_syntax ).
 
-    lo_node_set = io_sql_parser->get_node_as_object( ls_node_set-id ).
     lt_nodes_set_fields = lo_node_set->get_child_nodes( ).
 
     LOOP AT lt_nodes_set_fields INTO lo_node_set_field.

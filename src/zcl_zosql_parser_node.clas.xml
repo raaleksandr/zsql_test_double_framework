@@ -20,6 +20,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
+     <CMPNAME>EXISTS_CHILD_NODE_OFTYPE_RECUR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if child node with specified type exists, all levels</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_NODE</CLSNAME>
      <CMPNAME>EXISTS_CHILD_NODE_WITH_TYPE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if child node with specified type exists</DESCRIPT>

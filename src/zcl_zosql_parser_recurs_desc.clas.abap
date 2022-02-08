@@ -161,6 +161,9 @@ public section.
   methods GET_TOP_NODE
     returning
       value(RS_TOP_NODE) type TY_NODE .
+  methods GET_TOP_NODE_AS_OBJECT
+    returning
+      value(RO_TOP_NODE) type ref to ZCL_ZOSQL_PARSER_NODE .
   methods RUN_RECURSIVE_DESCENT_PARSER .
   methods SET_SQL
     importing
@@ -559,6 +562,19 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method GET_TOP_NODE.
     READ TABLE mt_parsed_tree WITH KEY parent_id = 0 INTO rs_top_node.
+  endmethod.
+
+
+  method GET_TOP_NODE_AS_OBJECT.
+
+    DATA: ls_top_node TYPE ty_node.
+
+    ls_top_node = get_top_node( ).
+
+    CREATE OBJECT ro_top_node
+      EXPORTING
+        io_sql_parser = me
+        iv_node_id    = ls_top_node-id.
   endmethod.
 
 

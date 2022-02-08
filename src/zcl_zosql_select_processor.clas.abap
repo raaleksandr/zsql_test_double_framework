@@ -354,21 +354,17 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   METHOD _fill_select_fields.
 
     DATA: lo_sql_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
-          lt_nodes_with_select_fields TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lt_nodes_with_select_fields TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           ls_parameter                TYPE ty_select_parameter,
           lo_node_select_field        TYPE REF TO zcl_zosql_parser_node.
 
-    FIELD-SYMBOLS: <ls_node_select_field> TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    CREATE OBJECT lo_sql_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( IMPORTING et_nodes_of_select_field_list = lt_nodes_with_select_fields ).
 
-    CREATE OBJECT lo_sql_parser_helper.
-    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = io_sql_parser
-                                                       IMPORTING et_nodes_of_select_field_list = lt_nodes_with_select_fields ).
-
-    LOOP AT lt_nodes_with_select_fields ASSIGNING <ls_node_select_field>.
-
-      lo_node_select_field = io_sql_parser->get_node_as_object( <ls_node_select_field>-id ).
+    LOOP AT lt_nodes_with_select_fields INTO lo_node_select_field.
       ls_parameter = _fill_select_field( lo_node_select_field ).
-
       APPEND ls_parameter TO mt_select_parameters.
     ENDLOOP.
   ENDMETHOD.

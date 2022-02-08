@@ -24,6 +24,11 @@ public section.
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
       !IV_NODE_ID type I .
+  methods EXISTS_CHILD_NODE_OFTYPE_RECUR
+    importing
+      !IV_NODE_TYPE type CLIKE
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
   methods EXISTS_CHILD_NODE_WITH_TYPE
     importing
       !IV_NODE_TYPE type CLIKE
@@ -115,6 +120,18 @@ CLASS ZCL_ZOSQL_PARSER_NODE IMPLEMENTATION.
     token_index = ls_node_info-token_index.
     node_type   = ls_node_info-node_type.
   endmethod.
+
+
+  METHOD EXISTS_CHILD_NODE_OFTYPE_RECUR.
+    DATA: ls_child_node TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+
+    ls_child_node = mo_sql_parser->get_child_node_with_type_recur( iv_node_id   = id
+                                                                   iv_node_type = iv_node_type ).
+
+    IF ls_child_node IS NOT INITIAL.
+      rv_exists = abap_true.
+    ENDIF.
+  ENDMETHOD.
 
 
   METHOD EXISTS_CHILD_NODE_WITH_TYPE.
