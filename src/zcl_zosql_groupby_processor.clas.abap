@@ -134,14 +134,12 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
 
   method _GET_GROUP_BY_NODE.
 
-    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_group_by TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper.
 
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser    = io_sql_parser
-                                                   IMPORTING es_node_group_by = ls_node_group_by ).
-
-    ro_node_group_by = io_sql_parser->get_node_as_object( ls_node_group_by-id ).
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_group_by = ro_node_group_by ).
   endmethod.
 
 

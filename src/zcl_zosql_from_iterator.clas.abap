@@ -660,18 +660,16 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   method _INIT_BY_SQL_PARSER.
 
     DATA: lo_parser_helper        TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_from            TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_nodes_from_tables    TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           lo_node_from            TYPE REF TO zcl_zosql_parser_node,
+          lt_nodes_from_tables    TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           lo_child_node_of_from   TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node_from_table>     LIKE LINE OF lt_nodes_from_tables.
 
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
-                                                   IMPORTING es_node_from  = ls_node_from ).
-
-    lo_node_from = io_sql_parser->get_node_as_object( ls_node_from-id ).
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_from  = lo_node_from ).
 
     lt_nodes_from_tables = lo_node_from->get_child_nodes( ).
 

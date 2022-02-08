@@ -687,7 +687,7 @@ endmethod.
           lo_where_processor            TYPE REF TO zcl_zosql_where_processor,
           lo_parameters                 TYPE REF TO zcl_zosql_parameters,
           lo_parser_helper              TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_where                 TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_where                 TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_parameter_with_name>      LIKE LINE OF it_parameters_with_name,
                    <ls_dynamic_struct_with_pars> TYPE any,
@@ -709,14 +709,11 @@ endmethod.
         io_parameters = lo_parameters.
 
     IF io_sql_parser IS BOUND.
-      CREATE OBJECT lo_parser_helper.
-      lo_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser = io_sql_parser
-                                                     IMPORTING es_node_where = ls_node_where ).
+      CREATE OBJECT lo_parser_helper
+        EXPORTING
+          io_sql_parser = io_sql_parser.
+      lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
     ENDIF.
-
-    DATA: lo_node_where TYPE REF TO zcl_zosql_parser_node.
-
-    lo_node_where = io_sql_parser->get_node_as_object( ls_node_where-id ).
 
     lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( lo_node_where ).
 
@@ -1249,21 +1246,20 @@ ENDMETHOD.
   method _SPLIT_DELETE_INTO_PARTS.
 
     DATA: lo_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_delete_table TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_where        TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_where        TYPE REF TO zcl_zosql_parser_node.
 
     CREATE OBJECT eo_sql_parser.
     eo_sql_parser->set_sql( iv_delete_statement ).
     eo_sql_parser->run_recursive_descent_parser( ).
 
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_delete( EXPORTING io_sql_parser        = eo_sql_parser
-                                                   IMPORTING es_node_delete_table = ls_node_delete_table
-                                                             es_node_where        = ls_node_where
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = eo_sql_parser.
+    lo_parser_helper->get_key_nodes_of_sql_delete( IMPORTING eo_node_where        = lo_node_where
                                                              ev_new_syntax        = ev_new_syntax ).
 
-    ev_table_name    = lo_parser_helper->get_delete_table_name( eo_sql_parser ).
-    ev_where         = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+    ev_table_name    = lo_parser_helper->get_delete_table_name( ).
+    ev_where         = lo_node_where->get_node_sql_without_self( ).
   endmethod.
 
 
@@ -1275,16 +1271,17 @@ ENDMETHOD.
           lv_select_field_list_start TYPE i,
           lv_select_field_list_end   TYPE i,
           lo_sql_parser_helper       TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_distinct           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_single             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          lt_nodes_select_field_list TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
-          ls_node_up_to_n_rows       TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_from               TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_for_all_entries    TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_where              TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_group_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_having             TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_order_by           TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_distinct           TYPE REF TO zcl_zosql_parser_node,
+          lo_node_single             TYPE REF TO zcl_zosql_parser_node,
+          lt_nodes_select_field_list TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node_up_to_n_rows       TYPE REF TO zcl_zosql_parser_node,
+          lo_node_from               TYPE REF TO zcl_zosql_parser_node,
+          lo_node_for_all_entries    TYPE REF TO zcl_zosql_parser_node,
+          lo_node_where              TYPE REF TO zcl_zosql_parser_node,
+          lo_node_group_by           TYPE REF TO zcl_zosql_parser_node,
+          lo_node_having             TYPE REF TO zcl_zosql_parser_node,
+          lo_node_order_by           TYPE REF TO zcl_zosql_parser_node,
+          lo_node_select_field       TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_node>                TYPE zcl_zosql_parser_recurs_desc=>ty_node.
 
@@ -1292,36 +1289,37 @@ ENDMETHOD.
 
     eo_sql_parser = parse_sql( iv_select ).
 
-    CREATE OBJECT lo_sql_parser_helper.
-    lo_sql_parser_helper->get_key_nodes_of_sql_select( EXPORTING io_sql_parser                 = eo_sql_parser
-                                                       IMPORTING es_node_distinct              = ls_node_distinct
-                                                                 es_node_single                = ls_node_single
+    CREATE OBJECT lo_sql_parser_helper
+      EXPORTING
+        io_sql_parser = eo_sql_parser.
+    lo_sql_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_distinct              = lo_node_distinct
+                                                                 eo_node_single                = lo_node_single
                                                                  et_nodes_of_select_field_list = lt_nodes_select_field_list
-                                                                 es_node_up_to_n_rows          = ls_node_up_to_n_rows
-                                                                 es_node_from                  = ls_node_from
-                                                                 es_node_for_all_entries       = ls_node_for_all_entries
-                                                                 es_node_where                 = ls_node_where
-                                                                 es_node_group_by              = ls_node_group_by
-                                                                 es_node_having                = ls_node_having
-                                                                 es_node_order_by              = ls_node_order_by
+                                                                 eo_node_up_to_n_rows          = lo_node_up_to_n_rows
+                                                                 eo_node_from                  = lo_node_from
+                                                                 eo_node_for_all_entries       = lo_node_for_all_entries
+                                                                 eo_node_where                 = lo_node_where
+                                                                 eo_node_group_by              = lo_node_group_by
+                                                                 eo_node_having                = lo_node_having
+                                                                 eo_node_order_by              = lo_node_order_by
                                                                  ev_new_syntax                 = ev_new_syntax ).
 
-    IF ls_node_distinct IS NOT INITIAL.
+    IF lo_node_distinct IS BOUND.
       ev_distinct = abap_true.
     ENDIF.
 
-    IF ls_node_single IS NOT INITIAL.
+    IF lo_node_single IS BOUND.
       lv_single = abap_true.
     ENDIF.
 
-    LOOP AT lt_nodes_select_field_list ASSIGNING <ls_node>.
+    LOOP AT lt_nodes_select_field_list INTO lo_node_select_field.
       IF lv_select_field_list_start IS INITIAL.
-        lv_select_field_list_start = <ls_node>-token_index.
-      ELSEIF lv_select_field_list_start > <ls_node>-token_index.
-        lv_select_field_list_start = <ls_node>-token_index.
+        lv_select_field_list_start = lo_node_select_field->token_index.
+      ELSEIF lv_select_field_list_start > lo_node_select_field->token_index.
+        lv_select_field_list_start = lo_node_select_field->token_index.
       ENDIF.
 
-      lv_end_token_index = eo_sql_parser->get_node_end_token_index( <ls_node>-id ).
+      lv_end_token_index = lo_node_select_field->get_node_end_token_index( ).
 
       IF lv_end_token_index > lv_select_field_list_end.
         lv_select_field_list_end = lv_end_token_index.
@@ -1334,34 +1332,26 @@ ENDMETHOD.
                                                    iv_end_token_index   = lv_select_field_list_end ).
     ENDIF.
 
-    ev_number_of_rows_expr = lo_sql_parser_helper->get_up_to_n_rows_value( eo_sql_parser ).
+    ev_number_of_rows_expr = lo_sql_parser_helper->get_up_to_n_rows_value( ).
 
-    IF ls_node_up_to_n_rows IS NOT INITIAL.
-      ev_number_of_rows_expr = eo_sql_parser->get_token_of_nth_child_node( iv_main_node_id = ls_node_up_to_n_rows-id
-                                                                           iv_n            = 2 ).
+    ev_from = lo_node_from->get_node_sql_without_self( ).
+
+    ev_for_all_entries_tabname = lo_sql_parser_helper->get_for_all_entries_tabname( ).
+
+    IF lo_node_where IS BOUND.
+      ev_where = lo_node_where->get_node_sql_without_self( ).
     ENDIF.
 
-    ev_from = eo_sql_parser->get_node_sql_without_self( ls_node_from-id ).
-
-    ev_for_all_entries_tabname = lo_sql_parser_helper->get_for_all_entries_tabname( io_sql_parser = eo_sql_parser ).
-
-    IF ls_node_where IS NOT INITIAL.
-      ev_where = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+    IF lo_node_group_by IS BOUND.
+      ev_group_by = lo_node_group_by->get_node_sql_start_at_offset( 2 ).
     ENDIF.
 
-    IF ls_node_group_by IS NOT INITIAL.
-      ev_group_by = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_group_by-id
-                                                                 iv_number_of_tokens_offset = 2 ).
+    IF lo_node_having IS NOT INITIAL.
+      ev_having = lo_node_having->get_node_sql_without_self( ).
     ENDIF.
 
-    IF ls_node_having IS NOT INITIAL.
-      ev_having = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_having-id
-                                                               iv_number_of_tokens_offset = 1 ).
-    ENDIF.
-
-    IF ls_node_order_by IS NOT INITIAL.
-      ev_order_by = eo_sql_parser->get_node_sql_start_at_offset( iv_node_id                 = ls_node_order_by-id
-                                                                 iv_number_of_tokens_offset = 2 ).
+    IF lo_node_order_by IS NOT INITIAL.
+      ev_order_by = lo_node_order_by->get_node_sql_start_at_offset( 2 ).
     ENDIF.
 
     IF lv_single = abap_true AND ev_number_of_rows_expr IS NOT INITIAL.
@@ -1376,24 +1366,25 @@ ENDMETHOD.
   METHOD _SPLIT_UPDATE_INTO_PARTS.
 
     DATA: lo_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
-          ls_node_update_table TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_set          TYPE zcl_zosql_parser_recurs_desc=>ty_node,
-          ls_node_where        TYPE zcl_zosql_parser_recurs_desc=>ty_node.
+          lo_node_update_table TYPE REF TO zcl_zosql_parser_node,
+          lo_node_set          TYPE REF TO zcl_zosql_parser_node,
+          lo_node_where        TYPE REF TO zcl_zosql_parser_node.
 
     CREATE OBJECT eo_sql_parser.
     eo_sql_parser->set_sql( iv_update_statement ).
     eo_sql_parser->run_recursive_descent_parser( ).
 
-    CREATE OBJECT lo_parser_helper.
-    lo_parser_helper->get_key_nodes_of_sql_update( EXPORTING io_sql_parser        = eo_sql_parser
-                                                   IMPORTING es_node_update_table = ls_node_update_table
-                                                             es_node_set          = ls_node_set
-                                                             es_node_where        = ls_node_where
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = eo_sql_parser.
+    lo_parser_helper->get_key_nodes_of_sql_update( IMPORTING eo_node_update_table = lo_node_update_table
+                                                             eo_node_set          = lo_node_set
+                                                             eo_node_where        = lo_node_where
                                                              ev_new_syntax        = ev_new_syntax ).
 
-    ev_table_name    = lo_parser_helper->get_update_table_name( eo_sql_parser ).
-    ev_set_statement = eo_sql_parser->get_node_sql_without_self( ls_node_set-id ).
-    ev_where         = eo_sql_parser->get_node_sql_without_self( ls_node_where-id ).
+    ev_table_name    = lo_parser_helper->get_update_table_name( ).
+    ev_set_statement = lo_node_set->get_node_sql_without_self( ).
+    ev_where         = lo_node_where->get_node_sql_without_self( ).
   ENDMETHOD.
 
 
