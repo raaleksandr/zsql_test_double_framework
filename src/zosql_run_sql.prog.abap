@@ -3,7 +3,7 @@
 *&---------------------------------------------------------------------*
 *& A tool that can run any Open SQL query and output results
 *&---------------------------------------------------------------------*
-REPORT zosql_query_runner.
+REPORT zosql_query_runner MESSAGE-ID zosql_db_layer.
 
 CLASS lcl_controller DEFINITION DEFERRED.
 
@@ -22,7 +22,10 @@ CLASS lcl_controller DEFINITION.
       _display,
       _execute_sql RAISING zcx_zosql_error,
       _show_result_in_alv IMPORTING id_result TYPE REF TO data,
-      _prepare_alv_before_show IMPORTING it_table TYPE ANY TABLE.
+      _prepare_alv_before_show IMPORTING it_table TYPE ANY TABLE,
+      _show_error IMPORTING io_error TYPE REF TO cx_root,
+      _check_auth_on_select_tabs IMPORTING iv_select TYPE clike RAISING zcx_zosql_error,
+      _check_auth_one_table IMPORTING iv_tabname TYPE clike RAISING zcx_zosql_error.
 
     DATA: gv_is_displayed         TYPE abap_bool,
           go_separator_of_alv     TYPE REF TO cl_gui_docking_container,
@@ -50,16 +53,22 @@ CLASS lcl_controller IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD pai.
-    DATA: lv_ucomm_save  TYPE syucomm.
+    DATA: lv_ucomm_save TYPE syucomm,
+          lo_error      TYPE REF TO zcx_zosql_error.
 
     lv_ucomm_save = gv_ok_code_100.
     CLEAR gv_ok_code_100.
-    CASE lv_ucomm_save.
-      WHEN 'BACK' OR 'EXIT' OR 'CANC'.
-        SET SCREEN 0.
-      WHEN 'EXECUTE'.
-        _execute_sql( ).
-    ENDCASE.
+
+    TRY.
+        CASE lv_ucomm_save.
+          WHEN 'BACK' OR 'EXIT' OR 'CANC'.
+            SET SCREEN 0.
+          WHEN 'EXECUTE'.
+            _execute_sql( ).
+        ENDCASE.
+      CATCH zcx_zosql_error INTO lo_error.
+        _show_error( lo_error ).
+    ENDTRY.
   ENDMETHOD.
 
   METHOD _is_displayed.
@@ -104,6 +113,8 @@ CLASS lcl_controller IMPLEMENTATION.
 
     cl_gui_cfw=>flush( ).
 
+    _check_auth_on_select_tabs( lv_sql_entered_by_user ).
+
     go_db_layer->select( EXPORTING iv_select          = lv_sql_entered_by_user
                          IMPORTING ed_result_as_table = ld_sql_result ).
 
@@ -145,6 +156,79 @@ CLASS lcl_controller IMPLEMENTATION.
 
     lo_columns = go_alv->get_columns( ).
     lo_columns->set_optimize( abap_true ).
+  ENDMETHOD.
+
+  METHOD _show_error.
+    TYPES: BEGIN OF ty_error,
+             error_icon    TYPE icon_d,
+             error_message TYPE text255,
+           END OF ty_error.
+
+    DATA: lt_error  TYPE TABLE OF ty_error.
+
+    FIELD-SYMBOLS: <ls_error> LIKE LINE OF lt_error.
+
+    APPEND INITIAL LINE TO lt_error ASSIGNING <ls_error>.
+    <ls_error>-error_icon    = icon_message_error.
+    <ls_error>-error_message = io_error->get_text( ).
+
+    IF go_alv IS BOUND.
+      go_alv->set_data( CHANGING t_table = lt_error ).
+      go_alv->refresh( ).
+    ELSE.
+      cl_salv_table=>factory( EXPORTING r_container  = go_alv_container
+                              IMPORTING r_salv_table = go_alv
+                              CHANGING  t_table      = lt_error ).
+      go_alv->display( ).
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD _check_auth_on_select_tabs.
+
+    DATA: lo_sql_parser      TYPE REF TO zcl_zosql_parser_recurs_desc,
+          lo_parser_helper   TYPE REF TO zcl_zosql_parser_helper,
+          lt_names_of_tables TYPE zcl_zosql_iterator_position=>ty_data_sets.
+
+    FIELD-SYMBOLS: <ls_name_of_table> LIKE LINE OF lt_names_of_tables.
+
+    CREATE OBJECT lo_sql_parser.
+    lo_sql_parser->set_sql( iv_select ).
+    lo_sql_parser->run_recursive_descent_parser( ).
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
+
+    lt_names_of_tables = lo_parser_helper->get_list_of_select_from_tables( ).
+
+    LOOP AT lt_names_of_tables ASSIGNING <ls_name_of_table>.
+      _check_auth_one_table( <ls_name_of_table>-dataset_name ).
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD _check_auth_one_table.
+
+    CONSTANTS: lc_view_action_show TYPE char1 VALUE 'S'.
+
+    DATA: lv_view_name TYPE dd25v-viewname.
+
+    lv_view_name = iv_tabname.
+    CALL FUNCTION 'VIEW_AUTHORITY_CHECK'
+      EXPORTING
+        view_action                    = lc_view_action_show
+        view_name                      = lv_view_name
+      EXCEPTIONS
+        invalid_action                 = 1
+        no_authority                   = 2
+        no_clientindependent_authority = 3
+        table_not_found                = 4
+        no_linedependent_authority     = 5
+        OTHERS                         = 6.
+
+    IF sy-subrc <> 0.
+      MESSAGE e080 WITH lv_view_name INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.
 

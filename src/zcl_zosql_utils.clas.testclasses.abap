@@ -65,7 +65,9 @@ CLASS ltc_split_cond_into_tokens DEFINITION FOR TESTING
              split_by_comma FOR TESTING,
              split_by_space_and_comma FOR TESTING,
              split_when_comma_at_end FOR TESTING,
-             split_when_list_of_vals FOR TESTING.
+             split_when_list_of_vals FOR TESTING,
+             split_by_line_breaks FOR TESTING,
+             split_by_tab FOR TESTING.
 ENDCLASS.       "ltc_split_cond_into_tokens
 
 CLASS ltc_zosql_utils IMPLEMENTATION.
@@ -237,6 +239,40 @@ CLASS ltc_split_cond_into_tokens IMPLEMENTATION.
     APPEND ','          TO lt_expected_tokens.
     APPEND '''VALUE2''' TO lt_expected_tokens.
     APPEND ')'          TO lt_expected_tokens.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
+  ENDMETHOD.
+
+  METHOD split_by_line_breaks.
+    DATA: lt_result_tokens TYPE TABLE OF string,
+          lv_text          TYPE string.
+
+    CONCATENATE 'FIELD1 =' '''value1''' INTO lv_text SEPARATED BY cl_abap_char_utilities=>cr_lf.
+
+    lt_result_tokens = zcl_zosql_utils=>split_condition_into_tokens( lv_text ).
+
+    DATA: lt_expected_tokens TYPE TABLE OF string.
+
+    APPEND 'FIELD1' TO lt_expected_tokens.
+    APPEND '=' TO lt_expected_tokens.
+    APPEND '''value1''' TO lt_expected_tokens.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
+  ENDMETHOD.
+
+  METHOD split_by_tab.
+    DATA: lt_result_tokens TYPE TABLE OF string,
+          lv_text          TYPE string.
+
+    CONCATENATE 'FIELD1 =' '''value1''' INTO lv_text SEPARATED BY cl_abap_char_utilities=>horizontal_tab.
+
+    lt_result_tokens = zcl_zosql_utils=>split_condition_into_tokens( lv_text ).
+
+    DATA: lt_expected_tokens TYPE TABLE OF string.
+
+    APPEND 'FIELD1' TO lt_expected_tokens.
+    APPEND '=' TO lt_expected_tokens.
+    APPEND '''value1''' TO lt_expected_tokens.
 
     cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
   ENDMETHOD.
