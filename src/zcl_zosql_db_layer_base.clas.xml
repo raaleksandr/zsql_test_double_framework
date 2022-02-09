@@ -87,12 +87,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
-     <CMPNAME>_REPLACE_SEPARATORS_TO_SPACE</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Replaces different separators to space (cl/lr, tab etc)</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_DB_LAYER_BASE</CLSNAME>
      <CMPNAME>_RETURN_LINE_TO_RESULT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns one line of table into result struct (or value)</DESCRIPT>

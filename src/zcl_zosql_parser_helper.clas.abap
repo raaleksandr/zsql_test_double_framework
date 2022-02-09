@@ -4,6 +4,9 @@ class ZCL_ZOSQL_PARSER_HELPER definition
 
 public section.
 
+  methods GET_LIST_OF_SELECT_FROM_TABLES
+    returning
+      value(RT_DATASETS) type ZCL_ZOSQL_ITERATOR_POSITION=>TY_DATA_SETS .
   methods CONSTRUCTOR
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
@@ -204,6 +207,35 @@ CLASS ZCL_ZOSQL_PARSER_HELPER IMPLEMENTATION.
 
       ev_new_syntax = abap_true.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD get_list_of_select_from_tables.
+    DATA: lo_top_node          TYPE REF TO zcl_zosql_parser_node,
+          lt_child_nodes_table TYPE zcl_zosql_parser_node=>ty_parser_nodes,
+          lo_node_table        TYPE REF TO zcl_zosql_parser_node,
+          lo_node_table_alias  TYPE REF TO zcl_zosql_parser_node.
+
+    FIELD-SYMBOLS: <ls_dataset> LIKE LINE OF rt_datasets.
+
+    lo_top_node = mo_sql_parser->get_top_node_as_object( ).
+
+    lt_child_nodes_table = lo_top_node->get_child_nodes_recursive( ).
+
+    LOOP AT lt_child_nodes_table INTO lo_node_table
+      WHERE table_line->node_type = zcl_zosql_parser_recurs_desc=>node_type-table.
+
+      APPEND INITIAL LINE TO rt_datasets ASSIGNING <ls_dataset>.
+      <ls_dataset>-dataset_name = lo_node_table->token_ucase.
+
+      lo_node_table_alias =
+        lo_node_table->get_child_node_with_type(
+          zcl_zosql_parser_recurs_desc=>node_type-alias ).
+
+      IF lo_node_table_alias IS BOUND.
+        <ls_dataset>-dataset_alias = lo_node_table_alias->token.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
 

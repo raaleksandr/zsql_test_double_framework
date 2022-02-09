@@ -160,13 +160,13 @@ private section.
   class-methods _SPLIT_INTO_TOKENS_AT_SEP_ITAB
     importing
       !IT_CONDITIONS_TABLE type STRING_TABLE
-      value(IV_SEPARATOR) type CHAR1 optional
+      value(IV_SEPARATOR) type CLIKE optional
     returning
       value(RT_TOKENS) type STRING_TABLE .
   class-methods _SPLIT_INTO_TOKENS_AT_SEP
     importing
       !IV_SQL_CONDITION type CLIKE
-      value(IV_SEPARATOR) type CHAR1 optional
+      value(IV_SEPARATOR) type CLIKE optional
     returning
       value(RT_TOKENS) type STRING_TABLE .
 ENDCLASS.
@@ -563,6 +563,12 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
                                            iv_separator     = space ).
 
     rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
+                                                iv_separator        = cl_abap_char_utilities=>cr_lf ).
+
+    rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
+                                                iv_separator        = cl_abap_char_utilities=>horizontal_tab ).
+
+    rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
                                                 iv_separator        = ',' ).
 
     rt_tokens = _split_into_tokens_at_sep_itab( it_conditions_table = rt_tokens
@@ -615,12 +621,17 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
 
     CONSTANTS: lc_quote  TYPE char1 VALUE ''''.
 
-    DATA: lt_words        TYPE TABLE OF string,
-          lv_word         TYPE string,
-          lv_inside_quote TYPE abap_bool,
-          lv_new_token    TYPE string,
-          lt_results      TYPE match_result_tab,
-          lv_first        TYPE abap_bool.
+    DATA: lt_words         TYPE TABLE OF string,
+          lv_word          TYPE string,
+          lv_inside_quote  TYPE abap_bool,
+          lv_new_token     TYPE string,
+          lt_results       TYPE match_result_tab,
+          lv_first         TYPE abap_bool,
+          lv_separator     TYPE string,
+          lv_separator_len TYPE i.
+
+    lv_separator = iv_separator.
+    lv_separator_len = strlen( lv_separator ).
 
     SPLIT iv_sql_condition AT iv_separator INTO TABLE lt_words.
 
@@ -653,13 +664,15 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     ENDLOOP.
 
     IF get_last_n_chars( iv_string              = iv_sql_condition
-                         iv_how_many_characters = 1 ) = iv_separator.
+                         iv_how_many_characters = lv_separator_len ) = iv_separator.
 
       APPEND iv_separator TO rt_tokens.
     ENDIF.
 
     DELETE rt_tokens
-      WHERE table_line IS INITIAL.
+      WHERE table_line IS INITIAL
+         OR table_line = cl_abap_char_utilities=>cr_lf
+         OR table_line = cl_abap_char_utilities=>horizontal_tab.
   endmethod.
 
 

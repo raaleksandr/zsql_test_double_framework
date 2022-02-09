@@ -107,11 +107,6 @@ private section.
       !EV_OTHER_SELECT type CLIKE
     raising
       ZCX_ZOSQL_ERROR .
-  methods _REPLACE_SEPARATORS_TO_SPACE
-    importing
-      !IV_SOURCE_TEXT type CLIKE
-    returning
-      value(RV_DESTINATION_TEXT) type STRING .
 ENDCLASS.
 
 
@@ -158,13 +153,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
 
   method PARSE_SQL.
-
-    DATA: lv_sql TYPE string.
-
-    lv_sql = _replace_separators_to_space( iv_sql ).
-
     CREATE OBJECT ro_sql_parser.
-    ro_sql_parser->set_sql( lv_sql ).
+    ro_sql_parser->set_sql( iv_sql ).
     ro_sql_parser->run_recursive_descent_parser( ).
   endmethod.
 
@@ -399,17 +389,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
                                                                 iv_start_token_to_delete = c_where ).
     ENDIF.
   endmethod.
-
-
-  METHOD _REPLACE_SEPARATORS_TO_SPACE.
-
-    rv_destination_text = iv_source_text.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>cr_lf IN rv_destination_text WITH space.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>cr_lf(1) IN rv_destination_text WITH space.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>cr_lf+1(1) IN rv_destination_text WITH space.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>horizontal_tab IN rv_destination_text WITH space.
-    CONDENSE rv_destination_text.
-  ENDMETHOD.
 
 
   METHOD _RETURN_LINE_TO_RESULT.
