@@ -79,7 +79,12 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       update_by_sql_params_set FOR TESTING RAISING zcx_zosql_error,
       update_by_sql_new_syntax FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
-      delete_by_sql_with_params FOR TESTING RAISING zcx_zosql_error.
+      delete_by_sql_with_params FOR TESTING RAISING zcx_zosql_error,
+      insert_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      update_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      delete_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      delete_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_zosql_db_layer
 
 
@@ -2605,7 +2610,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
   METHOD insert_by_itab.
 
     DATA: ls_line         TYPE zosql_for_tst,
-          lt_insert_table TYPE TABLE OF zosql_for_tst.
+          lt_insert_table TYPE TABLE OF zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
 
     " GIVEN
     ls_line-key_field   = 'KEY1'.
@@ -2617,8 +2623,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_insert_table.
 
     " WHEN
-    f_cut->zif_zosql_db_layer~insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
-                                              it_new_lines  = lt_insert_table ).
+    lv_subrc = f_cut->zif_zosql_db_layer~insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
+                                                         it_new_lines  = lt_insert_table ).
 
     " THEN
     DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
@@ -2629,12 +2635,14 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_insert_table ).
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD update_by_itab.
 
     DATA: ls_line                TYPE zosql_for_tst,
-          lt_table_before_update TYPE TABLE OF zosql_for_tst.
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
+          lv_subrc               TYPE sysubrc.
 
     " GIVEN
     DELETE FROM zosql_for_tst.
@@ -2660,8 +2668,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE_2_1_UPD'.
     APPEND ls_line TO lt_update_table.
 
-    f_cut->zif_zosql_db_layer~update_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
-                                              it_lines_for_update = lt_update_table ).
+    lv_subrc = f_cut->zif_zosql_db_layer~update_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+                                                         it_lines_for_update = lt_update_table ).
 
     " THEN
     DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
@@ -2672,6 +2680,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_update_table ).
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD modify_by_itab.
@@ -2729,7 +2738,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
 
   METHOD delete_by_itab.
     DATA: ls_line                TYPE zosql_for_tst,
-          lt_table_before_modify TYPE TABLE OF zosql_for_tst.
+          lt_table_before_modify TYPE TABLE OF zosql_for_tst,
+          lv_subrc               TYPE sysubrc.
 
     " GIVEN
     ls_line-key_field   = 'KEY1'.
@@ -2749,15 +2759,15 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     ls_line-key_field = 'KEY2'.
     APPEND ls_line TO lt_delete_table.
 
-    f_cut->zif_zosql_db_layer~delete_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+    lv_subrc = f_cut->zif_zosql_db_layer~delete_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
                                               it_lines_for_delete = lt_delete_table ).
 
     " THEN
     DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
           lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
-                                              IMPORTING et_result_table = lt_result_table ).
+     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
+                                               IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
 
@@ -2766,12 +2776,14 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD update_by_sql_no_params.
     DATA: ls_line                TYPE zosql_for_tst,
           lt_table_before_update TYPE TABLE OF zosql_for_tst,
-          lv_update_statement    TYPE string.
+          lv_update_statement    TYPE string,
+          lv_result_subrc        TYPE sysubrc.
 
     " GIVEN
     ls_line-key_field   = 'KEY1'.
@@ -2790,14 +2802,14 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
       'WHERE TEXT_FIELD1 = ''VALUE2_1'''
       INTO lv_update_statement SEPARATED BY space.
 
-    f_cut->zif_zosql_db_layer~update( lv_update_statement ).
+    lv_result_subrc = f_cut->zif_zosql_db_layer~update( lv_update_statement ).
 
     " THEN
     DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
           lt_expected_table TYPE TABLE OF zosql_for_tst.
 
     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
-                                              IMPORTING et_result_table = lt_result_table ).
+                                                                IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
 
@@ -2813,6 +2825,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+    cl_aunit_assert=>assert_equals( act = lv_result_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD update_by_sql_with_params.
@@ -2987,7 +3000,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
   METHOD delete_by_sql_no_params.
     DATA: ls_line                TYPE zosql_for_tst,
           lt_table_before_delete TYPE TABLE OF zosql_for_tst,
-          lv_delete_statement    TYPE string.
+          lv_delete_statement    TYPE string,
+          lv_result_subrc        TYPE sysubrc.
 
     " GIVEN
     ls_line-key_field   = 'KEY1'.
@@ -3005,7 +3019,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
       'WHERE TEXT_FIELD1 = ''VALUE2_1'''
       INTO lv_delete_statement SEPARATED BY space.
 
-    f_cut->zif_zosql_db_layer~delete( lv_delete_statement ).
+    lv_result_subrc = f_cut->zif_zosql_db_layer~delete( lv_delete_statement ).
 
     " THEN
     DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
@@ -3022,6 +3036,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+    cl_aunit_assert=>assert_equals( act = lv_result_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD delete_by_sql_with_params.
@@ -3070,5 +3085,93 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD insert_by_itab_subrc_4.
+
+    DATA: ls_line         TYPE zosql_for_tst,
+          lt_insert_table TYPE TABLE OF zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_insert_table.
+
+    INSERT zosql_for_tst FROM TABLE lt_insert_table.
+
+    " WHEN
+    lv_subrc = f_cut->zif_zosql_db_layer~insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
+                                                         it_new_lines  = lt_insert_table ).
+
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
+  ENDMETHOD.
+
+  METHOD update_by_itab_subrc_4.
+    DATA: ls_line  TYPE zosql_for_tst,
+          lv_subrc TYPE sysubrc.
+
+    " WHEN
+    DATA: lt_update_table TYPE TABLE OF zosql_for_tst.
+
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE_1_1_UPD'.
+    APPEND ls_line TO lt_update_table.
+
+    lv_subrc = f_cut->zif_zosql_db_layer~update_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+                                                         it_lines_for_update = lt_update_table ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
+  ENDMETHOD.
+
+  METHOD delete_by_itab_subrc_4.
+    DATA: ls_line         TYPE zosql_for_tst,
+          lt_delete_table TYPE TABLE OF zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
+
+    " WHEN
+    CLEAR ls_line.
+    ls_line-key_field = 'KEY2'.
+    APPEND ls_line TO lt_delete_table.
+
+    lv_subrc = f_cut->zif_zosql_db_layer~delete_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+                                                         it_lines_for_delete = lt_delete_table ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
+  ENDMETHOD.
+
+  METHOD update_by_sql_subrc_4.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lv_update_statement    TYPE string,
+          lv_subrc               TYPE sysubrc.
+
+    " WHEN
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
+      'SET text_field2 = ''NEW_VAL_FIELD2'''
+      'WHERE TEXT_FIELD1 = ''VALUE2_1'''
+      INTO lv_update_statement SEPARATED BY space.
+
+    lv_subrc = f_cut->zif_zosql_db_layer~update( lv_update_statement ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
+  ENDMETHOD.
+
+  METHOD delete_by_sql_subrc_4.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lv_delete_statement    TYPE string,
+          lv_subrc               TYPE sysubrc.
+
+    " WHEN
+    CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'
+      'WHERE TEXT_FIELD1 = ''VALUE2_1'''
+      INTO lv_delete_statement SEPARATED BY space.
+
+    lv_subrc = f_cut->zif_zosql_db_layer~delete( lv_delete_statement ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( exp = lv_subrc act = 4 ).
   ENDMETHOD.
 ENDCLASS.

@@ -56,12 +56,16 @@ interface ZIF_ZOSQL_DB_LAYER
     importing
       !IV_TABLE_NAME type CLIKE optional
       !IT_NEW_LINES type ANY TABLE
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods UPDATE_BY_ITAB
     importing
       !IV_TABLE_NAME type CLIKE optional
       !IT_LINES_FOR_UPDATE type ANY TABLE
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods MODIFY_BY_ITAB
@@ -74,18 +78,24 @@ interface ZIF_ZOSQL_DB_LAYER
     importing
       !IV_TABLE_NAME type CLIKE optional
       !IT_LINES_FOR_DELETE type ANY TABLE
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods UPDATE
     importing
       !IV_UPDATE_STATEMENT type CLIKE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS optional
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods DELETE
     importing
       !IV_DELETE_STATEMENT type CLIKE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS optional
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods COMMIT

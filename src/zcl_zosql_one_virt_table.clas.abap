@@ -5,10 +5,15 @@ class ZCL_ZOSQL_ONE_VIRT_TABLE definition
 public section.
 
   data M_TABLE_NAME type TABNAME16 read-only .
+  data COUNT_INSERTED type I .
+  data COUNT_UPDATED type I .
+  data COUNT_DELETED type I .
 
   methods DELETE_TEST_DATA_FROM_ITAB
     importing
-      !IT_LINES_FOR_DELETE type ANY TABLE .
+      !IT_LINES_FOR_DELETE type ANY TABLE
+    returning
+      value(RV_SUBRC) type SYSUBRC .
   methods GET_DATA
     exporting
       !ET_TABLE type ANY TABLE .
@@ -31,14 +36,18 @@ private section.
   methods _MODIFY_BUFFERLINE_FROM_STRUCT
     importing
       !IS_RECORD type ANY
-      !IV_DELETE type ABAP_BOOL .
+      !IV_DELETE type ABAP_BOOL
+    returning
+      value(RV_SUBRC) type SYSUBRC .
   methods _FILL_MANDANT_FIELD
     changing
       !CS_STRUCT type ANY .
   methods _PERFORM_UPD_DEL_OPERATION
     importing
       !IT_TABLE type ANY TABLE
-      !IV_DELETE type ABAP_BOOL .
+      !IV_DELETE type ABAP_BOOL
+    returning
+      value(RV_SUBRC) type SYSUBRC .
   methods _FIND_MANDANT_FIELD .
   methods _GET_FIELD_LIST
     returning
@@ -70,8 +79,8 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
 
   method DELETE_TEST_DATA_FROM_ITAB.
 
-    _perform_upd_del_operation( it_table  = it_lines_for_delete
-                                iv_delete = abap_true ).
+    rv_subrc = _perform_upd_del_operation( it_table  = it_lines_for_delete
+                                           iv_delete = abap_true ).
   endmethod.
 
 
@@ -183,14 +192,19 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
 
     IF iv_delete = abap_true.
       DELETE TABLE <lt_table_buffer> FROM is_record.
+      count_deleted = count_deleted + 1.
     ELSE.
       READ TABLE <lt_table_buffer> FROM is_record TRANSPORTING NO FIELDS.
       IF sy-subrc = 0.
         MODIFY TABLE <lt_table_buffer> FROM is_record.
+        count_updated = count_updated + 1.
       ELSE.
         INSERT is_record INTO TABLE <lt_table_buffer>.
+        count_inserted = count_inserted + 1.
       ENDIF.
     ENDIF.
+
+    rv_subrc = sy-subrc.
   ENDMETHOD.
 
 
@@ -203,14 +217,19 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
     CREATE DATA ld_table_line TYPE (m_table_name).
     ASSIGN ld_table_line->* TO <ls_table_line>.
 
+    rv_subrc = 4.
+
     LOOP AT it_table ASSIGNING <ls_param_line>.
       CLEAR <ls_table_line>.
       MOVE-CORRESPONDING <ls_param_line> TO <ls_table_line>.
 
       _fill_mandant_field( CHANGING cs_struct = <ls_table_line> ).
 
-      _modify_bufferline_from_struct( is_record = <ls_table_line>
-                                      iv_delete = iv_delete ).
+      IF _modify_bufferline_from_struct( is_record = <ls_table_line>
+                                         iv_delete = iv_delete ) = 0.
+
+        rv_subrc = 0.
+      ENDIF.
     ENDLOOP.
   ENDMETHOD.
 ENDCLASS.

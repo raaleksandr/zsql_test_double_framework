@@ -24,6 +24,12 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Class to process field list in select statemenet</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQL_EXEC_SELECT</CLSNAME>
+     <CMPNAME>MV_SUBRC</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Return Code</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>

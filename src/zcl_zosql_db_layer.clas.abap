@@ -55,6 +55,8 @@ private section.
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods _SPLIT_UPDATE_INTO_PARTS
@@ -85,6 +87,8 @@ private section.
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods _SPLIT_SELECT_INTO_PARTS
@@ -148,12 +152,16 @@ private section.
       !IV_TABLE_NAME type CLIKE
       !IV_SET_STATEMENT type CLIKE
       !IV_WHERE type CLIKE
-      !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY .
+      !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY
+    returning
+      value(RV_SUBRC) type SYSUBRC .
   methods _EXECUTE_DELETE
     importing
       !IV_TABLE_NAME type CLIKE
       !IV_WHERE type CLIKE
-      !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY .
+      !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY
+    returning
+      value(RV_SUBRC) type SYSUBRC .
   methods _CONSIDER_IF_HOST_ALREADY_WAS
     changing
       !CV_SQL type CLIKE .
@@ -326,11 +334,11 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_new_syntax       = lv_new_syntax
                                         eo_sql_parser       = lo_sql_parser ).
 
-    _delete_by_sql_parts( iv_table_name = lv_table_name
-                          iv_where      = lv_where
-                          iv_new_syntax = lv_new_syntax
-                          it_parameters = it_parameters
-                          io_sql_parser = lo_sql_parser ).
+    rv_subrc = _delete_by_sql_parts( iv_table_name = lv_table_name
+                                     iv_where      = lv_where
+                                     iv_new_syntax = lv_new_syntax
+                                     it_parameters = it_parameters
+                                     io_sql_parser = lo_sql_parser ).
   endmethod.
 
 
@@ -352,6 +360,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     ASSIGN ld_itab_for_db_operation->* TO <lt_itab_for_db_operation>.
 
     DELETE (lv_table_name) FROM TABLE <lt_itab_for_db_operation>.
+
+    rv_subrc = sy-subrc.
   endmethod.
 
 
@@ -421,7 +431,9 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
     ASSIGN ld_itab_for_db_operation->* TO <lt_itab_for_db_operation>.
 
-    INSERT (lv_table_name) FROM TABLE <lt_itab_for_db_operation>.
+    INSERT (lv_table_name) FROM TABLE <lt_itab_for_db_operation> ACCEPTING DUPLICATE KEYS.
+
+    rv_subrc = sy-subrc.
   endmethod.
 
 
@@ -582,12 +594,12 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_new_syntax         = lv_new_syntax
                                         eo_sql_parser         = lo_sql_parser ).
 
-    _update_by_sql_parts( iv_table_name    = lv_table_name
-                          iv_set_statement = lv_set_statement
-                          iv_where         = lv_where
-                          iv_new_syntax    = lv_new_syntax
-                          it_parameters    = it_parameters
-                          io_sql_parser    = lo_sql_parser ).
+    rv_subrc = _update_by_sql_parts( iv_table_name    = lv_table_name
+                                     iv_set_statement = lv_set_statement
+                                     iv_where         = lv_where
+                                     iv_new_syntax    = lv_new_syntax
+                                     it_parameters    = it_parameters
+                                     io_sql_parser    = lo_sql_parser ).
   ENDMETHOD.
 
 
@@ -609,6 +621,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
     ASSIGN ld_itab_for_db_operation->* TO <lt_itab_for_db_operation>.
 
     UPDATE (lv_table_name) FROM TABLE <lt_itab_for_db_operation>.
+
+    rv_subrc = sy-subrc.
   endmethod.
 
 
@@ -794,9 +808,9 @@ endmethod.
 
     ASSIGN ld_dynamic_struct_with_params->* TO <ls_dynamic_struct_with_pars>.
 
-    _execute_delete( iv_table_name                 = iv_table_name
-                     iv_where                      = lv_where
-                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
+    rv_subrc = _execute_delete( iv_table_name                 = iv_table_name
+                                iv_where                      = lv_where
+                                is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
   ENDMETHOD.
 
 
@@ -807,6 +821,8 @@ endmethod.
     ELSE.
       DELETE FROM (iv_table_name).
     ENDIF.
+
+    rv_subrc = sy-subrc.
   endmethod.
 
 
@@ -938,6 +954,8 @@ endmethod.
       UPDATE (iv_table_name)
         SET (iv_set_statement).
     ENDIF.
+
+    rv_subrc = sy-subrc.
   endmethod.
 
 
@@ -1411,9 +1429,9 @@ ENDMETHOD.
                                        iv_name_of_struct_with_params = 'IS_DYNAMIC_STRUCT_WITH_PARAMS'
                              CHANGING  cv_set_statement              = lv_set_statement ).
 
-    _execute_update( iv_table_name                 = iv_table_name
-                     iv_set_statement              = lv_set_statement
-                     iv_where                      = lv_where
-                     is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
+    rv_subrc = _execute_update( iv_table_name                 = iv_table_name
+                                iv_set_statement              = lv_set_statement
+                                iv_where                      = lv_where
+                                is_dynamic_struct_with_params = <ls_dynamic_struct_with_pars> ).
   endmethod.
 ENDCLASS.

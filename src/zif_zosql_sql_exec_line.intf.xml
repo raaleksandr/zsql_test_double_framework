@@ -17,6 +17,12 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Executes SQL for one line selected according to WHERE</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_SQL_EXEC_LINE</CLSNAME>
+     <CMPNAME>GET_SUBRC</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns sy-subrc of operation</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>

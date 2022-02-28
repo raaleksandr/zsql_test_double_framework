@@ -29,6 +29,7 @@ private section.
 
   data MV_TABLE_NAME type TABNAME16 .
   data MD_BUFFER_FOR_UPDATE type ref to DATA .
+  data MV_SUBRC type SYSUBRC .
 ENDCLASS.
 
 
