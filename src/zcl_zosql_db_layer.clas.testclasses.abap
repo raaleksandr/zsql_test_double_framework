@@ -513,6 +513,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
