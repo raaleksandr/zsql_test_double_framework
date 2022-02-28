@@ -84,6 +84,22 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_TEST_ENVIRONMENT~CLEAR_UPDATE_COUNTERS.
+
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    CLEAR: zif_zosql_test_environment~count_inserted,
+           zif_zosql_test_environment~count_updated,
+           zif_zosql_test_environment~count_deleted.
+
+    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
+      CLEAR: <ls_virtual_table>-virt_table->count_inserted,
+             <ls_virtual_table>-virt_table->count_updated,
+             <ls_virtual_table>-virt_table->count_deleted.
+    ENDLOOP.
+  endmethod.
+
+
   method ZIF_ZOSQL_TEST_ENVIRONMENT~DELETE_TEST_DATA_FROM_ITAB.
     DATA: lv_table_name    TYPE tabname16.
 
@@ -99,9 +115,13 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
       _raise_cannot_detect_tabname( ).
     ENDIF.
 
+    rv_subrc = 4.
+
     READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
     IF sy-subrc = 0.
-      <ls_virtual_table>-virt_table->delete_test_data_from_itab( it_lines_for_delete ).
+      IF <ls_virtual_table>-virt_table->delete_test_data_from_itab( it_lines_for_delete ) = 0.
+        rv_subrc = 0.
+      ENDIF.
     ENDIF.
   endmethod.
 

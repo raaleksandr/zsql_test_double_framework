@@ -2,6 +2,10 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
   public .
 
 
+  data COUNT_INSERTED type I read-only .
+  data COUNT_UPDATED type I read-only .
+  data COUNT_DELETED type I read-only .
+
   methods DESTROY .
   methods CLEAR_ONE_TABLE
     importing
@@ -9,13 +13,15 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
   methods DELETE_TEST_DATA_FROM_ITAB
     importing
       !IT_LINES_FOR_DELETE type ANY TABLE
-      !IV_TABLE_NAME type TABNAME16 optional
+      !IV_TABLE_NAME type CLIKE optional
+    returning
+      value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
   methods INSERT_TEST_DATA
     importing
       !IT_TABLE type ANY TABLE
-      value(IV_TABLE_NAME) type TABNAME16 optional
+      value(IV_TABLE_NAME) type CLIKE optional
     raising
       ZCX_ZOSQL_ERROR .
   methods CLEAR_ALL .
@@ -33,4 +39,5 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
       !IV_TABLE_NAME type CLIKE
     returning
       value(RD_REF_TO_DATA) type ref to DATA .
+  methods CLEAR_UPDATE_COUNTERS .
 endinterface.

@@ -198,8 +198,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     ASSIGN ld_ref_to_buffer_for_delete->* TO <lt_buffer>.
     IF <lt_buffer> IS NOT INITIAL.
-      zif_zosql_db_layer~delete_by_itab( iv_table_name       = lv_table_name
-                                         it_lines_for_delete = <lt_buffer> ).
+      rv_subrc = zif_zosql_db_layer~delete_by_itab( iv_table_name       = lv_table_name
+                                                    it_lines_for_delete = <lt_buffer> ).
+    ELSE.
+      rv_subrc = 4.
     ENDIF.
   endmethod.
 
@@ -208,8 +210,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     DATA: lv_table_name TYPE tabname16.
 
     lv_table_name = iv_table_name.
-    mo_zosql_test_environment->delete_test_data_from_itab( it_lines_for_delete = it_lines_for_delete
-                                                           iv_table_name       = lv_table_name ).
+    rv_subrc = mo_zosql_test_environment->delete_test_data_from_itab( it_lines_for_delete = it_lines_for_delete
+                                                                      iv_table_name       = lv_table_name ).
   endmethod.
 
 
@@ -276,11 +278,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
-    DATA: lv_table_name TYPE tabname16.
-
-    lv_table_name = iv_table_name.
+    mo_zosql_test_environment->clear_update_counters( ).
     mo_zosql_test_environment->insert_test_data( it_table      = it_new_lines
-                                                 iv_table_name = lv_table_name ).
+                                                 iv_table_name = iv_table_name ).
+
+    IF mo_zosql_test_environment->count_inserted > 0.
+      rv_subrc = 0.
+    ELSE.
+      rv_subrc = 4.
+    ENDIF.
   endmethod.
 
 
@@ -418,15 +424,24 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     ld_ref_to_buffer_for_update = lo_sql_executor_for_line->get_buffer_with_processed_recs( ).
     ASSIGN ld_ref_to_buffer_for_update->* TO <lt_buffer>.
     IF <lt_buffer> IS NOT INITIAL.
-      zif_zosql_db_layer~update_by_itab( iv_table_name       = lv_table_name
-                                         it_lines_for_update = <lt_buffer> ).
+      rv_subrc = zif_zosql_db_layer~update_by_itab( iv_table_name       = lv_table_name
+                                                    it_lines_for_update = <lt_buffer> ).
+    ELSE.
+      rv_subrc = 4.
     ENDIF.
   endmethod.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
-    zif_zosql_db_layer~insert_by_itab( iv_table_name = iv_table_name
-                                       it_new_lines  = it_lines_for_update ).
+    mo_zosql_test_environment->clear_update_counters( ).
+    mo_zosql_test_environment->insert_test_data( it_table      = it_lines_for_update
+                                                 iv_table_name = iv_table_name ).
+
+    IF mo_zosql_test_environment->count_updated > 0.
+      rv_subrc = 0.
+    ELSE.
+      rv_subrc = 4.
+    ENDIF.
   endmethod.
 
 
