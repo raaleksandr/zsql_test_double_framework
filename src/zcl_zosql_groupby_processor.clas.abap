@@ -106,7 +106,7 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
 
     DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ls_data_set               LIKE LINE OF lt_data_set_list,
-          lt_components_of_data_set TYPE cl_abap_structdescr=>component_table.
+          lt_components_of_data_set TYPE cl_abap_structdescr=>included_view.
 
     FIELD-SYMBOLS: <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields.
 

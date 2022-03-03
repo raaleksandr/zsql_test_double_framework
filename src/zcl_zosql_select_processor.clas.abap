@@ -294,11 +294,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
       APPEND ls_new_component TO lt_target_set_components.
     ENDLOOP.
 
-*    CLEAR ls_new_component.
-*    ls_new_component-name = c_special_field_with_datasets.
-*    ls_new_component-type ?= cl_abap_typedescr=>describe_by_name( 'ZCL_ZOSQL_ITERATOR_POSITION' ).
-*    APPEND ls_new_component TO lt_target_set_components.
-
     lo_struct = cl_abap_structdescr=>create( lt_target_set_components ).
     lo_table = cl_abap_tabledescr=>create( lo_struct ).
 
@@ -310,7 +305,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ls_data_set               LIKE LINE OF lt_data_set_list,
-          lt_components_of_data_set TYPE cl_abap_structdescr=>component_table.
+          lt_components_of_data_set TYPE cl_abap_structdescr=>included_view.
 
     FIELD-SYMBOLS: <ls_select_parameter> LIKE LINE OF mt_select_parameters.
 
@@ -459,17 +454,19 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     DATA: ld_ref_to_dataset_data   TYPE REF TO data,
           lo_struct                TYPE REF TO cl_abap_structdescr,
-          lt_dataset_components    TYPE cl_abap_structdescr=>component_table.
+          lt_dataset_components    TYPE cl_abap_structdescr=>included_view,
+          ls_component             TYPE abap_simple_componentdescr.
 
     FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_dataset_components.
 
     ld_ref_to_dataset_data = io_from_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name ).
 
     lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
-    lt_dataset_components = lo_struct->get_components( ).
+    lt_dataset_components = lo_struct->get_included_view( ).
 
-    READ TABLE lt_dataset_components WITH KEY name = is_select_parameter-field_name INTO rs_component.
+    READ TABLE lt_dataset_components WITH KEY name = is_select_parameter-field_name INTO ls_component.
     IF sy-subrc = 0.
+      MOVE-CORRESPONDING ls_component TO rs_component.
       IF is_select_parameter-field_alias IS NOT INITIAL.
         rs_component-name = is_select_parameter-field_alias.
       ENDIF.
@@ -507,7 +504,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     DATA: lt_new_select_parameters LIKE mt_select_parameters,
           lt_data_set_list         TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ls_data_set              LIKE LINE OF lt_data_set_list,
-          lt_components            TYPE cl_abap_structdescr=>component_table,
+          lt_components            TYPE cl_abap_structdescr=>included_view,
           lv_dataset_index         TYPE i,
           lt_fields                TYPE TABLE OF ty_field,
           ls_field                 TYPE ty_field.

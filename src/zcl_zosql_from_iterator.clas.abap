@@ -35,7 +35,7 @@ public section.
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
     returning
-      value(RT_DATA_SET_COMPONENTS) type CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE
+      value(RT_DATA_SET_COMPONENTS) type CL_ABAP_STRUCTDESCR=>INCLUDED_VIEW
     raising
       ZCX_ZOSQL_ERROR .
 protected section.
@@ -89,6 +89,9 @@ private section.
   data MV_OUTER_JOIN_ADD_MODE_INDEX type I .
   data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
+  methods _POSITIONS_AS_STRING
+    returning
+      value(RV_POSITIONS_AS_STRING) type STRING .
   methods _CREATE_DATASET_ITERATOR
     importing
       !IV_DATASET_NAME type CLIKE
@@ -115,15 +118,15 @@ private section.
       value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _INIT_BY_ATTRIBUTES
-    importing
-      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
-      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_BY_SQL_PARSER
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _INIT_BY_ATTRIBUTES
+    importing
+      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
+      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_OUTER_JOIN_ADD_MODE
     returning
       value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
@@ -210,7 +213,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     ld_ref_to_dataset_data = get_line_for_data_set_ref( iv_dataset_name_or_alias ).
     lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
-    rt_data_set_components = lo_struct->get_components( ).
+    rt_data_set_components = lo_struct->get_included_view( ).
   endmethod.
 
 
@@ -730,6 +733,10 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
       lv_current_dataset = lv_current_dataset - 1.
     ENDWHILE.
+
+    DATA: lv_datasets_positions TYPE string.
+
+    lv_datasets_positions = _positions_as_string( ).
   endmethod.
 
 
@@ -747,6 +754,30 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     IF rv_next_position_found <> abap_true AND mv_outer_join_add_mode_index <= LINES( mt_outer_join_add_chain ).
       mv_outer_join_add_mode_index = mv_outer_join_add_mode_index + 1.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD _positions_as_string.
+
+    DATA: lo_table_iterator TYPE REF TO zcl_zosql_table_iterator,
+          lv_position       TYPE string.
+
+    FIELD-SYMBOLS: <ls_dataset> LIKE LINE OF mt_datasets_with_position.
+
+    LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset>.
+      TRY.
+          lo_table_iterator ?= <ls_dataset>-iterator.
+          lv_position = |{ lo_table_iterator->current_record }|.
+        CATCH cx_root.
+          lv_position = 'UNKNOWN'.
+      ENDTRY.
+
+      IF rv_positions_as_string IS INITIAL.
+        rv_positions_as_string = lv_position.
+      ELSE.
+        CONCATENATE rv_positions_as_string lv_position INTO rv_positions_as_string SEPARATED BY '-'.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
 

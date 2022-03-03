@@ -55,6 +55,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       like_with_star FOR TESTING RAISING zcx_zosql_error,
       join FOR TESTING RAISING zcx_zosql_error,
       left_join FOR TESTING RAISING zcx_zosql_error,
+      join_3_tabs FOR TESTING RAISING zcx_zosql_error,
       new_syntax FOR TESTING RAISING zcx_zosql_error,
       new_syntax_no_host_var FOR TESTING RAISING zcx_zosql_error,
       new_syntax_no_space_selfld FOR TESTING RAISING zcx_zosql_error,
@@ -83,6 +84,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
+      select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
@@ -108,7 +110,8 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
       subquery_in FOR TESTING RAISING zcx_zosql_error,
       subquery_not_in FOR TESTING RAISING zcx_zosql_error,
-      param_with_name_like_field FOR TESTING RAISING zcx_zosql_error.
+      param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
+      view_user_addr FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
 CLASS ltc_cases_for_insert DEFINITION FOR TESTING
@@ -134,7 +137,7 @@ CLASS ltc_cases_for_insert DEFINITION FOR TESTING
 *?</asx:abap>
   PUBLIC SECTION.
     METHODS: insert_by_itab FOR TESTING RAISING zcx_zosql_error,
-             insert_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error.
+      insert_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error.
 ENDCLASS.
 
 CLASS ltc_cases_for_update DEFINITION FOR TESTING
@@ -1173,6 +1176,71 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD join_3_tabs.
+    DATA: lt_table1 TYPE TABLE OF zosql_for_tst,
+          ls_table1 TYPE zosql_for_tst,
+          lt_table2 TYPE TABLE OF zosql_for_tst2,
+          ls_table2 TYPE zosql_for_tst2,
+          lt_table3 TYPE TABLE OF zosql_for_tst3,
+          ls_table3 TYPE zosql_for_tst3.
+
+    " GIVEN
+    ls_table1-mandt     = sy-mandt.
+    ls_table1-key_field = 'KEY1'.
+    APPEND ls_table1 TO lt_table1.
+
+    ls_table1-mandt     = sy-mandt.
+    ls_table1-key_field = 'KEY2'.
+    APPEND ls_table1 TO lt_table1.
+
+    ls_table2-mandt     = sy-mandt.
+    ls_table2-key_field = 'KEY1'.
+    APPEND ls_table2 TO lt_table2.
+
+    ls_table2-mandt     = sy-mandt.
+    ls_table2-key_field = 'KEY2'.
+    APPEND ls_table2 TO lt_table2.
+
+    ls_table3-mandt      = sy-mandt.
+    ls_table3-key_field3 = 'KEY1'.
+    APPEND ls_table3 TO lt_table3.
+
+    ls_table3-mandt      = sy-mandt.
+    ls_table3-key_field3 = 'KEY2'.
+    APPEND ls_table3 TO lt_table3.
+
+    mo_test_environment->insert_test_data( lt_table1 ).
+    mo_test_environment->insert_test_data( lt_table2 ).
+    mo_test_environment->insert_test_data( lt_table3 ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT zosql_for_tst~key_field'
+      'FROM zosql_for_tst'
+      'JOIN zosql_for_tst2 ON zosql_for_tst2~key_field = zosql_for_tst~key_field'
+      'JOIN zosql_for_tst3 ON zosql_for_tst3~key_field3 = zosql_for_tst2~key_field'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_result TYPE TABLE OF ty_result.
+
+    APPEND 'KEY1' TO lt_expected_result.
+    APPEND 'KEY2' TO lt_expected_result.
+
+    SORT: lt_result, lt_expected_result.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
   ENDMETHOD.
 
   METHOD new_syntax.
@@ -3854,7 +3922,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " WHEN
     TYPES: BEGIN OF ty_result,
-             key_field  TYPE zosql_for_tst2-key_field,
+             key_field TYPE zosql_for_tst2-key_field,
            END OF ty_result.
 
     DATA: lt_result_table TYPE TABLE OF ty_result.
@@ -4048,6 +4116,43 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD select_from_table_with_include.
+
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst4,
+          ls_line          TYPE zosql_for_tst4.
+
+    " GIVEN
+    ls_line-mandt = sy-mandt.
+    ls_line-key_field1 = 'KEY1_1'.
+    ls_line-key_field2 = 'KEY2_1'.
+    ls_line-field1     = 'FIELD1_1'.
+    ls_line-field2     = 'FIELD2_1'.
+    ls_line-field3     = 'FIELD3_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    DATA: ld_result TYPE REF TO data,
+          lt_result TYPE TABLE OF zosql_for_tst4.
+
+    FIELD-SYMBOLS: <lt_result> TYPE STANDARD TABLE.
+
+    f_cut->zif_zosql_db_layer~select( EXPORTING iv_select          = 'SELECT * FROM zosql_for_tst4'
+                                      IMPORTING ed_result_as_table = ld_result ).
+
+    ASSIGN ld_result->* TO <lt_result>.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result>
+                                               IMPORTING et_table_dest = lt_result ).
+
+    " THEN
+    DATA: lt_expected  TYPE TABLE OF zosql_for_tst4.
+
+    lt_expected = lt_initial_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
   METHOD sql_separated_by_line_breaks.
@@ -4298,6 +4403,106 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD view_user_addr.
+
+    " It is a bug found when selecting from view USER_ADDR in 'fake' mode
+
+    DATA: lt_usr21     TYPE TABLE OF usr21,
+          ls_usr21     TYPE usr21,
+          lt_adrc      TYPE TABLE OF adrc,
+          ls_adrc      TYPE adrc,
+          lt_adrp      TYPE TABLE OF adrp,
+          ls_adrp      TYPE adrp,
+          lt_adcp      TYPE TABLE OF adcp,
+          ls_adcp      TYPE adcp,
+          lt_uscompany TYPE TABLE OF uscompany,
+          ls_uscompany TYPE uscompany.
+
+    " GIVEN
+    ls_usr21-mandt      = sy-mandt.
+    ls_usr21-bname      = 'USER1'.
+    ls_usr21-addrnumber = 1001.
+    ls_usr21-persnumber = 2001.
+    APPEND ls_usr21 TO lt_usr21.
+
+    ls_usr21-mandt      = sy-mandt.
+    ls_usr21-bname      = 'USER2'.
+    ls_usr21-addrnumber = 1002.
+    ls_usr21-persnumber = 2002.
+    APPEND ls_usr21 TO lt_usr21.
+
+    ls_adrc-client     = sy-mandt.
+    ls_adrc-addrnumber = 1001.
+    APPEND ls_adrc TO lt_adrc.
+
+    ls_adrc-client     = sy-mandt.
+    ls_adrc-addrnumber = 1002.
+    APPEND ls_adrc TO lt_adrc.
+
+    ls_adrp-client     = sy-mandt.
+    ls_adrp-persnumber = 2001.
+    ls_adrp-name_first = 'USER1_Name'.
+    APPEND ls_adrp TO lt_adrp.
+
+    ls_adrp-client     = sy-mandt.
+    ls_adrp-persnumber = 2002.
+    ls_adrp-name_first = 'USER2_Name'.
+    APPEND ls_adrp TO lt_adrp.
+
+    ls_adcp-client     = sy-mandt.
+    ls_adcp-addrnumber = 1001.
+    ls_adcp-persnumber = 2001.
+    APPEND ls_adcp TO lt_adcp.
+
+    ls_adcp-client     = sy-mandt.
+    ls_adcp-addrnumber = 1002.
+    ls_adcp-persnumber = 2002.
+    APPEND ls_adcp TO lt_adcp.
+
+    ls_uscompany-mandt      = sy-mandt.
+    ls_uscompany-company    = 3001.
+    ls_uscompany-addrnumber = 1001.
+    APPEND ls_uscompany TO lt_uscompany.
+
+    ls_uscompany-mandt      = sy-mandt.
+    ls_uscompany-company    = 3002.
+    ls_uscompany-addrnumber = 1002.
+    APPEND ls_uscompany TO lt_uscompany.
+
+    mo_test_environment->insert_test_data( lt_usr21 ).
+    mo_test_environment->insert_test_data( lt_adrc ).
+    mo_test_environment->insert_test_data( lt_adrp ).
+    mo_test_environment->insert_test_data( lt_adcp ).
+    mo_test_environment->insert_test_data( lt_uscompany ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             bname      TYPE user_addr-bname,
+             name_first TYPE user_addr-name_first,
+           END OF ty_result.
+
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT bname name_first'
+      'FROM user_addr'
+      'WHERE bname = ''USER1'''
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_result TYPE TABLE OF ty_result,
+          ls_expected_result TYPE ty_result.
+
+    ls_expected_result-bname      = 'USER1'.
+    ls_expected_result-name_first = 'USER1_Name'.
+    APPEND ls_expected_result TO lt_expected_result.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
   ENDMETHOD.
 ENDCLASS.
 
@@ -4627,9 +4832,9 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_subrc_4.
-    DATA: ls_line                TYPE zosql_for_tst,
-          lv_update_statement    TYPE string,
-          lv_subrc               TYPE sysubrc.
+    DATA: ls_line             TYPE zosql_for_tst,
+          lv_update_statement TYPE string,
+          lv_subrc            TYPE sysubrc.
 
     " WHEN
     CONCATENATE 'UPDATE ZOSQL_FOR_TST'
@@ -4849,9 +5054,9 @@ CLASS ltc_cases_for_delete IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete_by_sql_subrc_4.
-    DATA: ls_line                TYPE zosql_for_tst,
-          lv_delete_statement    TYPE string,
-          lv_subrc               TYPE sysubrc.
+    DATA: ls_line             TYPE zosql_for_tst,
+          lv_delete_statement TYPE string,
+          lv_subrc            TYPE sysubrc.
 
     " WHEN
     CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'

@@ -66,6 +66,7 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
+      select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_tab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
@@ -103,6 +104,7 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     DELETE FROM zosql_for_tst.
     DELETE FROM zosql_for_tst2.
     DELETE FROM zosql_for_tst3.
+    DELETE FROM zosql_for_tst4.
   ENDMETHOD.
 
   METHOD one_table_no_conditions.
@@ -2300,6 +2302,43 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
   ENDMETHOD.
 
+  METHOD select_from_table_with_include.
+
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst4,
+          ls_line          TYPE zosql_for_tst4.
+
+    " GIVEN
+    ls_line-mandt = sy-mandt.
+    ls_line-key_field1 = 'KEY1_1'.
+    ls_line-key_field2 = 'KEY2_1'.
+    ls_line-field1     = 'FIELD1_1'.
+    ls_line-field2     = 'FIELD2_1'.
+    ls_line-field3     = 'FIELD3_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst4 FROM TABLE lt_initial_table.
+
+    " WHEN
+    DATA: ld_result TYPE REF TO data,
+          lt_result TYPE TABLE OF zosql_for_tst4.
+
+    FIELD-SYMBOLS: <lt_result> TYPE STANDARD TABLE.
+
+    f_cut->zif_zosql_db_layer~select( EXPORTING iv_select          = 'SELECT * FROM zosql_for_tst4'
+                                      IMPORTING ed_result_as_table = ld_result ).
+
+    ASSIGN ld_result->* TO <lt_result>.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = <lt_result>
+                                               IMPORTING et_table_dest = lt_result ).
+
+    " THEN
+    DATA: lt_expected  TYPE TABLE OF zosql_for_tst4.
+
+    lt_expected = lt_initial_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
+  ENDMETHOD.
+
   METHOD sql_separated_by_line_breaks.
     DATA: ls_line          TYPE zosql_for_tst,
           lt_initial_table TYPE TABLE OF zosql_for_tst.
@@ -2766,8 +2805,8 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
           lt_expected_table TYPE TABLE OF zosql_for_tst.
 
-     f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
-                                               IMPORTING et_result_table = lt_result_table ).
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
+                                              IMPORTING et_result_table = lt_result_table ).
 
     clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
 
@@ -3143,9 +3182,9 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update_by_sql_subrc_4.
-    DATA: ls_line                TYPE zosql_for_tst,
-          lv_update_statement    TYPE string,
-          lv_subrc               TYPE sysubrc.
+    DATA: ls_line             TYPE zosql_for_tst,
+          lv_update_statement TYPE string,
+          lv_subrc            TYPE sysubrc.
 
     " WHEN
     CONCATENATE 'UPDATE ZOSQL_FOR_TST'
@@ -3160,9 +3199,9 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete_by_sql_subrc_4.
-    DATA: ls_line                TYPE zosql_for_tst,
-          lv_delete_statement    TYPE string,
-          lv_subrc               TYPE sysubrc.
+    DATA: ls_line             TYPE zosql_for_tst,
+          lv_delete_statement TYPE string,
+          lv_subrc            TYPE sysubrc.
 
     " WHEN
     CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'
