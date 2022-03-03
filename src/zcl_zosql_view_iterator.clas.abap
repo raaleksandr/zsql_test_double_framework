@@ -168,10 +168,11 @@ CLASS ZCL_ZOSQL_VIEW_ITERATOR IMPLEMENTATION.
 
         CLEAR lv_join_conditions.
         LOOP AT lt_join_conditions ASSIGNING <ls_join_condition>
-          WHERE right_tabname = <ls_dd26s>-tabname.
+          WHERE right_tabname = <ls_dd26s>-tabname
+             OR left_tabname  = <ls_dd26s>-tabname.
 
           CONCATENATE <ls_join_condition>-left_tabname '~' <ls_join_condition>-left_fieldname INTO lv_table_and_field.
-          CONCATENATE lv_table_and_field <ls_join_condition>-operator INTO lv_join_conditions SEPARATED BY space.
+          CONCATENATE lv_join_conditions lv_table_and_field <ls_join_condition>-operator INTO lv_join_conditions SEPARATED BY space.
 
           CONCATENATE <ls_join_condition>-right_tabname '~' <ls_join_condition>-right_fieldname INTO lv_table_and_field.
           CONCATENATE lv_join_conditions lv_table_and_field <ls_join_condition>-and_or_after
@@ -179,6 +180,13 @@ CLASS ZCL_ZOSQL_VIEW_ITERATOR IMPLEMENTATION.
         ENDLOOP.
 
         IF lv_join_conditions IS NOT INITIAL.
+          IF zcl_zosql_utils=>check_ends_with_token( iv_sql   = lv_join_conditions
+                                                     iv_token = 'AND' ) = abap_true.
+            lv_join_conditions =
+              zcl_zosql_utils=>delete_end_token_if_equals( iv_sql_source          = lv_join_conditions
+                                                           iv_end_token_to_delete = 'AND' ).
+          ENDIF.
+
           CONCATENATE rv_from_sql_part 'ON' lv_join_conditions INTO rv_from_sql_part SEPARATED BY space.
         ENDIF.
       ENDIF.

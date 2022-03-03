@@ -165,6 +165,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_POSITIONS_AS_STRING</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns positions of underlying iterators as string</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>_RESET_POSITION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Resets iterator position to first element</DESCRIPT>
