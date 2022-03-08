@@ -70,6 +70,17 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _DELETE_BY_SQL_PARTS
+    importing
+      !IV_TABLE_NAME type CLIKE
+      !IV_WHERE type CLIKE
+      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_SUBRC) type SYSUBRC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _SPLIT_DELETE_INTO_PARTS
     importing
       !IV_DELETE_STATEMENT type CLIKE
@@ -80,15 +91,7 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _DELETE_BY_SQL_PARTS
-    importing
-      !IV_TABLE_NAME type CLIKE
-      !IV_WHERE type CLIKE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-    returning
-      value(RV_SUBRC) type SYSUBRC
+  methods _RAISE_NEW_SYNTAX_IMPOSSIBLE
     raising
       ZCX_ZOSQL_ERROR .
   methods _SPLIT_SELECT_INTO_PARTS
@@ -108,6 +111,11 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CREATE_STANDARD_LIKE_ANY_TAB
+    importing
+      !IT_ANY_TABLE type ANY TABLE
+    returning
+      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _SELECT_BY_SQL_PARTS
     importing
       !IV_SELECT type STRING default '*'
@@ -130,11 +138,6 @@ private section.
       !EV_SUBRC type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _CREATE_STANDARD_LIKE_ANY_TAB
-    importing
-      !IT_ANY_TABLE type ANY TABLE
-    returning
-      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _PREPARE_SET_FOR_UPDATE
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -495,6 +498,10 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                         ev_number_of_rows_expr     = lv_number_of_rows_expr
                                         eo_sql_parser              = lo_sql_parser ).
 
+    IF lv_new_syntax = abap_true.
+      _raise_new_syntax_impossible( ).
+    ENDIF.
+
     lv_from_ready_for_select   = lv_from.
     lv_where_ready_for_select  = lv_where.
     lv_having_ready_for_seleft = lv_having.
@@ -798,6 +805,10 @@ endmethod.
           ld_dynamic_struct_with_params TYPE REF TO data.
 
     FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
+
+    IF iv_new_syntax = abap_true.
+      _raise_new_syntax_impossible( ).
+    ENDIF.
 
     lv_where = iv_where.
     _prepare_for_update_delete( EXPORTING it_parameters                 = it_parameters
@@ -1125,6 +1136,18 @@ ENDMETHOD.
   ENDMETHOD.
 
 
+  method _RAISE_NEW_SYNTAX_IMPOSSIBLE.
+
+    DATA: lv_version TYPE char4.
+
+    IF zcl_zosql_utils=>is_version_740_and_above( ) <> abap_true.
+      CONCATENATE sy-saprl(1) sy-saprl+1(2) INTO lv_version SEPARATED BY '.'.
+      MESSAGE e082 WITH lv_version INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
+
+
   METHOD _REPLACE_FOR_ALL_ENTRIES_TAB.
 
     DATA: lv_what_replace TYPE string,
@@ -1217,6 +1240,10 @@ ENDMETHOD.
                                                               is_result_line  = es_result_line ).
 
     ASSIGN ld_result_table_prepared->* TO <lt_result_table>.
+
+    IF iv_new_syntax = abap_true.
+      _raise_new_syntax_impossible( ).
+    ENDIF.
 
     _execute_select( EXPORTING iv_select                     = iv_select
                                iv_from                       = lv_from_ready_for_select
@@ -1413,6 +1440,10 @@ ENDMETHOD.
           lv_where                      TYPE string.
 
     FIELD-SYMBOLS: <ls_dynamic_struct_with_pars> TYPE any.
+
+    IF iv_new_syntax = abap_true.
+      _raise_new_syntax_impossible( ).
+    ENDIF.
 
     lv_set_statement = iv_set_statement.
     lv_where         = iv_where.
