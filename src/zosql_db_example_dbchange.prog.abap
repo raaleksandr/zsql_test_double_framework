@@ -56,8 +56,9 @@ CLASS lcl_controller_and_view DEFINITION.
       _insert_new_record,
       _edit_record,
       _delete_records,
-      _display_edit_dialog CHANGING  cs_scarr          TYPE scarr
-                           RETURNING VALUE(rv_user_ok) TYPE abap_bool,
+      _display_edit_dialog IMPORTING is_scarr          TYPE scarr
+                           EXPORTING es_scarr          TYPE scarr
+                                     VALUE(ev_user_ok) TYPE abap_bool,
       _display_error IMPORTING io_exception TYPE REF TO zcx_zosql_error,
       _refresh_alv RAISING zcx_zosql_error.
 ENDCLASS.
@@ -323,10 +324,18 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
 
   METHOD _insert_new_record.
 
-    DATA: ls_new_record TYPE scarr,
-          lo_exception  TYPE REF TO zcx_zosql_error.
+    DATA: ls_new_record        TYPE scarr,
+          lo_exception         TYPE REF TO zcx_zosql_error,
+          lv_user_responded_ok TYPE abap_bool.
 
-    IF _display_edit_dialog( CHANGING cs_scarr = ls_new_record ) <> abap_true.
+    CALL METHOD _display_edit_dialog
+      EXPORTING
+        is_scarr   = ls_new_record
+      IMPORTING
+        es_scarr   = ls_new_record
+        ev_user_ok = lv_user_responded_ok.
+
+    IF lv_user_responded_ok <> abap_true.
       RETURN.
     ENDIF.
 
@@ -340,13 +349,13 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD _display_error.
-    MESSAGE ID io_exception->if_t100_message~t100key-msgid
+    MESSAGE ID io_exception->t100_message-msgid
             TYPE 'I'
-            NUMBER io_exception->if_t100_message~t100key-msgno
-            WITH io_exception->if_t100_message~t100key-attr1
-                 io_exception->if_t100_message~t100key-attr1
-                 io_exception->if_t100_message~t100key-attr1
-                 io_exception->if_t100_message~t100key-attr1
+            NUMBER io_exception->t100_message-msgno
+            WITH io_exception->t100_message-msgv1
+                 io_exception->t100_message-msgv2
+                 io_exception->t100_message-msgv3
+                 io_exception->t100_message-msgv4
            DISPLAY LIKE 'E'.
   ENDMETHOD.
 
@@ -361,7 +370,8 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
           lt_selected_rows      TYPE salv_t_row,
           lv_selected_row_index LIKE LINE OF lt_selected_rows,
           ls_updated_row        LIKE LINE OF mt_alv_data,
-          lo_exception          TYPE REF TO zcx_zosql_error.
+          lo_exception          TYPE REF TO zcx_zosql_error,
+          lv_user_responded_ok  TYPE abap_bool.
 
     FIELD-SYMBOLS: <ls_alv_row> LIKE LINE OF mt_alv_data.
 
@@ -376,7 +386,14 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
     READ TABLE lt_selected_rows INDEX 1 INTO lv_selected_row_index.
     READ TABLE mt_alv_data INDEX lv_selected_row_index INTO ls_updated_row.
 
-    IF _display_edit_dialog( CHANGING cs_scarr = ls_updated_row ) <> abap_true.
+    CALL METHOD _display_edit_dialog
+      EXPORTING
+        is_scarr   = ls_updated_row
+      IMPORTING
+        es_scarr   = ls_updated_row
+        ev_user_ok = lv_user_responded_ok.
+
+    IF lv_user_responded_ok <> abap_true.
       RETURN.
     ENDIF.
 
@@ -448,6 +465,8 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
 
     FIELD-SYMBOLS: <lv_ref_to_value_in_struct> TYPE any.
 
+    es_scarr = is_scarr.
+
     ls_one_field_for_dialog-tabname = 'SCARR'.
 
     ls_one_field_for_dialog-fieldname = 'CARRID'.
@@ -463,7 +482,7 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
     APPEND ls_one_field_for_dialog TO lt_field_list_for_dialog.
 
     LOOP AT lt_field_list_for_dialog INTO ls_one_field_for_dialog.
-      ASSIGN COMPONENT ls_one_field_for_dialog-fieldname OF STRUCTURE cs_scarr TO <lv_ref_to_value_in_struct>.
+      ASSIGN COMPONENT ls_one_field_for_dialog-fieldname OF STRUCTURE is_scarr TO <lv_ref_to_value_in_struct>.
       IF sy-subrc = 0.
         ls_one_field_for_dialog-value = <lv_ref_to_value_in_struct>.
         MODIFY lt_field_list_for_dialog FROM ls_one_field_for_dialog.
@@ -482,18 +501,18 @@ CLASS lcl_controller_and_view IMPLEMENTATION.
         OTHERS          = 2.
 
     IF sy-subrc <> 0 OR lv_button_code_of_user_answer = 'A'.
-      rv_user_ok = abap_false.
+      ev_user_ok = abap_false.
       RETURN.
     ENDIF.
 
     LOOP AT lt_field_list_for_dialog INTO ls_one_field_for_dialog.
-      ASSIGN COMPONENT ls_one_field_for_dialog-fieldname OF STRUCTURE cs_scarr TO <lv_ref_to_value_in_struct>.
+      ASSIGN COMPONENT ls_one_field_for_dialog-fieldname OF STRUCTURE es_scarr TO <lv_ref_to_value_in_struct>.
       IF sy-subrc = 0.
         <lv_ref_to_value_in_struct> = ls_one_field_for_dialog-value.
       ENDIF.
     ENDLOOP.
 
-    rv_user_ok = abap_true.
+    ev_user_ok = abap_true.
   ENDMETHOD.
 ENDCLASS.
 
@@ -544,8 +563,8 @@ CLASS ltc_unit_tests_on_prog DEFINITION FOR TESTING
   PRIVATE SECTION.
     CLASS-DATA: mo_test_environment TYPE REF TO zif_zosql_test_environment.
     DATA:
-      f_cut               TYPE REF TO lcl_model,  "class under test
-      mo_db_layer_fake    TYPE REF TO zif_zosql_db_layer.
+      f_cut            TYPE REF TO lcl_model,  "class under test
+      mo_db_layer_fake TYPE REF TO zif_zosql_db_layer.
 
     CLASS-METHODS: class_setup.
 

@@ -48,7 +48,8 @@ FORM main .
       ENDIF.
 
     CATCH cx_root INTO lo_exception.
-      MESSAGE lo_exception->get_text( ) TYPE 'I' DISPLAY LIKE 'E'.
+      zcl_zosql_utils=>dummy = lo_exception->get_text( ).
+      MESSAGE zcl_zosql_utils=>dummy TYPE 'I' DISPLAY LIKE 'E'.
   ENDTRY.
 ENDFORM.
 *&---------------------------------------------------------------------*
