@@ -123,28 +123,36 @@ CLASS lcl_controller IMPLEMENTATION.
 
   METHOD _show_result_in_alv.
 
+    DATA: lo_exception TYPE REF TO cx_root.
+
     FIELD-SYMBOLS: <lt_result> TYPE STANDARD TABLE.
 
     ASSIGN id_result->* TO <lt_result>.
 
-    IF go_alv IS BOUND.
-      go_alv->set_data( CHANGING t_table = <lt_result> ).
+    TRY.
+        IF go_alv IS BOUND.
+          go_alv->set_data( CHANGING t_table = <lt_result> ).
 
-      _prepare_alv_before_show( <lt_result> ).
+          _prepare_alv_before_show( <lt_result> ).
 
-      zcl_zosql_utils=>salv_set_fieldnames_to_col_tit( io_salv  = go_alv
-                                                       it_table = <lt_result> ).
+          zcl_zosql_utils=>salv_set_fieldnames_to_col_tit( io_salv  = go_alv
+                                                           it_table = <lt_result> ).
 
-      go_alv->refresh( ).
-    ELSE.
-      cl_salv_table=>factory( EXPORTING r_container  = go_alv_container
-                              IMPORTING r_salv_table = go_alv
-                              CHANGING  t_table      = <lt_result> ).
+          go_alv->refresh( ).
+        ELSE.
+          cl_salv_table=>factory( EXPORTING r_container  = go_alv_container
+                                  IMPORTING r_salv_table = go_alv
+                                  CHANGING  t_table      = <lt_result> ).
 
-      _prepare_alv_before_show( <lt_result> ).
+          _prepare_alv_before_show( <lt_result> ).
 
-      go_alv->display( ).
-    ENDIF.
+          go_alv->display( ).
+        ENDIF.
+
+      CATCH cx_root INTO lo_exception.
+        zcl_zosql_utils=>dummy = lo_exception->get_text( ).
+        MESSAGE zcl_zosql_utils=>dummy TYPE 'I' DISPLAY LIKE 'E'.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD _prepare_alv_before_show.
@@ -164,7 +172,8 @@ CLASS lcl_controller IMPLEMENTATION.
              error_message TYPE text255,
            END OF ty_error.
 
-    DATA: lt_error  TYPE TABLE OF ty_error.
+    DATA: lt_error     TYPE TABLE OF ty_error,
+          lo_exception TYPE REF TO cx_root.
 
     FIELD-SYMBOLS: <ls_error> LIKE LINE OF lt_error.
 
@@ -172,15 +181,20 @@ CLASS lcl_controller IMPLEMENTATION.
     <ls_error>-error_icon    = icon_message_error.
     <ls_error>-error_message = io_error->get_text( ).
 
-    IF go_alv IS BOUND.
-      go_alv->set_data( CHANGING t_table = lt_error ).
-      go_alv->refresh( ).
-    ELSE.
-      cl_salv_table=>factory( EXPORTING r_container  = go_alv_container
-                              IMPORTING r_salv_table = go_alv
-                              CHANGING  t_table      = lt_error ).
-      go_alv->display( ).
-    ENDIF.
+    TRY.
+        IF go_alv IS BOUND.
+          go_alv->set_data( CHANGING t_table = lt_error ).
+          go_alv->refresh( ).
+        ELSE.
+          cl_salv_table=>factory( EXPORTING r_container  = go_alv_container
+                                  IMPORTING r_salv_table = go_alv
+                                  CHANGING  t_table      = lt_error ).
+          go_alv->display( ).
+        ENDIF.
+      CATCH cx_root INTO lo_exception.
+        zcl_zosql_utils=>dummy = lo_exception->get_text( ).
+        MESSAGE zcl_zosql_utils=>dummy TYPE 'I' DISPLAY LIKE 'E'.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD _check_auth_on_select_tabs.

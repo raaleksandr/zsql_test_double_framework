@@ -522,13 +522,15 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   method GET_SQL_AS_RANGE_OF_TOKENS.
 
     DATA: lv_token                  TYPE string,
-          ls_node_of_previous_token TYPE ty_node.
+          ls_node_of_previous_token TYPE ty_node,
+          lv_token_index            TYPE i.
 
     LOOP AT mt_tokens INTO lv_token
       FROM iv_start_token_index TO iv_end_token_index.
 
       IF sy-tabix > 1.
-        READ TABLE mt_parsed_tree WITH KEY token_index = sy-tabix - 1 INTO ls_node_of_previous_token.
+        lv_token_index = sy-tabix - 1.
+        READ TABLE mt_parsed_tree WITH KEY token_index = lv_token_index INTO ls_node_of_previous_token.
         IF sy-subrc <> 0.
           CLEAR ls_node_of_previous_token.
         ENDIF.

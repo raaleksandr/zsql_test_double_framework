@@ -112,7 +112,9 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _ADD_LEFT_JOIN_ITER
     importing
-      !IS_JOIN_CONDITION type TY_JOIN_CONDITION .
+      !IS_JOIN_CONDITION type TY_JOIN_CONDITION
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CHECK_CONDITIONS_CURRENT_POS
     returning
       value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
