@@ -481,18 +481,18 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
 
   METHOD RAISE_EXCEPTION_FROM_SY_MSG.
 
-    DATA: ls_t100_key TYPE scx_t100key.
+    DATA: ls_t100_msg TYPE symsg.
 
-    ls_t100_key-msgid = iv_msgid.
-    ls_t100_key-msgno = iv_msgno.
-    ls_t100_key-attr1 = iv_msgv1.
-    ls_t100_key-attr2 = iv_msgv2.
-    ls_t100_key-attr3 = iv_msgv3.
-    ls_t100_key-attr4 = iv_msgv4.
+    ls_t100_msg-msgid = iv_msgid.
+    ls_t100_msg-msgno = iv_msgno.
+    ls_t100_msg-msgv1 = iv_msgv1.
+    ls_t100_msg-msgv2 = iv_msgv2.
+    ls_t100_msg-msgv3 = iv_msgv3.
+    ls_t100_msg-msgv4 = iv_msgv4.
 
     RAISE EXCEPTION TYPE zcx_zosql_error
       EXPORTING
-        textid = ls_t100_key.
+        t100_message = ls_t100_msg.
   ENDMETHOD.
 
 
