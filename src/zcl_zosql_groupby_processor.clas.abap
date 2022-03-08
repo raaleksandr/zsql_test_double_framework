@@ -11,7 +11,9 @@ public section.
     importing
       !IO_HAVING_PROCESSOR type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR optional
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR .
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods APPLY_GROUP_BY
     importing
       !IO_SELECT type ref to ZCL_ZOSQL_SELECT_PROCESSOR

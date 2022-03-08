@@ -221,6 +221,30 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_DB_LAYER~DELETE_BY_ITAB.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~FETCH_NEXT_CURSOR.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~FETCH_NEXT_CURSOR_TO_ITAB.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~MODIFY_BY_ITAB.
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~OPEN_CURSOR.
+  endmethod.
+
+
   METHOD zif_zosql_db_layer~select.
     DATA: lv_select_field_list TYPE string,
           lv_from              TYPE string,
@@ -251,6 +275,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE.
 
+  endmethod.
+
+
+  method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
   endmethod.
 
 
