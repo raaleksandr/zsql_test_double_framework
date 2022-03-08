@@ -136,6 +136,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_RAISE_NEW_SYNTAX_IMPOSSIBLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception if new syntax since 7.40 not supported here</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
      <CMPNAME>_REPLACE_FOR_ALL_ENTRIES_TAB</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Replaces for all entries table name in where clause</DESCRIPT>

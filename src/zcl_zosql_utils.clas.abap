@@ -27,6 +27,9 @@ public section.
     importing
       !IO_SALV type ref to CL_SALV_TABLE
       !IT_TABLE type ANY TABLE .
+  class-methods IS_VERSION_740_AND_ABOVE
+    returning
+      value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
   class-methods BOOLEAN_NOT
     importing
       !IV_BOOLEAN type ABAP_BOOL
@@ -440,6 +443,13 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
 
         rv_is_structure = abap_true.
     ENDCASE.
+  ENDMETHOD.
+
+
+  METHOD is_version_740_and_above.
+    IF sy-saprl >= '740'.
+      rv_is_740_or_above = abap_true.
+    ENDIF.
   ENDMETHOD.
 
 
