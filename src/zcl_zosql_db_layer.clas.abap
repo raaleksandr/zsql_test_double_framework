@@ -837,7 +837,13 @@ endmethod.
   endmethod.
 
 
-  METHOD _EXECUTE_SELECT.
+  METHOD _execute_select.
+
+    DATA: lv_order_by_primary_key TYPE abap_bool.
+
+    IF zcl_zosql_utils=>to_upper_case( iv_order_by ) = 'PRIMARY KEY'.
+      lv_order_by_primary_key = abap_true.
+    ENDIF.
 
     IF iv_new_syntax = abap_true.
 
@@ -913,43 +919,89 @@ endmethod.
       IF iv_distinct = abap_true.
 
         IF iv_do_into_corresponding = abap_true.
-          SELECT DISTINCT (iv_select)
-            FROM (iv_from)
-            INTO CORRESPONDING FIELDS OF TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            WHERE (iv_where)
-            GROUP BY (iv_group_by)
-            HAVING (iv_having)
-            ORDER BY (iv_order_by).
+
+          IF lv_order_by_primary_key = abap_true.
+            SELECT DISTINCT (iv_select)
+              FROM (iv_from)
+              INTO CORRESPONDING FIELDS OF TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY PRIMARY KEY.
+          ELSE.
+            SELECT DISTINCT (iv_select)
+              FROM (iv_from)
+              INTO CORRESPONDING FIELDS OF TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY (iv_order_by).
+          ENDIF.
         ELSE.
-          SELECT DISTINCT (iv_select)
-            FROM (iv_from)
-            INTO TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            WHERE (iv_where)
-            GROUP BY (iv_group_by)
-            HAVING (iv_having)
-            ORDER BY (iv_order_by).
+          IF lv_order_by_primary_key = abap_true.
+            SELECT DISTINCT (iv_select)
+              FROM (iv_from)
+              INTO TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY PRIMARY KEY.
+          ELSE.
+            SELECT DISTINCT (iv_select)
+              FROM (iv_from)
+              INTO TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY (iv_order_by).
+          ENDIF.
         ENDIF.
       ELSE.
         IF iv_do_into_corresponding = abap_true.
-          SELECT (iv_select)
-            FROM (iv_from)
-            INTO CORRESPONDING FIELDS OF TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            WHERE (iv_where)
-            GROUP BY (iv_group_by)
-            HAVING (iv_having)
-            ORDER BY (iv_order_by).
+
+          IF lv_order_by_primary_key = abap_true.
+            SELECT (iv_select)
+              FROM (iv_from)
+              INTO CORRESPONDING FIELDS OF TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY PRIMARY KEY.
+          ELSE.
+            SELECT (iv_select)
+              FROM (iv_from)
+              INTO CORRESPONDING FIELDS OF TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY (iv_order_by).
+          ENDIF.
         ELSE.
-          SELECT (iv_select)
-            FROM (iv_from)
-            INTO TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            WHERE (iv_where)
-            GROUP BY (iv_group_by)
-            HAVING (iv_having)
-            ORDER BY (iv_order_by).
+          IF lv_order_by_primary_key = abap_true.
+            SELECT (iv_select)
+              FROM (iv_from)
+              INTO TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY PRIMARY KEY.
+          ELSE.
+            SELECT (iv_select)
+              FROM (iv_from)
+              INTO TABLE et_result_table
+              UP TO iv_number_of_rows_to_select ROWS
+              WHERE (iv_where)
+              GROUP BY (iv_group_by)
+              HAVING (iv_having)
+              ORDER BY (iv_order_by).
+          ENDIF.
         ENDIF.
       ENDIF.
     ENDIF.

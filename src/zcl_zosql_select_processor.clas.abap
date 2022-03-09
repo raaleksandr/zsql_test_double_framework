@@ -289,7 +289,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
                                                      io_from_iterator    = io_from_iterator ).
       ENDIF.
 
-      <ls_select_parameter>-field_name_in_result = ls_new_component-name.
+      <ls_select_parameter>-field_name_in_result = zcl_zosql_utils=>to_upper_case( ls_new_component-name ).
 
       APPEND ls_new_component TO lt_target_set_components.
     ENDLOOP.
