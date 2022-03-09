@@ -70,17 +70,6 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _DELETE_BY_SQL_PARTS
-    importing
-      !IV_TABLE_NAME type CLIKE
-      !IV_WHERE type CLIKE
-      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-    returning
-      value(RV_SUBRC) type SYSUBRC
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _SPLIT_DELETE_INTO_PARTS
     importing
       !IV_DELETE_STATEMENT type CLIKE
@@ -94,6 +83,27 @@ private section.
   methods _RAISE_NEW_SYNTAX_IMPOSSIBLE
     raising
       ZCX_ZOSQL_ERROR .
+  methods _IF_ORDER_BY_PRIMARY_KEY
+    importing
+      !IV_ORDER_BY type CLIKE
+    returning
+      value(RV_IS_ORDER_BY_PRIMARY_KEY) type ABAP_BOOL .
+  methods _DELETE_BY_SQL_PARTS
+    importing
+      !IV_TABLE_NAME type CLIKE
+      !IV_WHERE type CLIKE
+      value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_SUBRC) type SYSUBRC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CREATE_STANDARD_LIKE_ANY_TAB
+    importing
+      !IT_ANY_TABLE type ANY TABLE
+    returning
+      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _SPLIT_SELECT_INTO_PARTS
     importing
       !IV_SELECT type CLIKE
@@ -111,11 +121,6 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _CREATE_STANDARD_LIKE_ANY_TAB
-    importing
-      !IT_ANY_TABLE type ANY TABLE
-    returning
-      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _SELECT_BY_SQL_PARTS
     importing
       !IV_SELECT type STRING default '*'
@@ -841,9 +846,7 @@ endmethod.
 
     DATA: lv_order_by_primary_key TYPE abap_bool.
 
-    IF zcl_zosql_utils=>to_upper_case( iv_order_by ) = 'PRIMARY KEY'.
-      lv_order_by_primary_key = abap_true.
-    ENDIF.
+    lv_order_by_primary_key = _if_order_by_primary_key( iv_order_by ).
 
     IF iv_new_syntax = abap_true.
 
@@ -1022,7 +1025,19 @@ endmethod.
   endmethod.
 
 
-  METHOD _OPEN_CURSOR.
+  method _IF_ORDER_BY_PRIMARY_KEY.
+
+    IF zcl_zosql_utils=>to_upper_case( iv_order_by ) = 'PRIMARY KEY'.
+      rv_is_order_by_primary_key = abap_true.
+    ENDIF.
+  endmethod.
+
+
+  METHOD _open_cursor.
+
+    DATA: lv_order_by_primary_key TYPE abap_bool.
+
+    lv_order_by_primary_key = _if_order_by_primary_key( iv_order_by ).
 
     IF iv_new_syntax = abap_true.
 
@@ -1078,26 +1093,47 @@ endmethod.
 
       IF iv_distinct = abap_true.
 
-        OPEN CURSOR rv_cursor FOR
-        SELECT DISTINCT (iv_select)
-          FROM (iv_from)
-          UP TO iv_number_of_rows_to_select ROWS
-          WHERE (iv_where)
-          GROUP BY (iv_group_by)
-          HAVING (iv_having)
-          ORDER BY (iv_order_by).
+        IF lv_order_by_primary_key = abap_true.
+          OPEN CURSOR rv_cursor FOR
+          SELECT DISTINCT (iv_select)
+            FROM (iv_from)
+            UP TO iv_number_of_rows_to_select ROWS
+            WHERE (iv_where)
+            GROUP BY (iv_group_by)
+            HAVING (iv_having)
+            ORDER BY PRIMARY KEY.
+        ELSE.
+          OPEN CURSOR rv_cursor FOR
+          SELECT DISTINCT (iv_select)
+            FROM (iv_from)
+            UP TO iv_number_of_rows_to_select ROWS
+            WHERE (iv_where)
+            GROUP BY (iv_group_by)
+            HAVING (iv_having)
+            ORDER BY (iv_order_by).
+        ENDIF.
 
       ELSE.
 
-        OPEN CURSOR rv_cursor FOR
-        SELECT (iv_select)
-          FROM (iv_from)
-          UP TO iv_number_of_rows_to_select ROWS
-          WHERE (iv_where)
-          GROUP BY (iv_group_by)
-          HAVING (iv_having)
-          ORDER BY (iv_order_by).
-
+        IF lv_order_by_primary_key = abap_true.
+          OPEN CURSOR rv_cursor FOR
+          SELECT (iv_select)
+            FROM (iv_from)
+            UP TO iv_number_of_rows_to_select ROWS
+            WHERE (iv_where)
+            GROUP BY (iv_group_by)
+            HAVING (iv_having)
+            ORDER BY PRIMARY KEY.
+        ELSE.
+          OPEN CURSOR rv_cursor FOR
+          SELECT (iv_select)
+            FROM (iv_from)
+            UP TO iv_number_of_rows_to_select ROWS
+            WHERE (iv_where)
+            GROUP BY (iv_group_by)
+            HAVING (iv_having)
+            ORDER BY (iv_order_by).
+        ENDIF.
       ENDIF.
     ENDIF.
   ENDMETHOD.

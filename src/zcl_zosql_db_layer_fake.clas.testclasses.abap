@@ -4444,11 +4444,13 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_adrp-client     = sy-mandt.
     ls_adrp-persnumber = 2001.
     ls_adrp-name_first = 'USER1_Name'.
+    ls_adrp-pers_group = 'BC01'.
     APPEND ls_adrp TO lt_adrp.
 
     ls_adrp-client     = sy-mandt.
     ls_adrp-persnumber = 2002.
     ls_adrp-name_first = 'USER2_Name'.
+    ls_adrp-pers_group = 'BC01'.
     APPEND ls_adrp TO lt_adrp.
 
     ls_adcp-client     = sy-mandt.
