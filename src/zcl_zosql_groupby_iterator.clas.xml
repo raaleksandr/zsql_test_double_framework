@@ -45,6 +45,24 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_ADD_RECORD_NUM_TO_CUR_GROUPBY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Applies record to current GROUP BY aggregated line</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_CREATE_DYNAMIC_TABLE_FOR_KEYS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates table containing list of group by key combinations</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_FILL_DYNAMIC_TABLE_WITH_KEYS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills previously created dynamic table for GROUP BY keys</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
      <CMPNAME>_FILL_KEY_VALUES</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fills lines with key values of group by keys</DESCRIPT>
@@ -54,6 +72,12 @@
      <CMPNAME>_GET_COUNT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns number of records</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_GROUPBY_ITERATOR</CLSNAME>
+     <CMPNAME>_RECORD_EQUALS_TO_CURRENT_KEY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if record in not grouped table equals to current key</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

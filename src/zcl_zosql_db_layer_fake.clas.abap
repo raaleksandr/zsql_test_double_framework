@@ -562,14 +562,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _SELECT.
+  METHOD _select.
 
     DATA: lo_from_iterator         TYPE REF TO zcl_zosql_from_iterator,
           lo_select                TYPE REF TO zcl_zosql_select_processor,
           lo_group_by              TYPE REF TO zcl_zosql_groupby_processor,
+          lo_order_by              TYPE REF TO zcl_zosql_orderby_processor,
           lo_sql_executor_for_line TYPE REF TO zif_zosql_sql_exec_line,
           lo_sql_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
           lo_node_group_by         TYPE REF TO zcl_zosql_parser_node,
+          lo_node_order_by         TYPE REF TO zcl_zosql_parser_node,
           lo_node_having           TYPE REF TO zcl_zosql_parser_node,
           lo_node_distinct         TYPE REF TO zcl_zosql_parser_node,
           lv_new_syntax            TYPE abap_bool,
@@ -600,8 +602,10 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     CREATE OBJECT lo_sql_parser_helper
       EXPORTING
         io_sql_parser = io_sql_parser.
+
     lo_sql_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_distinct = lo_node_distinct
                                                                  eo_node_group_by = lo_node_group_by
+                                                                 eo_node_order_by = lo_node_order_by
                                                                  eo_node_having   = lo_node_having
                                                                  ev_new_syntax    = lv_new_syntax ).
 
@@ -632,6 +636,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       lo_select->apply_group_by( lo_group_by ).
     ELSEIF lo_select->has_aggregation_functions( ) = abap_true.
       lo_select->apply_aggr_func_no_group_by( ).
+    ENDIF.
+
+    IF lo_node_order_by IS BOUND.
+      CREATE OBJECT lo_order_by
+        EXPORTING
+          io_sql_parser    = io_sql_parser
+          io_from_iterator = lo_from_iterator.
+
+      lo_select->apply_order_by( lo_order_by ).
     ENDIF.
 
     IF lo_node_distinct IS BOUND.

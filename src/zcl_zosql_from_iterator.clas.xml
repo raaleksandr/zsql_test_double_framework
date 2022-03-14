@@ -51,6 +51,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>GET_KEY_FIELDS_OF_DATA_SET</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns key fields of data set if it is possible</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>GET_LINE_FOR_DATA_SET_REF</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns ref to line with data of certain set</DESCRIPT>
@@ -132,6 +138,12 @@
      <CMPNAME>_GET_DATASET_NAME_AND_ALIAS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns dataset name and alias in join</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_IF_DATASET_IS_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if dataset is transparent table</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>

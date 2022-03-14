@@ -85,6 +85,7 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
+      select_order_by FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
@@ -107,6 +108,9 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_having_with_param FOR TESTING RAISING zcx_zosql_error,
       group_by_having_subquery FOR TESTING RAISING zcx_zosql_error,
       group_by_without_aggr_funcs FOR TESTING RAISING zcx_zosql_error,
+      group_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
+      order_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
+      order_by_when_empty_result FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
       subquery_in FOR TESTING RAISING zcx_zosql_error,
       subquery_not_in FOR TESTING RAISING zcx_zosql_error,
@@ -3939,6 +3943,125 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
+  METHOD group_by_field_not_selected.
+    DATA: ls_line          TYPE zosql_for_tst2,
+          lt_initial_table TYPE TABLE OF zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_1'.
+    ls_line-amount      = 10.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-key_field2  = 'KEY1_2'.
+    ls_line-amount      = 20.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-key_field2  = 'KEY2_1'.
+    ls_line-amount      = 5.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select   TYPE string.
+
+    CONCATENATE 'SELECT sum( amount ) as amount'
+      'FROM zosql_for_tst2'
+      'GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             amount TYPE zosql_for_tst2-amount,
+           END OF ty_result.
+
+    DATA: lt_result_table TYPE TABLE OF ty_result.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                  = lv_select
+                                              IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result,
+          ls_expected_table TYPE ty_Result.
+
+    ls_expected_table-amount = 30.
+    APPEND ls_expected_table TO lt_expected_table.
+
+    ls_expected_table-amount = 5.
+    APPEND ls_expected_table TO lt_expected_table.
+
+    SORT: lt_result_table BY amount, lt_expected_table BY amount.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table
+                                    msg = 'Error in select with group by where ''GROUP BY'' field not present in ''SELECT'' field list' ).
+  ENDMETHOD.
+
+  METHOD order_by_field_not_selected.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_line          TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'TEXT3'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'TEXT2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field TYPE zosql_for_tst-key_field,
+           END OF ty_result.
+
+    DATA: lt_result TYPE TABLE OF ty_result,
+          lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT KEY_FIELD FROM zosql_for_tst'
+      '  ORDER BY text_field1'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result.
+
+    APPEND 'KEY2' TO lt_expected_table.
+    APPEND 'KEY1' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table
+                                    msg = 'Error when ORDER BY is performed on field not selected to resulting data set' ).
+  ENDMETHOD.
+
+  METHOD order_by_when_empty_result.
+
+    " GIVEN
+    mo_test_environment->clear_all( ).
+
+    " WHEN
+    DATA: lt_result TYPE TABLE OF zosql_for_tst,
+          lv_select TYPE string.
+
+    lv_select = 'SELECT * FROM zosql_for_tst ORDER BY PRIMARY KEY'.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    cl_aunit_assert=>assert_initial( lt_result ).
+  ENDMETHOD.
+
   METHOD for_all_ent_compare_2_fld.
 
     " SELECT ... FOR ALL ENTRIES IN ... and in where condition there is 2 comparison with FAE base table fields
@@ -4153,6 +4276,52 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     lt_expected = lt_initial_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD select_order_by.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_line          TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'TEXT3'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'TEXT2'.
+    APPEND ls_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    DATA: lt_result TYPE TABLE OF zosql_for_tst,
+          lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT * FROM zosql_for_tst'
+      '  ORDER BY text_field1'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'TEXT2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'TEXT3'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD sql_separated_by_line_breaks.

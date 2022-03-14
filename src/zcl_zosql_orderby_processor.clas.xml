@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Order by processor</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>APPLY_ORDER_BY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Perform ORDER BY operation over data set</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>MT_ORDER_BY_FIELDS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Parsed order by fields</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>_FILL_DATASET_WHERE_EMPTY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fills dataset for those fields where it is empty</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>_GET_ORDER_BY_FIELDNAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns name of technical field for ORDER BY</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>_GET_TAB_WITH_SORTFIELDS_ADDED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns table where ORDER BY fields appended additionally</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ORDERBY_PROCESSOR</CLSNAME>
+     <CMPNAME>_INIT_ORDER_BY_PRIMARY_KEY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Initializes object in case of &apos;ORDER BY PRIMARY KEY&apos; phrase</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

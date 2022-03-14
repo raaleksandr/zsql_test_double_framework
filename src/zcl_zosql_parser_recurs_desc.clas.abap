@@ -58,6 +58,10 @@ public section.
                  group_by                       TYPE string VALUE 'GROUP_BY',
                  having                         TYPE string VALUE 'HAVING',
                  order_by                       TYPE string VALUE 'ORDER_BY',
+                 order_by_primary_key           TYPE string VALUE 'ORDER_BY_PRIMARY_KEY',
+                 order_by_field                 TYPE string VALUE 'ORDER_BY_FIELD',
+                 order_by_descending            TYPE string VALUE 'ORDER_BY_DESCENDING',
+                 order_by_ascending             TYPE string VALUE 'ORDER_BY_ASCENDING',
                  update                         TYPE string VALUE 'UPDATE',
                  update_tabname                 TYPE string VALUE 'UPDATE_TABNAME',
                  update_set_fields              TYPE string VALUE 'UPDATE_SET_FIELDS',
@@ -248,7 +252,7 @@ private section.
   methods _GROUP_BY
     importing
       !IV_PARENT_ID type I .
-  methods _GROUP_ORDER_FIELDS
+  methods _GROUP_BY_FIELDS
     importing
       !IV_PARENT_ID type I .
   methods _ORDER_BY
@@ -618,9 +622,10 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     "                      ( <EXPRESSION> )
     " <RIGHT_OPERAND_IN> ::= right_operand | <RIGHT_OPERAND_LIST_OF_VALS> | <SUBQUERY>
     " <SUBQUERY> ::= SELECT <SELECT_FIELDS> <FROM> <WHERE> <GROUP_BY>
-    " <GROUP_BY> ::= GROUP BY <GROUP_ORDER_FIELDS>
-    " <GROUP_ORDER_FIELDS> ::= col1 { <GROUP_ORDER_FIELDS> }
-    " <ORDER_BY> ::= ORDER BY <GROUP_ORDER_FIELDS>
+    " <GROUP_BY> ::= GROUP BY <GROUP_BY_FIELDS>
+    " <GROUP_BY_FIELDS> ::= col1 { <GROUP_BY_FIELDS> }
+    " <ORDER_BY> ::= ORDER BY PRIMARY KEY | <ORDER_BY_FIELDS>
+    " <ORDER_BY_FIELDS> ::= col1 [DESCENDING|ASCENDING] { <ORDER_BY_FIELDS> }
     " <HAVING> ::= <EXPRESSION_HAVING>
     " <EXPRESSION_HAVING> ::= <EXPRESSION_HAVING_OR> OR <EXPRESSION_HAVING> | <EXPRESSION_HAVING_OR>
     " <EXPRESSION_HAVING_OR> ::= <EXPRESSION_HAVING_AND> AND <EXPRESSION_HAVING_OR>
@@ -1327,11 +1332,11 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _group_order_fields( lv_group_by_node_id ).
+    _group_by_fields( lv_group_by_node_id ).
   endmethod.
 
 
-  METHOD _group_order_fields.
+  METHOD _GROUP_BY_FIELDS.
 
     DO.
       _col_spec( iv_parent_id ).
@@ -1447,9 +1452,10 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
-  method _ORDER_BY.
+  METHOD _order_by.
 
-    DATA: lv_order_by_node_id TYPE i.
+    DATA: lv_order_by_node_id       TYPE i,
+          lv_order_by_field_node_id TYPE i.
 
     IF mv_current_token_ucase <> 'ORDER'.
       RETURN.
@@ -1473,8 +1479,55 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    _group_order_fields( lv_order_by_node_id ).
-  endmethod.
+    IF mv_current_token_ucase = 'PRIMARY'.
+      _add_node( iv_parent_id = lv_order_by_node_id
+                 iv_node_type = node_type-order_by_primary_key ).
+
+      IF _step_forward( ) <> abap_true.
+        RETURN.
+      ENDIF.
+
+      IF mv_current_token_ucase = 'KEY'.
+        _add_node( iv_parent_id = lv_order_by_node_id
+                   iv_node_type = node_type-order_by_primary_key ).
+
+        _step_forward( ).
+
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    DO.
+
+      IF mv_current_token_ucase = c_having.
+        EXIT.
+      ENDIF.
+
+      lv_order_by_field_node_id = _add_node( iv_parent_id = lv_order_by_node_id
+                                             iv_node_type = node_type-order_by_field ).
+
+      IF _step_forward( ) <> abap_true.
+        EXIT.
+      ENDIF.
+
+      CASE mv_current_token_ucase.
+        WHEN 'DESCENDING'.
+          _add_node( iv_parent_id = lv_order_by_field_node_id
+                     iv_node_type = node_type-order_by_descending ).
+
+          IF _step_forward( ) <> abap_true.
+            EXIT.
+          ENDIF.
+        WHEN 'ASCENDING'.
+          _add_node( iv_parent_id = lv_order_by_field_node_id
+                     iv_node_type = node_type-order_by_ascending ).
+
+          IF _step_forward( ) <> abap_true.
+            EXIT.
+          ENDIF.
+      ENDCASE.
+    ENDDO.
+  ENDMETHOD.
 
 
   method _POP_POSITION_AND_STATE.

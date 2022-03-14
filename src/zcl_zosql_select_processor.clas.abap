@@ -20,6 +20,9 @@ public section.
   types:
     TY_ITERATOR_POSITIONS  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
 
+  methods APPLY_ORDER_BY
+    importing
+      !IO_ORDER_BY type ref to ZCL_ZOSQL_ORDERBY_PROCESSOR .
   methods CONSTRUCTOR
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -219,6 +222,17 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     io_group_by->apply_group_by( EXPORTING io_select   = me
                                  CHANGING  ct_data_set = <lt_data_set> ).
   ENDMETHOD.
+
+
+  method APPLY_ORDER_BY.
+
+    FIELD-SYMBOLS: <lt_data_set>             TYPE STANDARD TABLE.
+
+    ASSIGN md_data_set->* TO <lt_data_set>.
+
+    io_order_by->apply_order_by( EXPORTING io_select   = me
+                                 CHANGING  ct_data_set = <lt_data_set> ).
+  endmethod.
 
 
   method CONSTRUCTOR.
