@@ -62,6 +62,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>GET_KEY_FIELDS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns list of key fields of virtual table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
      <CMPNAME>INSERT_TEST_DATA_FROM_ITAB</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Insert test data from internal table</DESCRIPT>

@@ -14,6 +14,11 @@ public section.
   types:
     ty_data_sets TYPE STANDARD TABLE OF ty_data_set WITH DEFAULT KEY .
 
+  methods GET_KEY_FIELDS_OF_DATA_SET
+    importing
+      !IV_DATASET_NAME_OR_ALIAS type CLIKE
+    returning
+      value(RT_KEY_FIELDS) type FIELDNAME_TABLE .
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
@@ -99,6 +104,11 @@ private section.
       value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
+  methods _IF_DATASET_IS_TABLE
+    importing
+      !IO_ITERATOR_OF_DATASET type ref to ZIF_ZOSQL_ITERATOR
+    returning
+      value(RV_IS_TABLE) type ABAP_BOOL .
   methods _GET_DATASET_NAME_AND_ALIAS
     importing
       !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
@@ -224,6 +234,33 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = mt_datasets_with_position
                                                IMPORTING et_table_dest = rt_data_set_list ).
 
+  endmethod.
+
+
+  method GET_KEY_FIELDS_OF_DATA_SET.
+
+    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+
+    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position.
+
+    READ TABLE mt_datasets_with_position WITH KEY dataset_name = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    IF sy-subrc <> 0.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    ENDIF.
+
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    IF _if_dataset_is_table( <ls_data_set_data>-iterator ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    CREATE OBJECT lo_virt_table
+      EXPORTING
+        iv_table_name = <ls_data_set_data>-dataset_name.
+
+    rt_key_fields = lo_virt_table->get_key_fields( ).
   endmethod.
 
 
@@ -654,6 +691,19 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
           iv_ucase     = abap_true ).
     ENDIF.
   endmethod.
+
+
+  METHOD _if_dataset_is_table.
+
+    DATA: lo_table_iterator TYPE REF TO zcl_zosql_table_iterator.
+
+    TRY.
+        lo_table_iterator ?= io_iterator_of_dataset.
+        rv_is_table = abap_true.
+      CATCH cx_root.
+        rv_is_table = abap_false.
+    ENDTRY.
+  ENDMETHOD.
 
 
   method _INIT_BY_ATTRIBUTES.

@@ -9,6 +9,9 @@ public section.
   data COUNT_UPDATED type I .
   data COUNT_DELETED type I .
 
+  methods GET_KEY_FIELDS
+    returning
+      value(RT_KEY_FIELDS) type FIELDNAME_TABLE .
   methods DELETE_TEST_DATA_FROM_ITAB
     importing
       !IT_LINES_FOR_DELETE type ANY TABLE
@@ -108,6 +111,22 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
 
     <lt_table_copy> = <lt_table_buffer>.
   endmethod.
+
+
+  METHOD get_key_fields.
+
+    DATA: lt_all_fields TYPE ddfields.
+
+    FIELD-SYMBOLS: <ls_field> LIKE LINE OF lt_all_fields.
+
+    lt_all_fields = _get_field_list( ).
+
+    LOOP AT lt_all_fields ASSIGNING <ls_field>
+      WHERE keyflag = abap_true.
+
+      APPEND <ls_field>-fieldname TO rt_key_fields.
+    ENDLOOP.
+  ENDMETHOD.
 
 
   METHOD INSERT_TEST_DATA_FROM_ITAB.

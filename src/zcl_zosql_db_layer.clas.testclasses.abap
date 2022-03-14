@@ -67,6 +67,7 @@ CLASS ltc_zosql_db_layer DEFINITION FOR TESTING
       select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
+      select_order_by FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_tab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
@@ -2337,6 +2338,52 @@ CLASS ltc_zosql_db_layer IMPLEMENTATION.
     lt_expected = lt_initial_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
+  ENDMETHOD.
+
+  METHOD select_order_by.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_line          TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'TEXT3'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'TEXT2'.
+    APPEND ls_line TO lt_initial_table.
+
+    INSERT zosql_for_tst FROM TABLE lt_initial_table.
+
+    " WHEN
+    DATA: lt_result TYPE TABLE OF zosql_for_tst,
+          lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT * FROM zosql_for_tst'
+      '  ORDER BY text_field1'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'TEXT2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'TEXT3'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD sql_separated_by_line_breaks.
