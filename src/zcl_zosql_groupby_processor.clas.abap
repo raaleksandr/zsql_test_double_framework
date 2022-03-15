@@ -38,11 +38,6 @@ private section.
       !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
-  methods _FILL_DATASET_WHERE_EMPTY
-    importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
@@ -104,36 +99,6 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _FILL_DATASET_WHERE_EMPTY.
-
-    DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
-          ls_data_set               LIKE LINE OF lt_data_set_list,
-          lt_components_of_data_set TYPE cl_abap_structdescr=>included_view.
-
-    FIELD-SYMBOLS: <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields.
-
-    lt_data_set_list = io_from_iterator->get_data_set_list( ).
-
-    LOOP AT mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>
-      WHERE dataset_name_or_alias IS INITIAL.
-
-      LOOP AT lt_data_set_list INTO ls_data_set.
-        lt_components_of_data_set = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
-        READ TABLE lt_components_of_data_set WITH KEY name = <ls_group_by_key_field>-fieldname TRANSPORTING NO FIELDS.
-        IF sy-subrc = 0.
-          <ls_group_by_key_field>-dataset_name_or_alias = ls_data_set-dataset_name.
-          CONTINUE.
-        ENDIF.
-      ENDLOOP.
-
-      IF <ls_group_by_key_field>-dataset_name_or_alias IS INITIAL.
-        MESSAGE e057 WITH <ls_group_by_key_field>-fieldname INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-      ENDIF.
-    ENDLOOP.
-  ENDMETHOD.
-
-
   method _GET_GROUP_BY_NODE.
 
     DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper.
@@ -169,6 +134,7 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    _fill_dataset_where_empty( io_from_iterator ).
+    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+                              CHANGING  ct_table_where_to_fill = mt_group_by_key_fields ).
   ENDMETHOD.
 ENDCLASS.

@@ -109,8 +109,12 @@ CLASS ltc_cases_for_select DEFINITION FOR TESTING
       group_by_having_subquery FOR TESTING RAISING zcx_zosql_error,
       group_by_without_aggr_funcs FOR TESTING RAISING zcx_zosql_error,
       group_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
+      order_by_descending FOR TESTING RAISING zcx_zosql_error,
+      order_by_ascending FOR TESTING RAISING zcx_zosql_error,
       order_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
       order_by_when_empty_result FOR TESTING RAISING zcx_zosql_error,
+      order_by_2_fields FOR TESTING RAISING zcx_zosql_error,
+      order_by_with_join FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
       subquery_in FOR TESTING RAISING zcx_zosql_error,
       subquery_not_in FOR TESTING RAISING zcx_zosql_error,
@@ -3987,7 +3991,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " THEN
     DATA: lt_expected_table TYPE TABLE OF ty_result,
-          ls_expected_table TYPE ty_Result.
+          ls_expected_table TYPE ty_result.
 
     ls_expected_table-amount = 30.
     APPEND ls_expected_table TO lt_expected_table.
@@ -3999,6 +4003,118 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table
                                     msg = 'Error in select with group by where ''GROUP BY'' field not present in ''SELECT'' field list' ).
+  ENDMETHOD.
+
+  METHOD order_by_descending.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_initial_line  TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY1'.
+    ls_initial_line-text_field1 = 'ZZZ'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY2'.
+    ls_initial_line-text_field1 = 'AAA'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY3'.
+    ls_initial_line-text_field1 = 'CCC'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF zosql_for_tst.
+
+    CONCATENATE 'SELECT *'
+                '  FROM zosql_for_tst'
+                '  ORDER BY text_field1 DESCENDING'
+                INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'ZZZ'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'CCC'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'AAA'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD order_by_ascending.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_initial_line  TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY1'.
+    ls_initial_line-text_field1 = 'ZZZ'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY2'.
+    ls_initial_line-text_field1 = 'AAA'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY3'.
+    ls_initial_line-text_field1 = 'CCC'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF zosql_for_tst.
+
+    CONCATENATE 'SELECT *'
+                '  FROM zosql_for_tst'
+                '  ORDER BY text_field1 ASCENDING'
+                INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'AAA'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'CCC'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'ZZZ'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD order_by_field_not_selected.
@@ -4060,6 +4176,165 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_initial( lt_result ).
+  ENDMETHOD.
+
+  METHOD order_by_2_fields.
+
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_initial_line  TYPE zosql_for_tst.
+
+    " GIVEN
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY1'.
+    ls_initial_line-text_field1 = 'ZZZ'.
+    ls_initial_line-text_field2 = 'AAA'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY2'.
+    ls_initial_line-text_field1 = 'ZZZ'.
+    ls_initial_line-text_field2 = 'CCC'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY3'.
+    ls_initial_line-text_field1 = 'BBB'.
+    ls_initial_line-text_field2 = 'ZZZ'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    ls_initial_line-mandt       = sy-mandt.
+    ls_initial_line-key_field   = 'KEY4'.
+    ls_initial_line-text_field1 = 'BBB'.
+    ls_initial_line-text_field2 = 'AAA'.
+    APPEND ls_initial_line TO lt_initial_table.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+
+    " WHEN
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF zosql_for_tst.
+
+    CONCATENATE 'SELECT *'
+                '  FROM zosql_for_tst'
+                '  ORDER BY text_field1 text_field2'
+                INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY4'.
+    ls_expected_line-text_field1 = 'BBB'.
+    ls_expected_line-text_field2 = 'AAA'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'BBB'.
+    ls_expected_line-text_field2 = 'ZZZ'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'ZZZ'.
+    ls_expected_line-text_field2 = 'AAA'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'ZZZ'.
+    ls_expected_line-text_field2 = 'CCC'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD order_by_with_join.
+
+    DATA: lt_initial_table  TYPE TABLE OF zosql_for_tst,
+          ls_line           TYPE zosql_for_tst,
+          lt_initial_table2 TYPE TABLE OF zosql_for_tst2,
+          ls_line2          TYPE zosql_for_tst2.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'TEXT1_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'TEXT2_1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line2-mandt      = sy-mandt.
+    ls_line2-key_field  = 'KEY1'.
+    ls_line2-key_field2 = 'KEY1_1'.
+    ls_line2-amount     = 50.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt      = sy-mandt.
+    ls_line2-key_field  = 'KEY1'.
+    ls_line2-key_field2 = 'KEY1_2'.
+    ls_line2-amount     = 30.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    ls_line2-mandt      = sy-mandt.
+    ls_line2-key_field  = 'KEY2'.
+    ls_line2-key_field2 = 'KEY2_1'.
+    ls_line2-amount     = 20.
+    APPEND ls_line2 TO lt_initial_table2.
+
+    mo_test_environment->insert_test_data( lt_initial_table ).
+    mo_test_environment->insert_test_data( lt_initial_table2 ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             key_field   TYPE zosql_for_tst-key_field,
+             key_field2  TYPE zosql_for_tst2-key_field2,
+             text_field1 TYPE zosql_for_tst-text_field1,
+             amount      TYPE zosql_for_tst2-amount,
+           END OF ty_result.
+
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT t1~key_field t2~key_field2 t1~text_field1 t2~amount'
+                '  FROM zosql_for_tst AS t1'
+                '  JOIN zosql_for_tst2 AS t2 ON t2~key_field = t1~key_field'
+                '  ORDER BY t2~amount t1~text_field1'
+                INTO lv_select SEPARATED BY space.
+
+    f_cut->zif_zosql_db_layer~select_to_itab( EXPORTING iv_select       = lv_select
+                                              IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF ty_result,
+          ls_expected_line  TYPE ty_result.
+
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-key_field2  = 'KEY2_1'.
+    ls_expected_line-text_field1 = 'TEXT2_1'.
+    ls_expected_line-amount      = 20.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-key_field2  = 'KEY1_2'.
+    ls_expected_line-text_field1 = 'TEXT1_1'.
+    ls_expected_line-amount      = 30.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-key_field2  = 'KEY1_1'.
+    ls_expected_line-text_field1 = 'TEXT1_1'.
+    ls_expected_line-amount      = 50.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD for_all_ent_compare_2_fld.

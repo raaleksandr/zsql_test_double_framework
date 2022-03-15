@@ -1,63 +1,64 @@
-class ZCL_ZOSQL_SELECT_PROCESSOR definition
-  public
-  create public .
+CLASS zcl_zosql_select_processor DEFINITION
+  PUBLIC
+  INHERITING FROM zcl_zosql_processor_base
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  types:
-    BEGIN OF TY_SELECT_PARAMETER,
-           parameter_type TYPE char20,
-           dataset_name   TYPE string,
-           field_name     TYPE string,
-           field_alias    TYPE string,
-           function_name  TYPE string,
-           distinct_flag  TYPE abap_bool,
-           field_name_in_result TYPE string,
-         END OF ty_select_parameter .
-  types:
-    ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
-                                   WITH KEY dataset_name field_name .
-  types:
-    TY_ITERATOR_POSITIONS  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
+    TYPES:
+      BEGIN OF ty_select_parameter,
+        parameter_type        TYPE char20,
+        dataset_name_or_alias TYPE string,
+        fieldname             TYPE string,
+        field_alias           TYPE string,
+        function_name         TYPE string,
+        distinct_flag         TYPE abap_bool,
+        field_name_in_result  TYPE string,
+      END OF ty_select_parameter .
+    TYPES:
+      ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
+                                     WITH KEY dataset_name_or_alias fieldname .
+    TYPES:
+      ty_iterator_positions  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
 
-  methods APPLY_ORDER_BY
-    importing
-      !IO_ORDER_BY type ref to ZCL_ZOSQL_ORDERBY_PROCESSOR .
-  methods CONSTRUCTOR
-    importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods GET_SELECT_PARAMETERS
-    returning
-      value(RT_SELECT_PARAMETERS) type TY_SELECT_PARAMETERS .
-  methods GET_ITER_POSITIONS_OF_LINES
-    returning
-      value(RT_ITERATOR_POSITIONS) type TY_ITERATOR_POSITIONS .
-  methods APPLY_AGGR_FUNC_NO_GROUP_BY
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods HAS_AGGREGATION_FUNCTIONS
-    returning
-      value(RV_HAS_AGGREGATION_FUNCTIONS) type ABAP_BOOL .
-  methods APPLY_DISTINCT .
-  methods APPLY_GROUP_BY
-    importing
-      !IO_GROUP_BY type ref to ZCL_ZOSQL_GROUPBY_PROCESSOR
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods GET_RESULT_AS_REF_TO_DATA
-    returning
-      value(RD_REF_TO_RESULT_SET) type ref to DATA .
-  methods GET_RESULT_MOVE_CORRESPONDING
-    changing
-      !CT_RESULT_TABLE type ANY TABLE .
-  methods ADD_LINE_TO_RESULT
-    importing
-      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
-    raising
-      ZCX_ZOSQL_ERROR .
+    METHODS apply_order_by
+      IMPORTING
+        !io_order_by TYPE REF TO zcl_zosql_orderby_processor .
+    METHODS constructor
+      IMPORTING
+        !io_sql_parser    TYPE REF TO zcl_zosql_parser_recurs_desc
+        !io_from_iterator TYPE REF TO zcl_zosql_from_iterator
+      RAISING
+        zcx_zosql_error .
+    METHODS get_select_parameters
+      RETURNING
+        VALUE(rt_select_parameters) TYPE ty_select_parameters .
+    METHODS get_iter_positions_of_lines
+      RETURNING
+        VALUE(rt_iterator_positions) TYPE ty_iterator_positions .
+    METHODS apply_aggr_func_no_group_by
+      RAISING
+        zcx_zosql_error .
+    METHODS has_aggregation_functions
+      RETURNING
+        VALUE(rv_has_aggregation_functions) TYPE abap_bool .
+    METHODS apply_distinct .
+    METHODS apply_group_by
+      IMPORTING
+        !io_group_by TYPE REF TO zcl_zosql_groupby_processor
+      RAISING
+        zcx_zosql_error .
+    METHODS get_result_as_ref_to_data
+      RETURNING
+        VALUE(rd_ref_to_result_set) TYPE REF TO data .
+    METHODS get_result_move_corresponding
+      CHANGING
+        !ct_result_table TYPE ANY TABLE .
+    METHODS add_line_to_result
+      IMPORTING
+        !io_iteration_position TYPE REF TO zcl_zosql_iterator_position
+      RAISING
+        zcx_zosql_error .
 protected section.
 private section.
 
@@ -153,12 +154,14 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     APPEND INITIAL LINE TO <lt_result> ASSIGNING <ls_result>.
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
-      ld_ref_to_dataset_data = io_iteration_position->get_line_for_data_set_ref( <ls_select_parameter>-dataset_name ).
+      ld_ref_to_dataset_data =
+        io_iteration_position->get_line_for_data_set_ref(
+          <ls_select_parameter>-dataset_name_or_alias ).
 
       ASSIGN ld_ref_to_dataset_data->* TO <ls_ref_to_dataset_data>.
       CHECK sy-subrc = 0.
 
-      ASSIGN COMPONENT <ls_select_parameter>-field_name OF STRUCTURE <ls_ref_to_dataset_data> TO <lv_dataset_field_value>.
+      ASSIGN COMPONENT <ls_select_parameter>-fieldname OF STRUCTURE <ls_ref_to_dataset_data> TO <lv_dataset_field_value>.
       CHECK sy-subrc = 0.
 
       ASSIGN COMPONENT <ls_select_parameter>-field_name_in_result OF STRUCTURE <ls_result> TO <lv_result_field_value>.
@@ -236,6 +239,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
+    super->constructor( ).
+
     _fill_select_fields( io_sql_parser ).
     _star_to_field_list( io_from_iterator ).
     _fill_dataset_where_empty( io_from_iterator ).
@@ -317,30 +322,18 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
   METHOD _FILL_DATASET_WHERE_EMPTY.
 
-    DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
-          ls_data_set               LIKE LINE OF lt_data_set_list,
-          lt_components_of_data_set TYPE cl_abap_structdescr=>included_view.
-
     FIELD-SYMBOLS: <ls_select_parameter> LIKE LINE OF mt_select_parameters.
 
-    lt_data_set_list = io_from_iterator->get_data_set_list( ).
+    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+                                        iv_error_if_not_found  = abap_false
+                              CHANGING  ct_table_where_to_fill = mt_select_parameters ).
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>
-      WHERE dataset_name IS INITIAL.
+      WHERE dataset_name_or_alias IS INITIAL
+        AND function_name <> c_function_count.
 
-      LOOP AT lt_data_set_list INTO ls_data_set.
-        lt_components_of_data_set = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
-        READ TABLE lt_components_of_data_set WITH KEY name = <ls_select_parameter>-field_name TRANSPORTING NO FIELDS.
-        IF sy-subrc = 0.
-          <ls_select_parameter>-dataset_name = ls_data_set-dataset_name.
-          CONTINUE.
-        ENDIF.
-      ENDLOOP.
-
-      IF <ls_select_parameter>-dataset_name IS INITIAL AND <ls_select_parameter>-function_name <> c_function_count.
-        MESSAGE e057 WITH <ls_select_parameter>-field_name INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-      ENDIF.
+      MESSAGE e057 WITH <ls_select_parameter>-fieldname INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDLOOP.
   ENDMETHOD.
 
@@ -392,8 +385,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
       CLEAR lv_dataset_name_or_alias.
     ENDIF.
 
-    rs_select_field_parameters-dataset_name = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_dataset_name_or_alias ) ).
-    rs_select_field_parameters-field_name   = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_field_name ) ).
+    rs_select_field_parameters-dataset_name_or_alias = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_dataset_name_or_alias ) ).
+    rs_select_field_parameters-fieldname             = zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_field_name ) ).
   endmethod.
 
 
@@ -412,12 +405,12 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
             _get_function_name_from_token( lo_node_part_of_select_field->token_ucase ).
 
           IF rs_select_field_parameters-function_name = 'COUNT(*)'.
-            rs_select_field_parameters-field_name = '*'.
+            rs_select_field_parameters-fieldname = '*'.
           ENDIF.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-function_argument.
           ls_argument_parameters = _fill_select_field_as_field( lo_node_part_of_select_field ).
-          rs_select_field_parameters-dataset_name = ls_argument_parameters-dataset_name.
-          rs_select_field_parameters-field_name   = ls_argument_parameters-field_name.
+          rs_select_field_parameters-dataset_name_or_alias = ls_argument_parameters-dataset_name_or_alias.
+          rs_select_field_parameters-fieldname             = ls_argument_parameters-fieldname.
         WHEN zcl_zosql_parser_recurs_desc=>node_type-distinct.
           rs_select_field_parameters-distinct_flag = abap_true.
       ENDCASE.
@@ -473,19 +466,19 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_dataset_components.
 
-    ld_ref_to_dataset_data = io_from_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name ).
+    ld_ref_to_dataset_data = io_from_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name_or_alias ).
 
     lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
     lt_dataset_components = lo_struct->get_included_view( ).
 
-    READ TABLE lt_dataset_components WITH KEY name = is_select_parameter-field_name INTO ls_component.
+    READ TABLE lt_dataset_components WITH KEY name = is_select_parameter-fieldname INTO ls_component.
     IF sy-subrc = 0.
       MOVE-CORRESPONDING ls_component TO rs_component.
       IF is_select_parameter-field_alias IS NOT INITIAL.
         rs_component-name = is_select_parameter-field_alias.
       ENDIF.
     ELSE.
-      MESSAGE e073 WITH is_select_parameter-field_name is_select_parameter-field_alias
+      MESSAGE e073 WITH is_select_parameter-fieldname is_select_parameter-field_alias
         INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
@@ -493,7 +486,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
     IF is_select_parameter-parameter_type = parameter_type-groupby_function
       AND is_select_parameter-field_alias IS INITIAL.
 
-      CONCATENATE is_select_parameter-function_name is_select_parameter-field_name INTO rs_component-name SEPARATED BY '_'.
+      CONCATENATE is_select_parameter-function_name is_select_parameter-fieldname INTO rs_component-name SEPARATED BY '_'.
     ENDIF.
    ENDMETHOD.
 
@@ -531,15 +524,15 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
 
-      IF <ls_select_parameter>-field_name = '*' AND <ls_select_parameter>-function_name IS INITIAL.
+      IF <ls_select_parameter>-fieldname = '*' AND <ls_select_parameter>-function_name IS INITIAL.
 
         LOOP AT lt_data_set_list INTO ls_data_set.
 
           lv_dataset_index = sy-tabix.
 
-          IF <ls_select_parameter>-dataset_name IS NOT INITIAL
-            AND <ls_select_parameter>-dataset_name <> ls_data_set-dataset_name
-            AND <ls_select_parameter>-dataset_name <> ls_data_set-dataset_alias.
+          IF <ls_select_parameter>-dataset_name_or_alias IS NOT INITIAL
+            AND <ls_select_parameter>-dataset_name_or_alias <> ls_data_set-dataset_name
+            AND <ls_select_parameter>-dataset_name_or_alias <> ls_data_set-dataset_alias.
 
             CONTINUE.
           ENDIF.
@@ -558,10 +551,10 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
         LOOP AT lt_fields INTO ls_field.
           APPEND INITIAL LINE TO lt_new_select_parameters ASSIGNING <ls_new_select_parameter>.
-          <ls_new_select_parameter>-field_name = ls_field-fieldname.
+          <ls_new_select_parameter>-fieldname = ls_field-fieldname.
           READ TABLE lt_data_set_list INDEX ls_field-dataset_index INTO ls_data_set.
           IF sy-subrc = 0.
-            <ls_new_select_parameter>-dataset_name = ls_data_set-dataset_name.
+            <ls_new_select_parameter>-dataset_name_or_alias = ls_data_set-dataset_name.
           ENDIF.
         ENDLOOP.
       ELSE.

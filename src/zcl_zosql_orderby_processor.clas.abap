@@ -1,5 +1,6 @@
 class ZCL_ZOSQL_ORDERBY_PROCESSOR definition
   public
+  inheriting from ZCL_ZOSQL_PROCESSOR_BASE
   create public .
 
 public section.
@@ -19,14 +20,15 @@ protected section.
 private section.
 
   types:
-    BEGIN OF ty_group_by_key_field,
+    BEGIN OF ty_order_by_field,
            dataset_name_or_alias TYPE string,
-           fieldname TYPE fieldname,
-         END OF ty_group_by_key_field .
+           fieldname             TYPE fieldname,
+           descending            TYPE abap_bool,
+         END OF ty_order_by_field .
   types:
-    ty_group_by_key_fields TYPE STANDARD TABLE OF ty_group_by_key_field WITH DEFAULT KEY .
+    ty_order_by_fields TYPE STANDARD TABLE OF ty_order_by_field WITH DEFAULT KEY .
 
-  data MT_ORDER_BY_FIELDS type TY_GROUP_BY_KEY_FIELDS .
+  data MT_ORDER_BY_FIELDS type TY_ORDER_BY_FIELDS .
 
   methods _GET_ORDER_BY_FIELDNAME
     importing
@@ -41,11 +43,6 @@ private section.
   methods _INIT_ORDER_BY_PRIMARY_KEY
     importing
       !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR .
-  methods _FILL_DATASET_WHERE_EMPTY
-    importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
@@ -73,7 +70,8 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
     ENDIF.
 
     LOOP AT mt_order_by_fields ASSIGNING <ls_order_by_field>.
-      ls_sortorder-name = _get_order_by_fieldname( sy-tabix ).
+      ls_sortorder-name       = _get_order_by_fieldname( sy-tabix ).
+      ls_sortorder-descending = <ls_order_by_field>-descending.
       APPEND ls_sortorder TO lt_sortorder_tab.
     ENDLOOP.
 
@@ -94,6 +92,8 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
           lo_child_node              TYPE REF TO zcl_zosql_parser_node.
 
     FIELD-SYMBOLS: <ls_order_by_field> LIKE LINE OF mt_order_by_fields.
+
+    super->constructor( ).
 
     CREATE OBJECT lo_parser_helper
       EXPORTING
@@ -120,39 +120,16 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
       ELSE.
         <ls_order_by_field>-fieldname = lo_child_node->token_ucase.
       ENDIF.
-    ENDLOOP.
 
-    _fill_dataset_where_empty( io_from_iterator ).
-  ENDMETHOD.
+      IF lo_child_node->exists_child_node_with_type(
+            zcl_zosql_parser_recurs_desc=>node_type-order_by_descending ) = abap_true.
 
-
-  METHOD _FILL_DATASET_WHERE_EMPTY.
-
-    DATA: lt_data_set_list          TYPE zcl_zosql_iterator_position=>ty_data_sets,
-          ls_data_set               LIKE LINE OF lt_data_set_list,
-          lt_components_of_data_set TYPE cl_abap_structdescr=>included_view.
-
-    FIELD-SYMBOLS: <ls_order_by_field> LIKE LINE OF mt_order_by_fields.
-
-    lt_data_set_list = io_from_iterator->get_data_set_list( ).
-
-    LOOP AT mt_order_by_fields ASSIGNING <ls_order_by_field>
-      WHERE dataset_name_or_alias IS INITIAL.
-
-      LOOP AT lt_data_set_list INTO ls_data_set.
-        lt_components_of_data_set = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
-        READ TABLE lt_components_of_data_set WITH KEY name = <ls_order_by_field>-fieldname TRANSPORTING NO FIELDS.
-        IF sy-subrc = 0.
-          <ls_order_by_field>-dataset_name_or_alias = ls_data_set-dataset_name.
-          CONTINUE.
-        ENDIF.
-      ENDLOOP.
-
-      IF <ls_order_by_field>-dataset_name_or_alias IS INITIAL.
-        MESSAGE e057 WITH <ls_order_by_field>-fieldname INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+        <ls_order_by_field>-descending = abap_true.
       ENDIF.
     ENDLOOP.
+
+    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+                              CHANGING  ct_table_where_to_fill = mt_order_by_fields ).
   ENDMETHOD.
 
 

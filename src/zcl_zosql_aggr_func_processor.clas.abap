@@ -1,5 +1,6 @@
 class ZCL_ZOSQL_AGGR_FUNC_PROCESSOR definition
   public
+  inheriting from ZCL_ZOSQL_PROCESSOR_BASE
   create public .
 
 public section.
@@ -65,27 +66,27 @@ CLASS ZCL_ZOSQL_AGGR_FUNC_PROCESSOR IMPLEMENTATION.
     lt_select_parameters = io_select->get_select_parameters( ).
     LOOP AT lt_select_parameters ASSIGNING <ls_select_parameter>.
 
-      ASSIGN COMPONENT <ls_select_parameter>-field_name OF STRUCTURE <ls_new_line> TO <lv_field_value>.
+      ASSIGN COMPONENT <ls_select_parameter>-fieldname OF STRUCTURE <ls_new_line> TO <lv_field_value>.
       IF sy-subrc <> 0.
         ASSIGN COMPONENT <ls_select_parameter>-field_name_in_result OF STRUCTURE <ls_new_line>
           TO <lv_field_value>.
         IF sy-subrc <> 0.
-          MESSAGE e057 WITH <ls_select_parameter>-field_name INTO zcl_zosql_utils=>dummy.
+          MESSAGE e057 WITH <ls_select_parameter>-fieldname INTO zcl_zosql_utils=>dummy.
           zcl_zosql_utils=>raise_exception_from_sy_msg( ).
         ENDIF.
       ENDIF.
 
       IF <ls_select_parameter>-function_name IS NOT INITIAL.
         ld_value = io_iteration_position->get_grouped_value_of_data_set(
-          iv_dataset_name_or_alias = <ls_select_parameter>-dataset_name
-          iv_fieldname             = <ls_select_parameter>-field_name
+          iv_dataset_name_or_alias = <ls_select_parameter>-dataset_name_or_alias
+          iv_fieldname             = <ls_select_parameter>-fieldname
           iv_groupby_function      = <ls_select_parameter>-function_name
           iv_distinct              = <ls_select_parameter>-distinct_flag ).
 
       ELSE.
         ld_value = io_iteration_position->get_field_ref_of_data_set(
-          iv_dataset_name_or_alias = <ls_select_parameter>-dataset_name
-          iv_fieldname             = <ls_select_parameter>-field_name ).
+          iv_dataset_name_or_alias = <ls_select_parameter>-dataset_name_or_alias
+          iv_fieldname             = <ls_select_parameter>-fieldname ).
       ENDIF.
 
       IF ld_value IS BOUND.
