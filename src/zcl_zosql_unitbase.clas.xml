@@ -10,6 +10,7 @@
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
@@ -17,6 +18,12 @@
      <CMPNAME>CLEAR_MANDANT_FIELD</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Clears value of mandant field in all lines of internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UNITBASE</CLSNAME>
+     <CMPNAME>INSERT_TEST_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Insert test data to fake store of table from internal table</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

@@ -8,6 +8,12 @@ protected section.
   methods CLEAR_MANDANT_FIELD
     changing
       !CT_INTERNAL_TABLE type ANY TABLE .
+  methods INSERT_TEST_DATA
+    importing
+      !IT_TABLE type ANY TABLE
+      value(IV_TABLE_NAME) type CLIKE optional
+    raising
+      ZCX_ZOSQL_ERROR .
 private section.
 ENDCLASS.
 
@@ -28,5 +34,11 @@ CLASS ZCL_ZOSQL_UNITBASE IMPLEMENTATION.
         CLEAR <lv_mandant>.
       ENDIF.
     ENDLOOP.
+  endmethod.
+
+
+  method INSERT_TEST_DATA.
+    MESSAGE e083 INTO zcl_zosql_utils=>dummy.
+    zcl_zosql_utils=>raise_exception_from_sy_msg( ).
   endmethod.
 ENDCLASS.
