@@ -209,6 +209,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>083</MSGNR>
+     <TEXT>Must be reassigned in child test class</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>
