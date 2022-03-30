@@ -58,6 +58,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       select_single FOR TESTING RAISING zcx_zosql_error,
       select_in_empty_range FOR TESTING RAISING zcx_zosql_error,
       select_in_list_of_vals FOR TESTING RAISING zcx_zosql_error,
+      select_into_sorted_table FOR TESTING RAISING zcx_zosql_error,
       select_not_in_list_of_vals FOR TESTING RAISING zcx_zosql_error,
       select_count_star FOR TESTING RAISING zcx_zosql_error,
       select_count_star_no_space FOR TESTING RAISING zcx_zosql_error,
@@ -2130,6 +2131,44 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND 'KEY3' TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD select_into_sorted_table.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst,
+          lv_select        TYPE string.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( lt_initial_table ).
+
+    CONCATENATE 'SELECT *'
+      'FROM ZOSQL_FOR_TST'
+      'ORDER BY PRIMARY KEY'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE SORTED TABLE OF zosql_for_tst
+                               WITH UNIQUE KEY key_field,
+          ls_result_line  TYPE zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                           IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
   ENDMETHOD.
 
   METHOD select_not_in_list_of_vals.
