@@ -4937,6 +4937,8 @@ CLASS ltc_cases_for_select_740 IMPLEMENTATION.
     ls_expected-key_field = 'KEY3'.
     APPEND ls_expected TO lt_expected.
 
+    SORT: lt_result_table, lt_expected.
+
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected ).
   ENDMETHOD.
