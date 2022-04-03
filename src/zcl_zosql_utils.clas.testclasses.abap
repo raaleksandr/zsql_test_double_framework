@@ -32,7 +32,8 @@ CLASS ltc_zosql_utils DEFINITION FOR TESTING
              delete_end_token_no_delete FOR TESTING,
              is_char_string FOR TESTING,
              is_char_char_var FOR TESTING,
-             is_char_int_negative FOR TESTING.
+             is_char_int_negative FOR TESTING,
+             raise_exception_with_text FOR TESTING.
 ENDCLASS.       "ltc_zosql_Utils
 
 CLASS ltc_split_cond_into_tokens DEFINITION FOR TESTING
@@ -153,6 +154,22 @@ CLASS ltc_zosql_utils IMPLEMENTATION.
     lv_result = zcl_zosql_utils=>is_char( lv_int ).
 
     cl_aunit_assert=>assert_equals( act = lv_result exp = abap_false ).
+  ENDMETHOD.
+
+  METHOD raise_exception_with_text.
+
+    CONSTANTS: lc_error_text TYPE string VALUE 'Some text'.
+
+    DATA: lx_exception TYPE REF TO zcx_zosql_error,
+          lv_text_from_exception TYPE string.
+
+    TRY.
+      zcl_zosql_utils=>raise_exception_with_text( lc_error_text ).
+      cl_aunit_assert=>fail( 'Exception should be raised' ).
+    CATCH zcx_zosql_error INTO lx_exception.
+      lv_text_from_exception = lx_exception->get_text( ).
+      cl_aunit_assert=>assert_equals( act = lv_text_from_exception exp = lc_error_text ).
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.
 

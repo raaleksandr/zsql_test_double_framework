@@ -13,23 +13,33 @@ public section.
       !IT_KEY_FIELDS type FIELDNAME_TABLE
     returning
       value(RD_HASHED_TABLE) type ref to DATA .
+  class-methods RAISE_FROM_ANY_EXCEPTION
+    importing
+      !IX_ROOT type ref to CX_ROOT
+    raising
+      ZCX_ZOSQL_ERROR .
   class-methods DELETE_N_END_TOKENS
     importing
       value(IV_N) type I
     changing
       !CV_SQL type CLIKE .
+  class-methods RAISE_EXCEPTION_WITH_TEXT
+    importing
+      !IV_TEXT type CLIKE
+    raising
+      ZCX_ZOSQL_ERROR .
   class-methods SPLIT_CONDITION_INTO_TOKENS
     importing
       !IV_SQL_CONDITION type CLIKE
     returning
       value(RT_TOKENS) type STRING_TABLE .
+  class-methods IS_VERSION_740_AND_ABOVE
+    returning
+      value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
   class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
     importing
       !IO_SALV type ref to CL_SALV_TABLE
       !IT_TABLE type ANY TABLE .
-  class-methods IS_VERSION_740_AND_ABOVE
-    returning
-      value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
   class-methods BOOLEAN_NOT
     importing
       !IV_BOOLEAN type ABAP_BOOL
@@ -50,18 +60,18 @@ public section.
       !IV_VALUE type ANY
     returning
       value(RD_REF_TO_COPY_OF_DATA) type ref to DATA .
-  class-methods GET_FIRST_N_CHARS
-    importing
-      !IV_STRING type CLIKE
-      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
-    returning
-      value(RV_FIRST_N_CHARACTERS) type STRING .
   class-methods GET_LAST_N_CHARS
     importing
       !IV_STRING type CLIKE
       value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
     returning
       value(RV_LAST_N_CHARACTERS) type STRING .
+  class-methods GET_FIRST_N_CHARS
+    importing
+      !IV_STRING type CLIKE
+      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
+    returning
+      value(RV_FIRST_N_CHARACTERS) type STRING .
   class-methods GET_START_TOKEN
     importing
       !IV_SQL type CLIKE
@@ -96,16 +106,16 @@ public section.
       !IV_TABLE_NAME type CLIKE
     returning
       value(RV_TRANSPARENT_TABLE_EXISTS) type ABAP_BOOL .
-  class-methods IS_NUMBER
-    importing
-      !I_VARIABLE type ANY
-    returning
-      value(RV_IS_NUMBER) type ABAP_BOOL .
   class-methods IS_CHAR
     importing
       !I_VARIABLE type ANY
     returning
       value(RV_IS_CHAR) type ABAP_BOOL .
+  class-methods IS_NUMBER
+    importing
+      !I_VARIABLE type ANY
+    returning
+      value(RV_IS_NUMBER) type ABAP_BOOL .
   class-methods IS_STRUCTURE
     importing
       !I_VARIABLE type ANY
@@ -504,6 +514,29 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
       EXPORTING
         t100_message = ls_t100_msg.
   ENDMETHOD.
+
+
+  method RAISE_EXCEPTION_WITH_TEXT.
+
+    TYPES: BEGIN OF ty_parts_by_50_chars,
+             part1 TYPE char50,
+             part2 TYPE char50,
+             part3 TYPE char50,
+             part4 TYPE char50,
+           END OF ty_parts_by_50_chars.
+
+    DATA: ls_parts TYPE ty_parts_by_50_chars.
+
+    ls_parts = iv_text.
+
+    MESSAGE e000(clhp) WITH ls_parts-part1 ls_parts-part2 ls_parts-part3 ls_parts-part4 INTO dummy.
+    raise_exception_from_sy_msg( ).
+  endmethod.
+
+
+  method RAISE_FROM_ANY_EXCEPTION.
+    raise_exception_with_text( ix_root->get_text( ) ).
+  endmethod.
 
 
   method RAISE_IF_TRANSP_TAB_NOT_EXIST.

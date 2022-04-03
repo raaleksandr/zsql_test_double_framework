@@ -15,7 +15,21 @@ CLASS ltc_cases_for_select_real DEFINITION FOR TESTING
   INHERITING FROM ltc_cases_for_select.
 
   PUBLIC SECTION.
-    METHODS: view_user_addr REDEFINITION.
+    METHODS: view_user_addr REDEFINITION,
+      error_equal_and_range_in_par REDEFINITION.
+
+  PROTECTED SECTION.
+    METHODS: insert_test_data REDEFINITION.
+  PRIVATE SECTION.
+    DATA: mo_test_environment TYPE REF TO zif_zosql_test_environment.
+
+    METHODS: setup.
+ENDCLASS.
+
+CLASS ltc_cases_for_select_740_real DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS
+  INHERITING FROM ltc_cases_for_select_740.
 
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
@@ -42,6 +56,19 @@ CLASS ltc_cases_for_update_real DEFINITION FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS
   INHERITING FROM ltc_cases_for_update.
+
+  PROTECTED SECTION.
+    METHODS: insert_test_data REDEFINITION.
+  PRIVATE SECTION.
+    DATA: mo_test_environment TYPE REF TO zif_zosql_test_environment.
+
+    METHODS: setup.
+ENDCLASS.
+
+CLASS ltc_cases_for_update_740_real DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS
+  INHERITING FROM ltc_cases_for_update_740.
 
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
@@ -131,6 +158,32 @@ CLASS ltc_cases_for_select_real IMPLEMENTATION.
   METHOD view_user_addr.
     " Don't test for real database
   ENDMETHOD.
+
+  METHOD error_equal_and_range_in_par.
+
+    DATA: lx_error TYPE REF TO zcx_zosql_error.
+
+    TRY.
+        super->error_equal_and_range_in_par( ).
+        cl_aunit_assert=>fail( 'Exception should be raised' ).
+      CATCH zcx_zosql_error INTO lx_error.
+        "success
+      CATCH cx_root.
+        cl_aunit_assert=>fail( 'Exception zcx_zosql_error should be raised' ).
+    ENDTRY.
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_cases_for_select_740_real IMPLEMENTATION.
+  METHOD setup.
+    lcl_utils_for_unittests=>clear_test_tables( ).
+    f_cut = lcl_utils_for_unittests=>get_f_cut( ).
+  ENDMETHOD.
+
+  METHOD insert_test_data.
+    lcl_utils_for_unittests=>insert_test_data( it_table      = it_table
+                                               iv_table_name = iv_table_name ).
+  ENDMETHOD.
 ENDCLASS.
 
 CLASS ltc_cases_for_insert_real IMPLEMENTATION.
@@ -146,6 +199,18 @@ CLASS ltc_cases_for_insert_real IMPLEMENTATION.
 ENDCLASS.
 
 CLASS ltc_cases_for_update_real IMPLEMENTATION.
+  METHOD setup.
+    lcl_utils_for_unittests=>clear_test_tables( ).
+    f_cut = lcl_utils_for_unittests=>get_f_cut( ).
+  ENDMETHOD.
+
+  METHOD insert_test_data.
+    lcl_utils_for_unittests=>insert_test_data( it_table      = it_table
+                                               iv_table_name = iv_table_name ).
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_cases_for_update_740_real IMPLEMENTATION.
   METHOD setup.
     lcl_utils_for_unittests=>clear_test_tables( ).
     f_cut = lcl_utils_for_unittests=>get_f_cut( ).

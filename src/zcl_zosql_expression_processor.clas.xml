@@ -231,6 +231,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
+     <CMPNAME>_RAISE_IF_RIGHT_OPERAND_RANGE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if right operand is range and raises error if true</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
      <CMPNAME>_TRY_TO_GET_PARAMETER_NAME</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Tries to return parameter name if value is parameter</DESCRIPT>

@@ -138,6 +138,11 @@ private section.
   methods _INIT_LIKE
     importing
       !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
+  methods _RAISE_IF_RIGHT_OPERAND_RANGE
+    importing
+      !IV_RIGHT_OPERAND type ANY
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _TRY_TO_GET_PARAMETER_NAME
     importing
       !IS_OPERAND type TY_FIELD
@@ -566,6 +571,8 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
     DATA: lv_operation TYPE string.
 
+    _raise_if_right_operand_range( iv_value_right ).
+
     _raise_if_cannot_compare_vals( i_first_value  = iv_value_left
                                    i_second_value = iv_value_right ).
 
@@ -927,9 +934,16 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
     ASSIGN ld_copy_of_first->* TO <lv_copy_of_first>.
     ASSIGN ld_copy_of_second->* TO <lv_copy_of_second>.
 
+    IF zcl_zosql_utils=>is_internal_table( <lv_copy_of_second> ) = abap_true
+      AND zcl_zosql_utils=>is_internal_table( i_first_value ) <> abap_true.
+
+      MESSAGE e085 WITH i_first_value INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+
     TRY.
       <lv_copy_of_second> = i_first_value.
-      <lv_copy_of_first> = i_second_value.
+      <lv_copy_of_first>  = i_second_value.
     CATCH cx_root.
       lv_first_as_string = i_first_value.
       CONDENSE lv_first_as_string.
@@ -939,6 +953,14 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
       MESSAGE e078 WITH lv_first_as_string lv_second_as_string INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDTRY.
+  endmethod.
+
+
+  method _RAISE_IF_RIGHT_OPERAND_RANGE.
+    IF zcl_zosql_utils=>is_internal_table( iv_right_operand ) = abap_true.
+      MESSAGE e086 WITH ms_right_operand-parameter_info-param_name_in_select INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
   endmethod.
 
 

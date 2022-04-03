@@ -43,7 +43,7 @@ me->T100_MESSAGE = T100_MESSAGE .
 
 
   METHOD IF_MESSAGE~GET_TEXT.
-    IF t100_message-msgid IS NOT INITIAL AND t100_message-msgno IS NOT INITIAL.
+    IF t100_message-msgid IS NOT INITIAL.
 
       IF t100_message-msgty NA 'SIWEAX'.
         t100_message-msgty = 'E'.
