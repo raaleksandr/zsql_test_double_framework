@@ -844,170 +844,177 @@ endmethod.
 
   METHOD _execute_select.
 
-    DATA: lv_order_by_primary_key TYPE abap_bool.
+    DATA: lv_order_by_primary_key TYPE abap_bool,
+          lx_exception            TYPE REF TO cx_root.
 
     lv_order_by_primary_key = _if_order_by_primary_key( iv_order_by ).
 
-    IF iv_new_syntax = abap_true.
+    TRY.
 
-      " Dynamic call for backward compatibility with older versions
-      CALL METHOD ('ZCL_ZOSQL_UTILS_740')=>('EXECUTE_SELECT_740')
-        EXPORTING
-          iv_select                     = iv_select
-          iv_from                       = iv_from
-          iv_where                      = iv_where
-          iv_group_by                   = iv_group_by
-          iv_having                     = iv_having
-          iv_order_by                   = iv_order_by
-          iv_distinct                   = iv_distinct
-          it_for_all_entries_table      = it_for_all_entries_table
-          is_dynamic_struct_with_params = is_dynamic_struct_with_params
-          iv_do_into_corresponding      = iv_do_into_corresponding
-          iv_number_of_rows_to_select   = iv_number_of_rows_to_select
-        IMPORTING
-          et_result_table               = et_result_table.
+        IF iv_new_syntax = abap_true.
 
-      RETURN.
-    ENDIF.
+          " Dynamic call for backward compatibility with older versions
+          CALL METHOD ('ZCL_ZOSQL_UTILS_740')=>('EXECUTE_SELECT_740')
+            EXPORTING
+              iv_select                     = iv_select
+              iv_from                       = iv_from
+              iv_where                      = iv_where
+              iv_group_by                   = iv_group_by
+              iv_having                     = iv_having
+              iv_order_by                   = iv_order_by
+              iv_distinct                   = iv_distinct
+              it_for_all_entries_table      = it_for_all_entries_table
+              is_dynamic_struct_with_params = is_dynamic_struct_with_params
+              iv_do_into_corresponding      = iv_do_into_corresponding
+              iv_number_of_rows_to_select   = iv_number_of_rows_to_select
+            IMPORTING
+              et_result_table               = et_result_table.
 
-    IF it_for_all_entries_table IS NOT INITIAL.
-
-      IF iv_order_by IS NOT INITIAL.
-        MESSAGE e051 INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-      ENDIF.
-
-      IF iv_group_by IS NOT INITIAL.
-        MESSAGE e052 INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-      ENDIF.
-
-      IF iv_distinct = abap_true.
-
-        IF iv_do_into_corresponding = abap_true.
-          SELECT DISTINCT (iv_select)
-            FROM (iv_from)
-            INTO CORRESPONDING FIELDS OF TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            FOR ALL ENTRIES IN it_for_all_entries_table
-            WHERE (iv_where).
-        ELSE.
-          SELECT DISTINCT (iv_select)
-            FROM (iv_from)
-            INTO TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            FOR ALL ENTRIES IN it_for_all_entries_table
-            WHERE (iv_where).
+          RETURN.
         ENDIF.
-      ELSE.
 
-        IF iv_do_into_corresponding = abap_true.
-          SELECT (iv_select)
-            FROM (iv_from)
-            INTO CORRESPONDING FIELDS OF TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            FOR ALL ENTRIES IN it_for_all_entries_table
-            WHERE (iv_where).
-        ELSE.
-          SELECT (iv_select)
-            FROM (iv_from)
-            INTO TABLE et_result_table
-            UP TO iv_number_of_rows_to_select ROWS
-            FOR ALL ENTRIES IN it_for_all_entries_table
-            WHERE (iv_where).
-        ENDIF.
-      ENDIF.
-    ELSE.
+        IF it_for_all_entries_table IS NOT INITIAL.
 
-      IF iv_distinct = abap_true.
+          IF iv_order_by IS NOT INITIAL.
+            MESSAGE e051 INTO zcl_zosql_utils=>dummy.
+            zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+          ENDIF.
 
-        IF iv_do_into_corresponding = abap_true.
+          IF iv_group_by IS NOT INITIAL.
+            MESSAGE e052 INTO zcl_zosql_utils=>dummy.
+            zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+          ENDIF.
 
-          IF lv_order_by_primary_key = abap_true.
-            SELECT DISTINCT (iv_select)
-              FROM (iv_from)
-              INTO CORRESPONDING FIELDS OF TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY PRIMARY KEY.
+          IF iv_distinct = abap_true.
+
+            IF iv_do_into_corresponding = abap_true.
+              SELECT DISTINCT (iv_select)
+                FROM (iv_from)
+                INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                UP TO iv_number_of_rows_to_select ROWS
+                FOR ALL ENTRIES IN it_for_all_entries_table
+                WHERE (iv_where).
+            ELSE.
+              SELECT DISTINCT (iv_select)
+                FROM (iv_from)
+                INTO TABLE et_result_table
+                UP TO iv_number_of_rows_to_select ROWS
+                FOR ALL ENTRIES IN it_for_all_entries_table
+                WHERE (iv_where).
+            ENDIF.
           ELSE.
-            SELECT DISTINCT (iv_select)
-              FROM (iv_from)
-              INTO CORRESPONDING FIELDS OF TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY (iv_order_by).
+
+            IF iv_do_into_corresponding = abap_true.
+              SELECT (iv_select)
+                FROM (iv_from)
+                INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                UP TO iv_number_of_rows_to_select ROWS
+                FOR ALL ENTRIES IN it_for_all_entries_table
+                WHERE (iv_where).
+            ELSE.
+              SELECT (iv_select)
+                FROM (iv_from)
+                INTO TABLE et_result_table
+                UP TO iv_number_of_rows_to_select ROWS
+                FOR ALL ENTRIES IN it_for_all_entries_table
+                WHERE (iv_where).
+            ENDIF.
           ENDIF.
         ELSE.
-          IF lv_order_by_primary_key = abap_true.
-            SELECT DISTINCT (iv_select)
-              FROM (iv_from)
-              INTO TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY PRIMARY KEY.
-          ELSE.
-            SELECT DISTINCT (iv_select)
-              FROM (iv_from)
-              INTO TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY (iv_order_by).
-          ENDIF.
-        ENDIF.
-      ELSE.
-        IF iv_do_into_corresponding = abap_true.
 
-          IF lv_order_by_primary_key = abap_true.
-            SELECT (iv_select)
-              FROM (iv_from)
-              INTO CORRESPONDING FIELDS OF TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY PRIMARY KEY.
+          IF iv_distinct = abap_true.
+
+            IF iv_do_into_corresponding = abap_true.
+
+              IF lv_order_by_primary_key = abap_true.
+                SELECT DISTINCT (iv_select)
+                  FROM (iv_from)
+                  INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY PRIMARY KEY.
+              ELSE.
+                SELECT DISTINCT (iv_select)
+                  FROM (iv_from)
+                  INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY (iv_order_by).
+              ENDIF.
+            ELSE.
+              IF lv_order_by_primary_key = abap_true.
+                SELECT DISTINCT (iv_select)
+                  FROM (iv_from)
+                  INTO TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY PRIMARY KEY.
+              ELSE.
+                SELECT DISTINCT (iv_select)
+                  FROM (iv_from)
+                  INTO TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY (iv_order_by).
+              ENDIF.
+            ENDIF.
           ELSE.
-            SELECT (iv_select)
-              FROM (iv_from)
-              INTO CORRESPONDING FIELDS OF TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY (iv_order_by).
-          ENDIF.
-        ELSE.
-          IF lv_order_by_primary_key = abap_true.
-            SELECT (iv_select)
-              FROM (iv_from)
-              INTO TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY PRIMARY KEY.
-          ELSE.
-            SELECT (iv_select)
-              FROM (iv_from)
-              INTO TABLE et_result_table
-              UP TO iv_number_of_rows_to_select ROWS
-              WHERE (iv_where)
-              GROUP BY (iv_group_by)
-              HAVING (iv_having)
-              ORDER BY (iv_order_by).
+            IF iv_do_into_corresponding = abap_true.
+
+              IF lv_order_by_primary_key = abap_true.
+                SELECT (iv_select)
+                  FROM (iv_from)
+                  INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY PRIMARY KEY.
+              ELSE.
+                SELECT (iv_select)
+                  FROM (iv_from)
+                  INTO CORRESPONDING FIELDS OF TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY (iv_order_by).
+              ENDIF.
+            ELSE.
+              IF lv_order_by_primary_key = abap_true.
+                SELECT (iv_select)
+                  FROM (iv_from)
+                  INTO TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY PRIMARY KEY.
+              ELSE.
+                SELECT (iv_select)
+                  FROM (iv_from)
+                  INTO TABLE et_result_table
+                  UP TO iv_number_of_rows_to_select ROWS
+                  WHERE (iv_where)
+                  GROUP BY (iv_group_by)
+                  HAVING (iv_having)
+                  ORDER BY (iv_order_by).
+              ENDIF.
+            ENDIF.
           ENDIF.
         ENDIF.
-      ENDIF.
-    ENDIF.
+
+      CATCH cx_root INTO lx_exception.
+        zcl_zosql_utils=>raise_from_any_exception( lx_exception ).
+    ENDTRY.
   ENDMETHOD.
 
 

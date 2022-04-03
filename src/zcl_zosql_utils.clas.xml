@@ -154,6 +154,18 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>RAISE_EXCEPTION_WITH_TEXT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception with certain error text</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>RAISE_FROM_ANY_EXCEPTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception zcx_zosql_error from any other exception</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>RAISE_IF_TRANSP_TAB_NOT_EXIST</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Check if there exists transparent table with such name</DESCRIPT>
