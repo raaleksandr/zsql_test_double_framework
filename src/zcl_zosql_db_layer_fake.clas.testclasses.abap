@@ -21,8 +21,6 @@ CLASS ltc_cases_for_select_fake DEFINITION FOR TESTING
 *?</TESTCLASS_OPTIONS>
 *?</asx:values>
 *?</asx:abap>
-  PUBLIC SECTION.
-    METHODS: error_equal_and_range_in_par REDEFINITION.
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
   PRIVATE SECTION.
@@ -36,6 +34,8 @@ CLASS ltc_cases_for_select_740_fake DEFINITION FOR TESTING
   RISK LEVEL HARMLESS
   INHERITING FROM ltc_cases_for_select_740.
 
+  PUBLIC SECTION.
+    METHODS: error_equal_and_range_in_par REDEFINITION.
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
   PRIVATE SECTION.
@@ -183,6 +183,17 @@ CLASS ltc_cases_for_select_fake IMPLEMENTATION.
     mo_test_environment->insert_test_data( it_table      = it_table
                                            iv_table_name = iv_table_name ).
   ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_cases_for_select_740_fake IMPLEMENTATION.
+  METHOD setup.
+    mo_test_environment = zcl_zosql_test_environment=>create( ).
+    f_cut ?= mo_test_environment->get_db_layer_for_unit_tests( ).
+  ENDMETHOD.
+  METHOD insert_test_data.
+    mo_test_environment->insert_test_data( it_table      = it_table
+                                           iv_table_name = iv_table_name ).
+  ENDMETHOD.
   METHOD error_equal_and_range_in_par.
 
     DATA: lo_error       TYPE REF TO zcx_zosql_error,
@@ -198,17 +209,6 @@ CLASS ltc_cases_for_select_fake IMPLEMENTATION.
     CATCH cx_root.
       cl_aunit_assert=>fail( 'Exception zcx_zosql_error should be raised' ).
     ENDTRY.
-  ENDMETHOD.
-ENDCLASS.
-
-CLASS ltc_cases_for_select_740_fake IMPLEMENTATION.
-  METHOD setup.
-    mo_test_environment = zcl_zosql_test_environment=>create( ).
-    f_cut ?= mo_test_environment->get_db_layer_for_unit_tests( ).
-  ENDMETHOD.
-  METHOD insert_test_data.
-    mo_test_environment->insert_test_data( it_table      = it_table
-                                           iv_table_name = iv_table_name ).
   ENDMETHOD.
 ENDCLASS.
 

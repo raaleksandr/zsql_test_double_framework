@@ -98,8 +98,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       subquery_in FOR TESTING RAISING zcx_zosql_error,
       subquery_not_in FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
-      view_user_addr FOR TESTING RAISING zcx_zosql_error,
-      error_equal_and_range_in_par FOR TESTING RAISING zcx_zosql_error.
+      view_user_addr FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -118,7 +117,8 @@ CLASS ltc_cases_for_select_740 DEFINITION ABSTRACT FOR TESTING
       select_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_not_exists_subquery FOR TESTING RAISING zcx_zosql_error,
       select_subquery_where_eq FOR TESTING RAISING zcx_zosql_error,
-      select_subquery_all FOR TESTING RAISING zcx_zosql_error.
+      select_subquery_all FOR TESTING RAISING zcx_zosql_error,
+      error_equal_and_range_in_par FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -520,6 +520,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE3_1'.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1516,6 +1518,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'SOME_TEXT1'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -2222,6 +2226,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     APPEND 'KEY2' TO lt_expected_table.
     APPEND 'KEY3' TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -4577,78 +4583,6 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
   ENDMETHOD.
-
-  METHOD error_equal_and_range_in_par.
-    DATA: ls_line          TYPE zosql_for_tst,
-          lt_initial_table TYPE TABLE OF zosql_for_tst.
-
-    " GIVEN
-    ls_line-mandt       = sy-mandt.
-    ls_line-key_field   = 'KEY1'.
-    ls_line-text_field1 = 'VALUE1_1'.
-    ls_line-text_field2 = 'VALUE1_2'.
-    APPEND ls_line TO lt_initial_table.
-
-    ls_line-mandt       = sy-mandt.
-    ls_line-key_field   = 'KEY2'.
-    ls_line-text_field1 = 'VALUE2_1'.
-    ls_line-text_field2 = 'VALUE2_2'.
-    APPEND ls_line TO lt_initial_table.
-
-    ls_line-mandt       = sy-mandt.
-    ls_line-key_field   = 'KEY3'.
-    ls_line-text_field1 = 'VALUE3_1'.
-    ls_line-text_field2 = 'VALUE3_2'.
-    APPEND ls_line TO lt_initial_table.
-
-    insert_test_data( it_table = lt_initial_table ).
-
-    DATA: lv_select  TYPE string.
-
-    DATA: lt_params           TYPE zosql_db_layer_params,
-          ls_param            TYPE zosql_db_layer_param,
-          ls_param_range_line TYPE zosql_db_layer_range_line.
-
-    ls_param-param_name_in_select = ':TEXT_FIELD'.
-    ls_param_range_line-sign   = 'I'.
-    ls_param_range_line-option = 'EQ'.
-    ls_param_range_line-low    = 'VALUE1_1'.
-    APPEND ls_param_range_line TO ls_param-parameter_value_range.
-
-    ls_param_range_line-low    = 'VALUE3_1'.
-    APPEND ls_param_range_line TO ls_param-parameter_value_range.
-    APPEND ls_param TO lt_params.
-
-    CONCATENATE 'SELECT *'
-      'FROM zosql_for_tst'
-      'WHERE TEXT_FIELD1 = :TEXT_FIELD'
-      INTO lv_select SEPARATED BY space.
-
-    " WHEN
-    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
-
-    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
-                                     it_parameters   = lt_params
-                           IMPORTING et_result_table = lt_result_table ).
-
-    " THEN
-    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
-          ls_expected_line  TYPE zosql_for_tst.
-
-    ls_expected_line-mandt       = sy-mandt.
-    ls_expected_line-key_field   = 'KEY1'.
-    ls_expected_line-text_field1 = 'VALUE1_1'.
-    ls_expected_line-text_field2 = 'VALUE1_2'.
-    APPEND ls_expected_line TO lt_expected_table.
-
-    ls_expected_line-mandt       = sy-mandt.
-    ls_expected_line-key_field   = 'KEY3'.
-    ls_expected_line-text_field1 = 'VALUE3_1'.
-    ls_expected_line-text_field2 = 'VALUE3_2'.
-    APPEND ls_expected_line TO lt_expected_table.
-
-    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
-  ENDMETHOD.
 ENDCLASS.
 
 CLASS ltc_cases_for_select_740 IMPLEMENTATION.
@@ -5069,6 +5003,82 @@ CLASS ltc_cases_for_select_740 IMPLEMENTATION.
     DATA: lt_expected_table TYPE TABLE OF ty_result.
 
     APPEND 'KEY2' TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD error_equal_and_range_in_par.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " Here is no new syntax but in systems lower 7.40 in real database mode
+    " it falls into not catchable dump unlike 7.40 and higher
+    " That's whe the test was moved to 7.40+ group
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select  TYPE string.
+
+    DATA: lt_params           TYPE zosql_db_layer_params,
+          ls_param            TYPE zosql_db_layer_param,
+          ls_param_range_line TYPE zosql_db_layer_range_line.
+
+    ls_param-param_name_in_select = ':TEXT_FIELD'.
+    ls_param_range_line-sign   = 'I'.
+    ls_param_range_line-option = 'EQ'.
+    ls_param_range_line-low    = 'VALUE1_1'.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+
+    ls_param_range_line-low    = 'VALUE3_1'.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+    APPEND ls_param TO lt_params.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE TEXT_FIELD1 = :TEXT_FIELD'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                                     it_parameters   = lt_params
+                           IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'VALUE1_1'.
+    ls_expected_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'VALUE3_1'.
+    ls_expected_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
