@@ -15,8 +15,7 @@ CLASS ltc_cases_for_select_real DEFINITION FOR TESTING
   INHERITING FROM ltc_cases_for_select.
 
   PUBLIC SECTION.
-    METHODS: view_user_addr REDEFINITION,
-      error_equal_and_range_in_par REDEFINITION.
+    METHODS: view_user_addr REDEFINITION.
 
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
@@ -31,8 +30,11 @@ CLASS ltc_cases_for_select_740_real DEFINITION FOR TESTING
   RISK LEVEL HARMLESS
   INHERITING FROM ltc_cases_for_select_740.
 
+  PUBLIC SECTION.
+    METHODS: error_equal_and_range_in_par REDEFINITION.
   PROTECTED SECTION.
     METHODS: insert_test_data REDEFINITION.
+
   PRIVATE SECTION.
     DATA: mo_test_environment TYPE REF TO zif_zosql_test_environment.
 
@@ -158,6 +160,18 @@ CLASS ltc_cases_for_select_real IMPLEMENTATION.
   METHOD view_user_addr.
     " Don't test for real database
   ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_cases_for_select_740_real IMPLEMENTATION.
+  METHOD setup.
+    lcl_utils_for_unittests=>clear_test_tables( ).
+    f_cut = lcl_utils_for_unittests=>get_f_cut( ).
+  ENDMETHOD.
+
+  METHOD insert_test_data.
+    lcl_utils_for_unittests=>insert_test_data( it_table      = it_table
+                                               iv_table_name = iv_table_name ).
+  ENDMETHOD.
 
   METHOD error_equal_and_range_in_par.
 
@@ -171,18 +185,6 @@ CLASS ltc_cases_for_select_real IMPLEMENTATION.
       CATCH cx_root.
         cl_aunit_assert=>fail( 'Exception zcx_zosql_error should be raised' ).
     ENDTRY.
-  ENDMETHOD.
-ENDCLASS.
-
-CLASS ltc_cases_for_select_740_real IMPLEMENTATION.
-  METHOD setup.
-    lcl_utils_for_unittests=>clear_test_tables( ).
-    f_cut = lcl_utils_for_unittests=>get_f_cut( ).
-  ENDMETHOD.
-
-  METHOD insert_test_data.
-    lcl_utils_for_unittests=>insert_test_data( it_table      = it_table
-                                               iv_table_name = iv_table_name ).
   ENDMETHOD.
 ENDCLASS.
 
