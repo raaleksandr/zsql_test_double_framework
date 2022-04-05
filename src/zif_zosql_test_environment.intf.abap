@@ -39,5 +39,4 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
       !IV_TABLE_NAME type CLIKE
     returning
       value(RD_REF_TO_DATA) type ref to DATA .
-  methods CLEAR_UPDATE_COUNTERS .
 endinterface.

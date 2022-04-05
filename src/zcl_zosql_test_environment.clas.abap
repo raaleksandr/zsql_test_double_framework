@@ -15,6 +15,7 @@ public section.
   methods CONSTRUCTOR
     importing
       !IO_FACTORY type ref to ZIF_ZOSQL_FACTORY optional .
+  methods CLEAR_UPDATE_COUNTERS .
 protected section.
 private section.
 
@@ -44,6 +45,21 @@ ENDCLASS.
 
 
 CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
+
+
+  method CLEAR_UPDATE_COUNTERS.
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    CLEAR: zif_zosql_test_environment~count_inserted,
+           zif_zosql_test_environment~count_updated,
+           zif_zosql_test_environment~count_deleted.
+
+    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
+      CLEAR: <ls_virtual_table>-virt_table->count_inserted,
+             <ls_virtual_table>-virt_table->count_updated,
+             <ls_virtual_table>-virt_table->count_deleted.
+    ENDLOOP.
+  endmethod.
 
 
   method CONSTRUCTOR.

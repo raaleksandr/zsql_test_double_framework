@@ -53,6 +53,7 @@ private section.
     mt_cursors TYPE STANDARD TABLE OF ty_cursor WITH KEY cursor_number .
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
 
+  methods _CLEAR_UPDATE_COUNTERS .
   methods _EXECUTE_SQL
     importing
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
@@ -278,7 +279,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
-    mo_zosql_test_environment->clear_update_counters( ).
+
+    _clear_update_counters( ).
+
     mo_zosql_test_environment->insert_test_data( it_table      = it_new_lines
                                                  iv_table_name = iv_table_name ).
 
@@ -433,7 +436,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
-    mo_zosql_test_environment->clear_update_counters( ).
+    _clear_update_counters( ).
     mo_zosql_test_environment->insert_test_data( it_table      = it_lines_for_update
                                                  iv_table_name = iv_table_name ).
 
@@ -464,6 +467,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         APPEND ls_param TO ct_parameters.
       ENDIF.
     ENDLOOP.
+  endmethod.
+
+
+  method _CLEAR_UPDATE_COUNTERS.
+
+    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
+
+    lo_test_environment ?= mo_zosql_test_environment.
+    lo_test_environment->clear_update_counters( ).
   endmethod.
 
 
