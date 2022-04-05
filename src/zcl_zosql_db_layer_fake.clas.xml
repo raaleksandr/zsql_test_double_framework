@@ -40,6 +40,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_CLEAR_UPDATE_COUNTERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Clears counters of updated records in virtual tables</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
      <CMPNAME>_EXECUTE_SQL</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Executes SQL for select, update, delete</DESCRIPT>
