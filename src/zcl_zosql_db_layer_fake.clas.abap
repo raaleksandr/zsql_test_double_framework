@@ -54,6 +54,12 @@ private section.
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
 
   methods _CLEAR_UPDATE_COUNTERS .
+  methods _IS_FAE_ITAB_WITHOUT_STRUCT
+    importing
+      !IA_FOR_ALL_ENTRIES_TAB_LINE type ANY
+      !IV_FIELDNAME_IN_FAE_ITAB type CLIKE
+    returning
+      value(RV_IS_ITAB_WITHOUT_STRUCT) type ABAP_BOOL .
   methods _EXECUTE_SQL
     importing
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
@@ -556,6 +562,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
+  METHOD _is_fae_itab_without_struct.
+    IF zcl_zosql_utils=>is_structure( ia_for_all_entries_tab_line ) <> abap_true
+      AND zcl_zosql_utils=>to_upper_case( iv_fieldname_in_fae_itab ) = 'TABLE_LINE'.
+
+      rv_is_itab_without_struct = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
   METHOD _parse_condition_as_param.
 
     DATA: lv_fieldname_for_all_entries TYPE fieldname.
@@ -565,8 +580,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     SPLIT iv_for_all_entries_param AT '-' INTO zcl_zosql_utils=>dummy lv_fieldname_for_all_entries.
     ASSIGN COMPONENT lv_fieldname_for_all_entries OF STRUCTURE ia_for_all_entries_tab_line TO <lv_value_for_all_entries>.
     IF sy-subrc <> 0.
-      MESSAGE e054 WITH lv_fieldname_for_all_entries INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      IF _is_fae_itab_without_struct( ia_for_all_entries_tab_line = ia_for_all_entries_tab_line
+                                      iv_fieldname_in_fae_itab    = lv_fieldname_for_all_entries ) = abap_true.
+
+        ASSIGN ia_for_all_entries_tab_line TO <lv_value_for_all_entries>.
+      ELSE.
+        MESSAGE e054 WITH lv_fieldname_for_all_entries INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
     ENDIF.
 
     rs_parameter-param_name_in_select   = iv_for_all_entries_param.

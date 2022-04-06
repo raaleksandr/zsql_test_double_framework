@@ -58,6 +58,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_IS_FAE_ITAB_WITHOUT_STRUCT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if for all entries ITAB lines are without structrure</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
      <CMPNAME>_PARSE_CONDITION_AS_PARAM</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parse for all entries condition from where and add to params</DESCRIPT>
