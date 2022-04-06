@@ -94,8 +94,10 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       order_by_2_fields FOR TESTING RAISING zcx_zosql_error,
       order_by_with_join FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
+      for_all_ent_no_struct FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
-      view_user_addr FOR TESTING RAISING zcx_zosql_error.
+      view_user_addr FOR TESTING RAISING zcx_zosql_error,
+      empty_result_ref_to_data FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -4099,6 +4101,71 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
+  METHOD for_all_ent_no_struct.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " Check if for all entries works in case of not structured base table
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lt_base_table_without_struct  TYPE TABLE OF char10.
+
+    APPEND 'KEY2' TO lt_base_table_without_struct.
+    APPEND 'KEY3' TO lt_base_table_without_struct.
+
+    DATA: lv_select TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'FOR ALL ENTRIES IN lt_base_table_without_struct'
+      'WHERE KEY_FIELD = LT_BASE_TABLE_WITHOUT_STRUCT-TABLE_LINE'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select                  = lv_select
+                                     it_for_all_entries_table   = lt_base_table_without_struct
+                           IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    ls_expected_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'VALUE3_1'.
+    ls_expected_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
   METHOD select_from_table_with_include.
 
     DATA: lt_initial_table TYPE TABLE OF zosql_for_tst4,
@@ -4388,6 +4455,26 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_result TO lt_expected_result.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
+  ENDMETHOD.
+
+  METHOD empty_result_ref_to_data.
+
+    DATA: ld_result TYPE REF TO data.
+
+    f_cut->select( EXPORTING iv_select          = 'SELECT * FROM zosql_for_tst'
+                   IMPORTING ed_result_as_table = ld_result ).
+
+    DATA: lo_table      TYPE REF TO cl_abap_tabledescr,
+          lo_struct     TYPE REF TO cl_abap_structdescr,
+          lt_components TYPE cl_abap_structdescr=>component_table.
+
+    lo_table ?= cl_abap_tabledescr=>describe_by_data_ref( ld_result ).
+    lo_struct ?= lo_table->get_table_line_type( ).
+    lt_components = lo_struct->get_components( ).
+    READ TABLE lt_components WITH KEY name = 'KEY_FIELD' TRANSPORTING NO FIELDS.
+    IF sy-subrc <> 0.
+      cl_aunit_assert=>fail( 'No KEY_FIELD field found in internal table when result is empty' ).
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.
 
