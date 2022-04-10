@@ -2448,17 +2448,17 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     lv_cursor = f_cut->open_cursor( lv_select ).
     f_cut->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
-                                                                   iv_package_size = 2
-                                                         IMPORTING et_result_table = lt_result_table1 ).
+                                                iv_package_size = 2
+                                      IMPORTING et_result_table = lt_result_table1 ).
 
     f_cut->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
-                                                                   iv_package_size = 2
-                                                         IMPORTING et_result_table = lt_result_table2 ).
+                                                iv_package_size = 2
+                                      IMPORTING et_result_table = lt_result_table2 ).
 
     f_cut->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
-                                                                   iv_package_size = 2
-                                                         IMPORTING et_result_table = lt_result_table3
-                                                                   ev_subrc        = lv_subrc_after_call3 ).
+                                                iv_package_size = 2
+                                      IMPORTING et_result_table = lt_result_table3
+                                                ev_subrc        = lv_subrc_after_call3 ).
 
     " THEN
     DATA: lt_expected_table1 TYPE TABLE OF zosql_for_tst,

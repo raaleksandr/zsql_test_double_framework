@@ -6,7 +6,6 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
   data COUNT_UPDATED type I read-only .
   data COUNT_DELETED type I read-only .
 
-  methods DESTROY .
   methods CLEAR_ONE_TABLE
     importing
       !IV_TABLE_NAME type CLIKE .
