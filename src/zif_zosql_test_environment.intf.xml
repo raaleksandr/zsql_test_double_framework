@@ -55,12 +55,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZIF_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
-     <CMPNAME>DESTROY</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Free all resources allocated for the test environment</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZIF_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
      <CMPNAME>GET_DATA_OF_TABLE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns data of one virtual database table</DESCRIPT>
