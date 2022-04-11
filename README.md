@@ -60,7 +60,7 @@ Restrictions for versions from 702 to 73x:
 * No SQL subqueries supported
 
 # Examples
-[See more examples here](docs/examples.xml)
+[See more examples here](docs/examples.md)
 
 # More examples  
 More examples you can find in programs inside project:  
