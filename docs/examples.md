@@ -1,4 +1,4 @@
-# Examples
+    # Examples
 ## Examples inside project
 Some examples you can find in programs inside project:
 * ZTESTABLE_DB_EXAMPLE_HELLWORLD - a set of database select examples with some unit tests;
@@ -276,4 +276,209 @@ With Z-SQL Test Double Framework
       lo_db_layer->commit( ).
     ELSE.
       WRITE: ‘Update failed’.
+    ENDIF.
+
+### Update with WHERE condition
+With Open SQL
+
+    UPDATE scarr
+      SET url = ‘http://yycarrier.org’
+      WHERE carrid = ‘YY’.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Update failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: lv_update TYPE string,
+          lv_subrc    TYPE sysubrc.
+
+    CONCATENATE ‘UPDATE scarr’
+      ‘SET url = ‘‘http://yycarrier.org’’’
+      ‘WHERE carrid = ‘‘YY’’’
+      INTO lv_update SEPARATED BY space.
+
+    lv_subrc = lo_db_layer->update( iv_update_statement = lv_update ).
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE: ‘Update failed’.
+    ENDIF.
+
+### Update with bind parameters
+With Open SQL
+
+    DATA: lv_new_url  TYPE string,
+          lv_carrid      TYPE scarr-carrid.
+
+    lv_carrid = ‘YY’.
+    lv_new_url = ‘http://yycarrier.org’.
+
+    UPDATE scarr
+      SET url = lv_new_url
+      WHERE carrid = lv_carrid.
+
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Update failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: lv_new_url  TYPE string,
+          lv_carrid      TYPE scarr-carrid.
+
+    lv_carrid = ‘YY’.
+    lv_new_url = ‘http://yycarrier.org’.
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          lv_update TYPE string.
+
+    ls_param-param_name_in_select = ':NEW_URL'.
+    ls_param-parameter_value_single = lv_new_url.
+    APPEND ls_param TO lt_params.
+
+    ls_param-param_name_in_select = ':CARRID'.
+    ls_param-parameter_value_single = lv_carrid.
+    APPEND ls_param TO lt_params.
+
+    lv_subrc = lo_db_layer->update( iv_update_statement = lv_update
+                                    it_parameters = lt_params ).
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE: ‘Update failed’.
+    ENDIF.
+
+### Modify
+With open SQL
+
+    DATA: ls_mod_carrier TYPE scarr.
+
+    ls_mod_carrier-carrid = ‘YY’.
+    ls_mod_carrier-carrname = ‘New carrier’.
+    ls_mod_carrier-currcode = ‘USD’.
+    MODIFY scarr FROM ls_mod_carrier.
+    COMMIT WORK.
+
+With Z-SQL Test Double Framework
+
+    DATA: ls_mod_carrier TYPE scarr.
+
+    ls_mod_carrier-carrid = ‘YY’.
+    ls_mod_carrier-carrname = ‘New carrier’.
+    ls_mod_carrier-currcode = ‘USD’.
+
+    DATA: lt_mod_lines_scarr TYPE TABLE OF scarr.
+
+    APPEND ls_mod_carrier TO lt_mod_lines_scarr.
+
+    lo_db_layer->modify_by_itab( iv_table_name = 'SCARR'
+                                 it_lines_to_modify = lt_mod_lines_scarr ).
+    lo_db_layer->commit( ).
+
+### Simple delete
+With Open SQL
+
+    DATA: ls_scarr_to_delete TYPE scarr.
+
+    ls_scarr_to_delete-carrid = ‘YY’.
+
+    DELETE scarr FROM ls_scarr_to_delete.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Delete failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: ls_scarr_to_delete TYPE scarr.
+
+    ls_scarr_to_delete-carrid = ‘YY’.
+
+    DATA: lt_scarr_to_delete TYPE TABLE OF scarr,
+          lv_subrc                   TYPE sysubrc.
+
+    APPEND ls_scarr_to_delete TO lt_scarr_to_delete.
+    
+    lv_subrc = lo_db_layer->delete_by_itab( iv_table_name       = ‘SCARR’
+                                            it_lines_for_delete = lt_scarr_to_delete ).
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE ‘Delete failed’.
+    ENDIF.
+
+### Delete with WHERE condition
+With Open SQL
+
+    DELETE FROM scarr
+      WHERE carrid = ‘YY’.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Delete failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: lv_delete TYPE string,
+          lv_subrc  TYPE sysubrc.
+
+    CONCATENATE ‘DELETE FROM scarr’
+      ‘WHERE carrid = ‘‘YY’’’
+      INTO lv_delete SEPARATED BY space.
+
+    lv_subrc = lo_db_layer->delete( lv_delete ).
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE ‘Delete failed’.
+    ENDIF.
+
+### Delete with bind parameters
+With Open SQL
+
+    DATA: lv_carrid_to_delete TYPE scarr-carrid.
+
+    lv_carrid_to_delete = ‘YY’.
+
+    DELETE FROM scarr
+      WHERE carrid = lv_carrid_to_delete.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Delete failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: lv_carrid_to_delete TYPE scarr-carrid.
+
+    lv_carrid_to_delete = ‘YY’.
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          lv_update TYPE string,
+          lv_subrc  TYPE sysubrc.
+
+    ls_param-param_name_in_select = ':CARRID'.
+    ls_param-parameter_value_single = lv_carrid_to_delete.
+    APPEND ls_param TO lt_params.
+
+    CONCATENATE ‘DELETE FROM scarr’
+      ‘WHERE carrid =:CARRID’
+      INTO lv_delete SEPARATED BY SPACE.
+
+    lv_subrc = lo_db_layer->delete( iv_delete_statement = lv_delete
+                                    it_parameters             = lt_params ).
+    IF lv_subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Delete failed’.
     ENDIF.
