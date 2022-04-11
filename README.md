@@ -62,14 +62,5 @@ Restrictions for versions from 702 to 73x:
 # Examples
 [See more examples here](docs/examples.md)
 
-# More examples  
-More examples you can find in programs inside project:  
-ZTESTABLE_DB_EXAMPLE_HELLWORLD - a set of database select examples with some unit tests;  
-ZTESTABLE_DB_EXAMPLE_REP - report with several selects and further data modification before alv output. Also contains unit tests for the report;  
-ZTESTABLE_DB_EXAMPLE_DBCHANGE - example of program that writes data to database. Also contains unit tests.  
-ZTESTABLE_DB_EXAMPLE_REP_INIT - the same as ZTESTABLE_DB_EXAMPLE_REP but it does not use the interface. You can compare these two reports to see the difference between code that uses Z-SQL Test Double Framework and the one written just with regular Open SQL
-
-# Installation
-Library may be installed with ABAP Git.
-If you encounter error with dictionary types activation during 'Pull' of library with abap git please go to se11 and activate all objects manually.
-To ensure library is correctly installed you may run unit tests over the package and check whether tests passed successfully.
+# Reference
+[Go to reference](docs/reference.md)
