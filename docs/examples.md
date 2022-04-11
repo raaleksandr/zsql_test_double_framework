@@ -62,3 +62,218 @@ With Z-SQL Test Double Framework
                                            it_parameters   = lt_params
                                  IMPORTING es_result_line = ls_scarr ).
     lv_carrname = ls_scarr-carrname.
+
+### Select with IN operator
+With open SQL
+
+    DATA: lr_carrid TYPE RANGE OF scarr-carrid,
+          lt_scarr  TYPE TABLE OF scarr.
+
+    FIELD-SYMBOLS: <fs_carrid_line> LIKE LINE OF lr_carrid.
+
+    APPEND INITIAL LINE TO lr_carrid ASSIGNING <fs_carrid>.
+    <fs_carrid_line>-sing = ‘I’.
+    <fs_carrid_line>-option = ‘EQ’.
+    <fs_carrid_line>-low = ‘AB’.
+
+    SELECT * 
+      FROM scarr
+      INTO CORRESPONDING FIELDS OF TABLE lt_scarr
+      WHERE carrid IN lr_carrid.
+
+With Z-SQL Test Double Framework
+
+    DATA: lt_scarr  TYPE TABLE OF scarr.
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          ls_param_range_line TYPE zosql_db_layer_range_line,
+          lv_select TYPE string.
+
+    ls_param-param_name_in_select = ':CARRID_RANGE'.
+    ls_param_range_line-sign = ‘I’.
+    ls_param_range_line-option = ‘EQ’.
+    ls_param_range_line-low = ‘AB’.
+    APPEND ls_param_range_line TO ls_param-param_value_range.
+    APPEND ls_param TO lt_params.
+
+    CONCATENATE 'SELECT carrname'
+      'FROM scarr'
+      'WHERE CARRID IN :CARRID_RANGE'
+      INTO lv_select SEPARATED BY space.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = lv_select
+                                           it_parameters   = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
+
+### Select for all entries
+With Open SQL
+
+    TYPES: BEGIN OF ty_scarr,
+      Carrid TYPE scarr-carrid,
+    END OF ty_scarr.
+
+    DATA: lt_scarr_ids TYPE TABLE OF ty_scarr.
+
+    APPEND ‘AA’ TO lt_scarr_ids.
+    APPEND ‘AB’ TO lt_scarr_ids.
+
+    DATA: lt_scarr TYPE TABLE OF scarr.
+
+    SELECT *
+      FROM scarr
+      INTO CORRESPONDING FIELDS OF TABLE lt_scarr
+      FOR ALL ENTRIES IN lt_scarr_ids
+      WHERE carrid = lt_scarr_ids-carrid.
+
+With Z-SQL Test Double Framework
+
+    TYPES: BEGIN OF ty_scarr,
+      carrid TYPE scarr-carrid,
+    END OF ty_scarr.
+
+    DATA: lt_scarr_ids TYPE TABLE OF ty_scarr.
+
+    APPEND ‘AA’ TO lt_scarr_ids.
+    APPEND ‘AB’ TO lt_scarr_ids.
+
+    DATA: lt_scarr TYPE TABLE OF scarr.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE ‘SELECT *’
+      ‘FROM scarr’
+      ‘FOR ALL ENTRIES IN lt_scarr_ids’
+      ‘WHERE carrid = lt_scarr_ids-carrid’
+      INTO lv_select SEPARATED BY SPACE.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select                = lv_select
+                                           it_for_all_entries_table = lt_scarr_ids
+                                 IMPORTING et_result_table          = lt_scarr ).
+                                 
+### Open cursor / fetch next cursor
+With open SQL
+
+    DATA: lt_sflight_package TYPE TABLE OF sflight,
+          lt_sflight_all     TYPE TABLE OF sflight,
+          lv_package_size    TYPE I,
+          lv_cursor          TYPE cursor.
+
+    lv_package_size = 10.
+
+    OPEN CURSOR lv_cursor WITH
+      SELECT * FROM sflight.
+
+    DO.
+      FETCH NEXT CURSOR lv_cursor
+      INTO CORRESPONDING FIELDS OF TABLE lt_sflight_package
+      PACKAGE SIZE lv_package_size.
+
+      IF sy-subrc = 0.
+        APPEND LINES OF lt_slfight_package TO lt_sflight_all.
+      ELSE.
+        EXIT.
+      ENDIF.
+    ENDDO.
+
+With Z-SQL Test Double Framework
+
+    DATA: lt_sflight_package TYPE TABLE OF sflight,
+          lt_sflight_all     TYPE TABLE OF sflight,
+          lv_package_size    TYPE I,
+          lv_cursor          TYPE cursor,
+          lv_subrc           TYPE sysubrc.
+
+    lv_package_size = 10.
+
+    lv_cursor = go_db_layer->open_cursor( ‘SELECT * FROM sflight’ ).
+
+    DO.
+      go_db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
+                                                        iv_package_size = lv_package_size
+                                              IMPORTING et_result_table = lt_sflight_package
+                                                        ev_subrc        = lv_subrc ).
+
+      IF lv_subrc = 0.
+        APPEND LINES OF lt_slfight_package TO lt_sflight_all.
+      ELSE.
+        EXIT.
+      ENDIF.
+    ENDDO.
+    
+### Insert
+With open SQL
+
+    DATA: ls_new_carrier TYPE scarr.
+
+    ls_new_carrier-carrid = ‘YY’.
+    ls_new_carrier-carrname = ‘New carrier’.
+    ls_new_carrier-currcode = ‘USD’.
+    INSERT scarr FROM ls_new_carrier.
+
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Insert failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: ls_new_carrier TYPE scarr.
+
+    ls_new_carrier-carrid = ‘YY’.
+    ls_new_carrier-carrname = ‘New carrier’.
+    ls_new_carrier-currcode = ‘USD’.
+
+    DATA: lt_new_lines_scarr TYPE TABLE OF scarr.
+
+    APPEND Ls_new_carrier TO lt_new_lines_scarr.
+
+    DATA: lv_subrc TYPE sysubrc.
+    lv_subrc = lo_db_layer-> insert_by_itab( iv_table_name = 'SCARR'
+                                             it_new_lines  = lt_new_lines_scarr ).
+    
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE: ‘Insert failed’.
+    ENDIF.
+    
+### Simple update
+With open SQL
+
+    DATA: ls_updated_carrier TYPE scarr.
+
+    ls_updated_carrier-carrid = ‘YY’.
+    ls_updated_carrier-carrname = ‘New carrier’.
+    ls_updated_carrier-currcode = ‘USD’.
+
+    UPDATE scarr FROM ls_updated_carrier.
+
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ELSE.
+      WRITE ‘Update failed’.
+    ENDIF.
+
+With Z-SQL Test Double Framework
+
+    DATA: ls_new_carrier TYPE scarr.
+
+    ls_new_carrier-carrid = ‘YY’.
+    ls_new_carrier-carrname = ‘New carrier’.
+    ls_new_carrier-currcode = ‘USD’.
+
+    DATA: lt_new_lines_scarr TYPE TABLE OF scarr.
+
+    APPEND ls_new_carrier TO lt_new_lines_scarr.
+    
+    DATA: lv_subrc TYPE sysubrc.
+    
+    lv_subrc = lo_db_layer-> update_by_itab( iv_table_name       = 'SCARR'
+                                             it_lines_for_update = lt_new_lines_scarr ).
+                                             
+    IF lv_subrc = 0.
+      lo_db_layer->commit( ).
+    ELSE.
+      WRITE: ‘Update failed’.
+    ENDIF.
