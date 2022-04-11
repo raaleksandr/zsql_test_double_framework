@@ -371,5 +371,118 @@ Detailed description of SQL select parts see in table below
 |HAVING             |Yes                             |Has the same syntax as in Open SQL.  Bind parameters containing number of rows are also supported. Subqueries are supported with limitation that you must have at least 740 version of SAP Basis.|
 |ORDER BY           |Yes                             |Has the same syntax as in Open SQL|
 
+See [examples](examples.md) of converting Open SQL statements into Z-ZSQL Test Double Framework database layer calls.
 
+### Detailed description of parameter IT_PARAMETERS
+The parameter contains internal table with bind parameters which we need to pass to SQL call.
+Each row describes one bind parameter.
+
+Each line contains fields:
+* PARAM_NAME_IN_SELECT – unique name which must be replaced with parameter value during execution of SQL. During SQL execution database layer will search for the name and replace it’s value with passed one. Name search is not case sensitive. The field is mandatory. 
+* PARAMETER_VALUE_SINGLE – value of parameter in case it is single value
+* PARAMETER_VALUE_RANGE – you can pass range table to use in ‘IN’ SQL conditions
+* PARAMETER_VALUE_REF – ref to value of parameter as alternative to PARAMETER_VALUE_SINGLE
+
+You must fill one of fields PARAMETER_VALUE_REF, PARAMETER_VALUE_RANGE or PARAMETER_VALUE_REF
+
+Example of single value parameter
+
+    ls_param-parameter_name_in_select = ‘:CARRID’.
+    ls_param-parameter_value_single = ‘AA’.
+    APPEND ls_param TO lt_params.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM scarr WHERE carrid = :carrid’
+                                           it_parameters = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
+
+Example of parameter passed as ref to data
+    
+    ls_param-parameter_name_in_select = ‘:CARRID’.
+    
+    CREATE DATA ls_param-parameter_value_ref TYPE S_CARR_ID.
+    ASSIGN ls_param-parameter_value_ref->* TO <scarr>.
+    <scarr> = ‘AA’.
+    
+    APPEND ls_param TO lt_params.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = ‘SELECT * FROM scarr WHERE carrid = :carrid’
+                                           it_parameters   = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
+
+Example of parameters passed as range to perform ‘IN’ comparison
+
+    ls_param-parameter_name_in_select = ‘:CARRID’.
+
+    ls_param_range_line-sign = ‘I’.
+    ls_param_range_line-option = ‘EQ’.
+    ls_param_range_line-low  = ‘AA’.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+
+    ls_param_range_line-sign = ‘I’.
+    ls_param_range_line-option = ‘EQ’.
+    ls_param_range_line-low  = ‘AB’.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
+
+    APPEND ls_param TO lt_params.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+                                           it_parameters   = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
+
+If you use ‘IN’ comparison operator and pass empty range then the condition will be ignored just like in standard Open SQL.
+
+### Detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE
+In order to execute select FOR ALL ENTRIES you need to pass base table in parameter IT_FOR_ALL_ENTRIES_TABLE.
+The table can contain structure but not structured table is also available just like in standard Open SQL.
+
+In select statement string (parameter IV_SELECT) it does not matter how you call the table in FOR ALL ENTRIES. But the name of base table in SELECT must correspond to the one in WHERE clause.
+
+Example of simple select for all entries
+
+    DATA: lt_search_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scarr.
+
+    ls_scarr-carrid = ‘AA’.
+    APPEND ls_scarr TO lt_search_scarr.
+
+    ls_scarr-carrid = ‘AB’.
+    APPEND ls_scarr TO lt_search_scarr.
+
+    DATA: lt_selected_scarr TYPE TABLE OF scarr,
+          lv_select               TYPE string.
+
+    CONCATENATE ‘SELECT * FROM scarr’
+      ‘FOR ALL ENTRIES IN ITAB’
+      ‘WHERE carrid = ITAB-carrid’
+      INTO lv_select SEPARATED BY space.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+                                           it_for_all_entries_table = lt_selected_scarr
+                                 IMPORTING et_result_table = lt_selected_scarr ).
+
+In this example internal table of type SCARR is passed as for all entries base table with the field CARRID filled.
+In select the for all entries table is called ITAB and in where the same name is used in condition:
+carrid = ITAB-carrid
+(upper/lower case does not matter)
+
+Example of select for all entries with not structured base table
+
+    DATA: lt_search_scarr TYPE TABLE OF char3,
+          ls_scarr TYPE scarr.
+
+    APPEND ‘AA’ TO lt_search_scarr.
+
+    APPEND ‘AB’ TO lt_search_scarr.
+
+    DATA: lt_selected_scarr TYPE TABLE OF scarr,
+          lv_select         TYPE string.
+
+    CONCATENATE ‘SELECT * FROM scarr’
+      ‘FOR ALL ENTRIES IN ITAB’
+      ‘WHERE carrid = ITAB-TABLE_LINE’
+      INTO lv_select SEPARATED BY space.
+
+    lo_db_layer->select_to_itab( EXPORTING iv_select                = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+                                           it_for_all_entries_table = lt_selected_scarr
+                                 IMPORTING et_result_table          = lt_selected_scarr ).
 
