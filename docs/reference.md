@@ -340,3 +340,36 @@ Example of delete with parameter
 
     db->delete( iv_delete_statement = ‘DELETE scarr WHERE carrid = :CARRID’
                 it_parameters       = lt_params ).
+
+### Method COMMIT
+Allows to commit changes to database
+
+### Detailed description of parameter IV_SELECT
+This parameter lets you pass SQL statement itself.
+
+Example:
+
+    …
+    IV_SELECT = ‘SELECT * FROM SFLIGHT’
+    …
+
+So the SQL statement which is executed with Z-SQL Test Double Framework layer ZIF_ZOSQL_DB_LAYER is a dynamic SQL statement in fact.
+SQL statement can contain most of usual parts that regular Open SQL select statement has.
+
+Detailed description of SQL select parts see in table below
+
+|SQL Part           |May exist in IV_SELECT parameter|Comments                          |
+|:------------------|:-------------------------------|:---------------------------------|
+|SELECT <field_list>|Yes                             |Has the same syntax as in Open SQL|
+|SINGLE, DISTINCT   |Yes                             |Has the same syntax as in Open SQL|
+|FROM               |Yes                             |Has the same syntax as in Open SQL. Joins are supported including outer joins. Bind parameters in JOIN are also supported|
+|INTO               |No                              |Unlike implicit ‘INTO’ statement in Z-SQL Test Double framework you pass parameter to select method with result table when you call ZIF_ZOSQL_DB_LAYER method that contains IV_SELECT parameter.|
+|UP TO … ROWS       |Yes                             |Has the same syntax as in Open SQL. Bind parameters containing number of rows are also supported|
+|FOR ALL ENTRIES IN |Yes                             |If you want to execute SELECT for all entries you should include ‘FOR ALL ENTRIES IN’ part in select text implicitly. The name of base table in for all entries does not matter because anyway it takes it’s content from parameter IT_FOR_ALL_ENTRIES_TABLE|
+|WHERE              |Yes                             |Has the same syntax as in Open SQL. Bind parameters containing number of rows are also supported. Subqueries are supported with limitation that you must have at least 740 version of SAP Basis.|
+|GROUP BY           |Yes                             |Has the same syntax as in Open SQL|
+|HAVING             |Yes                             |Has the same syntax as in Open SQL.  Bind parameters containing number of rows are also supported. Subqueries are supported with limitation that you must have at least 740 version of SAP Basis.|
+|ORDER BY           |Yes                             |Has the same syntax as in Open SQL|
+
+
+
