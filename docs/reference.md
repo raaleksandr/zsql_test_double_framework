@@ -195,3 +195,148 @@ Example
       APPEND lt_sflight TO lt_sflight_all.
     ENDDO.
 
+### Method INSERT_BY_ITAB
+Allows to insert data into database. Like for all other methods resulting database is either real SAP database in case of production mode or fake database in case of test mode.
+Inserted data is passed as internal table.
+
+Parameters:
+1. IV_TABLE_NAME – table name of transparent table. Parameter is optional. If parameter is omitted then zif_zosql_db_layer tries to guess table name according to the type of internal table with inserted data
+2. IT_NEW_LINES – inserted data as internal table. If IV_TABLE_NAME is empty then zif_zosql_ddb_layer tries to guess table name according to type of this parameter
+3. RV_SUBRC – returns 0 if any record inserted and 4 otherwise
+
+Example
+    DATA: lt_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scar.
+
+    ls_scarr-carrid = ‘YY’.
+    ls_scarr-carrname = ‘Y test carrier’.
+    ls_scarr-currcode = ‘USD’.
+    APPEND ls_scarr TO lt_scarr.
+
+    db->insert_by_itab( lt_scarr ).
+
+### Method UPDATE_BY_ITAB
+Performs UPDATE operation on database table.
+
+Like for all other methods resulting database is either real SAP database in case of production mode or fake database in case of test mode.
+Data to update is passed as internal table.
+
+Parameters:
+1. IV_TABLE_NAME – table name of transparent table. Parameter is optional. If parameter is omitted then zif_zosql_db_layer tries to guess table name according to the type of internal table with inserted data
+2. IT_LINES_FOR_MODIFY – update data as internal table. If IV_TABLE_NAME is empty then zif_zosql_ddb_layer tries to guess table name according to type of this parameter
+3. RV_SUBRC – returns 0 if any record updated and 4 otherwise
+
+Example
+
+    DATA: lt_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scar.
+
+    ls_scarr-carrid = ‘YY’.
+    ls_scarr-carrname = ‘Y test carrier’.
+    ls_scarr-currcode = ‘USD’.
+    APPEND ls_scarr TO lt_scarr.
+
+    db->modify_by_itab( iv_table_name       = ‘SCARR’
+                        it_lines_for_modify = lt_scarr ).
+                        
+### Method MODIFY_BY_ITAB
+Performs MODIFY operation on database table.
+Like for all other methods resulting database is either real SAP database in case of production mode or fake database in case of test mode.
+Data to modify is passed as internal table.
+
+Parameters:
+1. IV_TABLE_NAME – table name of transparent table. Parameter is optional. If parameter is omitted then zif_zosql_db_layer tries to guess table name according to the type of internal table with inserted data
+2. IT_LINES_FOR_MODIFY – update data as internal table. If IV_TABLE_NAME is empty then zif_zosql_ddb_layer tries to guess table name according to type of this parameter
+
+Example
+    DATA: lt_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scar.
+
+    ls_scarr-carrid = ‘YY’.
+    ls_scarr-carrname = ‘Y test carrier’.
+    ls_scarr-currcode = ‘USD’.
+    APPEND ls_scarr TO lt_scarr.
+
+    db->modify_by_itab( iv_table_name       = ‘SCARR’
+                        it_lines_for_modify = lt_scarr ).
+
+### Method DELETE_BY_ITAB
+Performs DELETE operation on database table.
+Like for all other methods resulting database is either real SAP database in case of production mode or fake database in case of test mode.
+Data to modify is passed as internal table. Only key fields of corresponding database (transparent) table are taken into account.
+Parameters:
+1. IV_TABLE_NAME – table name of transparent table. Parameter is optional. If parameter is omitted then zif_zosql_db_layer tries to guess table name according to the type of internal table with inserted data
+2. IT_LINES_FOR_DELETE –internal table of rows which are necessary to delete. If IV_TABLE_NAME is empty then zif_zosql_ddb_layer tries to guess table name according to type of this parameter
+3. RV_SUBRC – returns 0 if any record deleted and 4 otherwise
+
+Example
+
+    DATA: lt_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scar.
+
+    ls_scarr-carrid = ‘YY’.
+    APPEND ls_scarr TO lt_scarr.
+
+    db->delete_by_itab( iv_table_name       = ‘SCARR’
+                        it_lines_for_delete = lt_scarr ).
+
+### Method UPDATE
+Allows execution of SQL Update statement passed as dynamic SQL query.
+It supports Open SQL syntax with possibility of passing bind parameters.
+
+Parameters:
+1. IV_UPDATE_STATEMENT – text of Update Open SQL statement
+2. IT_PARAMETERS – lets to pass bind variables to SQL statement
+ 
+You can get more information in detailed description of parameter IT_PARAMETERS (TODO)
+3. RV_SUBRC – returns 0 if any record updated and 4 otherwise
+
+Example of simple update
+
+    db->update( iv_update_statement = ‘UPDATE scarr SET carrname = ‘‘New name’’ WHERE carrid = ‘‘AA’’’ ).
+
+Example of update with parameter
+
+    ls_param-parameter_name_in_select = ‘:CARRID’.
+    ls_param-parameter_value_single = ‘AA’.
+    APPEND ls_param TO lt_params.
+
+    DATA: lv_update_statement TYPE string.
+
+    CONCATENATE ‘UPDATE scarr’
+      ‘SET carrname = ‘’New name’’’
+      ‘WHERE carrid = :CARRID’
+      INTO lv_update_statement SEPARATED BY space.
+
+    db->update( iv_update_statement = lv_update_statement
+                it_parameters = lt_params ).
+
+### Method DELETE
+Allows execution of SQL Delete statement passed as dynamic SQL query.
+It supports Open SQL syntax with possibility of passing bind parameters.
+
+Parameters:
+1. IV_DELETE_STATEMENT – text of delete Open SQL statement
+2. IT_PARAMETERS – lets to pass bind variables to SQL statement
+
+You can get more information in detailed description of parameter IT_PARAMETERS (TODO)
+3. RV_SUBRC – returns 0 if any record deleted and 4 otherwise
+
+Example of simple delete
+
+    db->delete( iv_update_statement = ‘DELETE scarr WHERE carrid = ‘‘AA’’’ ).
+
+Example of delete with parameter
+
+    ls_param-parameter_name_in_select = ‘:CARRID’.
+    ls_param-parameter_value_single = ‘AA’.
+    APPEND ls_param TO lt_params.
+
+    DATA: lv_delete_statement TYPE string.
+
+    CONCATENATE ‘DELETE scarr’
+      ‘WHERE carrid = :CARRID’
+      INTO lv_delete_statement SEPARATED BY space.
+
+    db->delete( iv_delete_statement = ‘DELETE scarr WHERE carrid = :CARRID’
+                it_parameters       = lt_params ).
