@@ -49,6 +49,19 @@ Code of simple_select form:
                              IMPORTING ed_result_as_table = cd_result ).
     ENDFORM.
   
+# Installation
+The project can be installed with ABAP Git. If you encounter error with dictionary types activation during 'Pull' of library with abap git please go to se11 and activate all objects manually. To ensure library is correctly installed you may run unit tests over the package and check whether tests have passed successfully.
+
+# Requirements
+It requires SAP BASIS version 702 or higher for most of functionality and SAP BASIS version 740 or higher for full functionality.
+
+Restrictions for versions from 702 to 73x:
+* No new 7.40 SQL syntax supported;
+* No SQL subqueries supported
+
+# Examples
+[Test link](src/package.devc.xml)
+
 # More examples  
 More examples you can find in programs inside project:  
 ZTESTABLE_DB_EXAMPLE_HELLWORLD - a set of database select examples with some unit tests;  
