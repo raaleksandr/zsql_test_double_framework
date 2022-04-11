@@ -132,3 +132,66 @@ Parameters:
 5. ET_RESULT_TABLE – target table to return result data. Any internal table can be set to this parameter. The result will be moved as move-corresponding or in field order depending on IV_DO_INTO_CORRESPONDING parameter
 6. ES_RESULT_LINE – returns first line of result dataset
 7. EV_SUBRC – result of select: 0 if at least one row was selected and 4 if no rows selected
+
+### Method OPEN_CURSOR
+Makes it possible to simulate OPEN CURSOR/ FETCH NEXT CURSOR in standard Open SQL.
+Like in Open SQL first you have to call OPEN CURSOR for SELECT SQL statement. Then you make subsequent calls of FETCH_NEXT_CURSOR or FETCH_NEXT_CURSOR_TO_ITAB to get result data in packaged manner.
+
+Parameters:
+1. IV_SELECT – Open SQL statement as string
+
+   You can get more information in detailed description of IV_SELECT parameter (TODO).
+2. IT_PARAMETERS – lets to pass bind variables to SQL statement
+
+   You can get more information in detailed description of parameter IT_PARAMETERS (TODO).
+3. IT_FOR_ALL_ENTRIES_TABLE – lets to pass internal table as base table of FOR ALL ENTIRES SQL statement
+
+   You can get more information in detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE (TODO).
+4. RV_CURSOR – returns cursor identifier that you can use in FETCH_NEXT_CURSOR/FETCH_NEXT_CURSOR_TO_ITAB methods calls
+
+See example in FETCH_NEXT_CURSOR_TO_ITAB method description.
+
+### Method FETCH_NEXT_CURSOR
+Returns necessary rows from cursor which was initialized previously in OPEN_CURSOR method call.
+Unlike SELECT and SELECT_TO_ITAB methods FETCH_NEXT_CURSOR returns limited number of rows by one call. To retrieve all result rows of select you have to make subsequent calls of FETCH_NEXT_CURSOR until data set of cursor finishes.
+
+Parameters:
+1. IV_CURSOR – cursor identifier returned by OPEN_CURSOR
+2. IV_PACKAGE_SIZE – maximum number of rows returned by the method
+3. ED_RESULT_AS_TABLE – result data containing dynamic internal table with result. If current package is the last one it can contain less rows than IV_PACKAGE_SIZE or no rows at all
+4. EV_SUBRC – 0 if any data returned and 4 if no data returned
+
+See example in FETCH_NEXT_CURSOR_TO_ITAB method description.
+
+### Method FETCH_NEXT_CURSOR_TO_ITAB
+The method is almost the same as SELECT but the result is returned into generic table with type ANY TABLE.
+
+Parameters:
+1. IV_CURSOR – cursor identifier returned by OPEN_CURSOR
+2. IV_DO_INTO_CORRESPONDING – if true then result is returned as by SELECT … INTO CORRESPONDING FIELDS OF TABLE. If false then result is returned as by SELECT … INTO TABLE
+3. IV_PACKAGE_SIZE – maximum number of rows returned by the method
+4. ET_RESULT_TABLE – target table to return result data. Any internal table can be set to this parameter. The result will be moved as move-corresponding or in field order depending on IV_DO_INTO_CORRESPONDING parameter
+5. EV_SUBRC – 0 if any data returned and 4 if no data returned
+
+Example
+
+    DATA: lt_sflight TYPE TABLE OF sflight,
+          lt_sflight_all TYPE TABLE OF sflight,
+          lv_cursor TYPE cursor.
+
+    lv_cursor = db->open_cursor( iv_select = ‘SELECT * FROM sflight’ ).
+
+    DATA: lv_subrc TYPE sysubrc.
+
+    DO.
+      db->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
+                                               iv_package_size = 200
+                                     IMPORTING et_result_table = lt_sflight
+                                               ev_subrc        = lv_subrc ).
+      IF lv_subrc <> 0.
+        EXIT.
+      ENDIF.
+
+      APPEND lt_sflight TO lt_sflight_all.
+    ENDDO.
+
