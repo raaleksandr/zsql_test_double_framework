@@ -1,4 +1,21 @@
-    # Examples
+[Back to readme](https://github.com/raaleksandr/zsql_test_double_framework#readme)
+
+[Examples inside project](#Examples-inside-project)
+[Examples of code adaptation for Z-SQL Test Double Framework](#Examples-of-code-adaptation-for-Z-SQL-Test-Double-Framework)
+* [Simple select](#Simple-select)
+* [Select with bind parameter](#Select-with-bind-parameter)
+* [Select with IN operator](#Select-with-IN-operator)
+* [Select for all entries](#Select-for-all-entries)
+* [Open cursor / fetch next cursor](#Open-cursor-/-fetch-next-cursor]
+* [Insert](#Insert)
+* [Simple update](#Simple-update)
+* [Update with WHERE condition](#Update-with-WHERE-condition)
+* [Update with bind parameters](#Update-with-bind-parameters)
+* [Modify](#Modify)
+* [Simple delete](#Simple-delete)
+* [Delete with WHERE condition](#Delete-with-WHERE-condition)
+* [Delete with bind parameter](#Delete-with-bind-parameter)
+
 ## Examples inside project
 Some examples you can find in programs inside project:
 * ZTESTABLE_DB_EXAMPLE_HELLWORLD - a set of database select examples with some unit tests;
@@ -441,7 +458,7 @@ With Z-SQL Test Double Framework
       WRITE ‘Delete failed’.
     ENDIF.
 
-### Delete with bind parameters
+### Delete with bind parameter
 With Open SQL
 
     DATA: lv_carrid_to_delete TYPE scarr-carrid.
