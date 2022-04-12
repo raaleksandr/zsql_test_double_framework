@@ -1,4 +1,4 @@
-[Back to readme.md](/../readme.md)
+[Back to readme.md](#readme)
 
 # Reference
 
