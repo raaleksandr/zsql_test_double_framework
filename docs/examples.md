@@ -211,16 +211,16 @@ With Z-SQL Test Double Framework
 
     lv_package_size = 10.
 
-    lv_cursor = go_db_layer->open_cursor( 'SELECT * FROM sflight' ).
+    lv_cursor = lo_db_layer->open_cursor( 'SELECT * FROM sflight' ).
 
     DO.
-      go_db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
+      lo_db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
                                                         iv_package_size = lv_package_size
                                               IMPORTING et_result_table = lt_sflight_package
                                                         ev_subrc        = lv_subrc ).
 
       IF lv_subrc = 0.
-        APPEND LINES OF lt_slfight_package TO lt_sflight_all.
+        APPEND LINES OF lt_sflight_package TO lt_sflight_all.
       ELSE.
         EXIT.
       ENDIF.
