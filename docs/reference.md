@@ -486,3 +486,90 @@ Example of select for all entries with not structured base table
                                            it_for_all_entries_table = lt_selected_scarr
                                  IMPORTING et_result_table          = lt_selected_scarr ).
 
+## Interface ZIF_ZOSQL_TEST_ENVIRONMENT
+You can use the interface to manipulate virtual database data and to create instance of ZIF_ZOSQL_DB_LAYER for unit test mode.
+If you want to test some database operations with ZIF_ZOSQL_DB_LAYER you may prepare some data in virtual database before with the instance of ZIF_ZOSQL_TEST_ENVIRONMENT interface.
+
+Example:
+
+    DATA: lo_test_environment TYPE REF TO zif_zosql_test_environment.
+
+    lo_test_environment = Zcl_zosql_test_environtment=>create( ).
+    DATA: lt_scarr TYPE TABLE OF scarr,
+          ls_scarr TYPE scarr.
+
+    ls_scarr-carrid = ‘YY’.
+    ls_scarr-carrname = ‘Test carrier’.
+    APPEND ls_scarr TO lt_scarr.
+    
+    lo_test_environment->insert_test_data( lt_scarr ).
+    
+    DATA: lo_db_layer TYPE REF TO zif_zolsq_db_layer.
+
+    lo_db_layer = Lo_test_environment->get_db_layer_for_unit_tests( ).
+    
+    DATA: lt_scarr_selected TYPE TABLE OF scarr.
+    
+    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM sflight’
+                                 IMPORTING et_result_table = lt_scarr_selected ).
+
+More complicated example is contained inside project named ZOSQL_DB_EXAMPLE_REP (run and open with SE38).
+
+### How to create instance
+Just call this static method:
+
+    ZCL_ZOSQL_TEST_ENVIRONMENT=>CREATE
+    
+### Method CLEAR_ALL
+Clears all data in virtual database.
+Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
+Works on virtual database and doesn’t delete anything in real database.
+
+### Method CLEAR_DOUBLES
+The same as CLEAR_ALL
+
+### Method CLEAR_ONE_TABLE
+Clears data of one table in virtual database.
+Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
+
+THe methods affects virtual database and doesn’t delete anything in real database.
+
+Parameters:
+* IV_TABLE_NAME – name of database table (transparent table)
+
+### Method DELETE_TEST_DATA_FROM_ITAB
+Lets to perform partial deletion of table in virtual database.
+In order to delete some of table records in virtual database you need to pass internal table with database table key fields filled in. Deletion will be performed according to provided key field combinations.
+Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
+
+Parameters:
+* IT_LINES_FOR_DELETE – internal table which must contain key fields of database table with the same name
+* IV_TABLE_NAME – name of database table (transparent table)
+* RV_SUBRC – returns 0 if at least one record was deleted or 4 otherwise
+
+### Method GET_DATA_OF_TABLE
+Returns data of one database (transparent) table in virtual database.
+Data is returned to internal table with move-corresponding statement.
+Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
+
+Parameters:
+* IV_TABLE_NAME – name of database table (transparent table)
+* ET_TABLE – returns table data to any table with move-corresponding statement
+
+### Method GET_DATA_OF_TABLE_AS_REF
+Returns data of one database (transparent) table in virtual database.
+Data is returned to internal as reference to internal table.
+Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
+
+Parameters:
+* IV_TABLE_NAME – name of database table (transparent table)
+* RD_REF_TO_DATA – reference to internal table that contains data
+
+### Method INSERT_TEST_DATA
+Lets to insert data in virtual database.
+Inserted data can be selected with ZIF_ZOSQL_DB_LAYER in form of Open SQL dynamic statements.
+
+Parameters:
+* IT_TABLE – data to be inserted
+* IV_TABLE_NAME – name of database (transparent) table. Parameter is not mandatory. If parameter is omitted than method tries to get data type from internal table passed as IT_TABLE parameter. If it is a table type of database (transparent) table than the data will be inserted in virtual database table with the same name.
+If IT_TABLE contains any other type than the parameter IV_TABLE_NAME is mandatory.
