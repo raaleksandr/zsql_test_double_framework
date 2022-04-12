@@ -5,10 +5,15 @@ The project Z-SQL Test Double Framework may be used from 7.02 version with some 
 
 # Contents
 [General description](#General-description)
+
 [Quick start](#Quick-start)
+
 [Installation](#Installation)
+
 [Requirements](#Requirements)
+
 [Examples](docs/examples.md)
+
 [Reference](docs/reference.md)
 
 # General description
