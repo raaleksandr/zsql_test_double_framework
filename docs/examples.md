@@ -255,8 +255,8 @@ With Z-SQL Test Double Framework
     APPEND Ls_new_carrier TO lt_new_lines_scarr.
 
     DATA: lv_subrc TYPE sysubrc.
-    lv_subrc = lo_db_layer-> insert_by_itab( iv_table_name = 'SCARR'
-                                             it_new_lines  = lt_new_lines_scarr ).
+    lv_subrc = lo_db_layer->insert_by_itab( iv_table_name = 'SCARR'
+                                            it_new_lines  = lt_new_lines_scarr ).
     
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
