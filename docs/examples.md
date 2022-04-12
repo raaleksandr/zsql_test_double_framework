@@ -120,7 +120,7 @@ With Z-SQL Test Double Framework
     ls_param_range_line-sign = 'I'.
     ls_param_range_line-option = 'EQ'.
     ls_param_range_line-low = 'AB'.
-    APPEND ls_param_range_line TO ls_param-param_value_range.
+    APPEND ls_param_range_line TO ls_param-parameter_value_range.
     APPEND ls_param TO lt_params.
 
     CONCATENATE 'SELECT carrname'
