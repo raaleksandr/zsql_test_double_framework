@@ -1,4 +1,4 @@
-[Back home](https://github.com/raaleksandr/zsql_test_double_framework#readme)
+[Back to readme](zsql_test_double_framework#readme)
 
 # Reference
 
