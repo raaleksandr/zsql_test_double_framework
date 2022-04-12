@@ -69,13 +69,13 @@ The result is returned in REF TO DATA variable containing dynamically created in
 Parameters:
 1. IV_SELECT – Open SQL statement as string
 
-   You can get more information in detailed description of IV_SELECT parameter (TODO).
+   You can get more information in [detailed description of IV_SELECT parameter](#Detailed-description-of-parameter-IV_SELECT).
 2. IT_PARAMETERS – lets to pass bind variables to SQL statement
 
-   You can get more information in detailed description of parameter IT_PARAMETERS (TODO).
+   You can get more information in [detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS).
 3. IT_FOR_ALL_ENTRIES_TABLE – lets to pass internal table as base table of FOR ALL ENTIRES SQL statement
 
-   You can get more information in detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE (TODO).
+   You can get more information in [detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE](#Detailed-description-of-parameter-IT_FOR_ALL_ENTRIES_TABLE).
 4. ED_RESULT_AS_TABLE – ref to internal table containing result
 
    If no rows returned then ref to empty internal table is returned.
@@ -150,13 +150,13 @@ The method is almost the same as SELECT but the result is returned into generic 
 Parameters:
 1. IV_SELECT – Open SQL statement as string
 
-   You can get more information in detailed description of IV_SELECT parameter (TODO).
+   You can get more information in [detailed description of IV_SELECT parameter](#Detailed-description-of-parameter-IV_SELECT).
 2. IT_PARAMETERS – lets to pass bind variables to SQL statement
 
-   You can get more information in detailed description of parameter IT_PARAMETERS (TODO).
+   You can get more information in [detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS).
 3. IT_FOR_ALL_ENTRIES_TABLE – lets to pass internal table as base table of FOR ALL ENTIRES SQL statement
 
-   You can get more information in detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE (TODO).
+   You can get more information in [detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE](#Detailed-description-of-parameter-IT_FOR_ALL_ENTRIES_TABLE).
 4. IV_DO_INTO_CORRESPONDING – if true then result is returned as by SELECT … INTO CORRESPONDING FIELDS OF TABLE. If false then result is returned as by SELECT … INTO TABLE
 5. ET_RESULT_TABLE – target table to return result data. Any internal table can be set to this parameter. The result will be moved as move-corresponding or in field order depending on IV_DO_INTO_CORRESPONDING parameter
 6. ES_RESULT_LINE – returns first line of result dataset
@@ -169,13 +169,13 @@ Like in Open SQL first you have to call OPEN CURSOR for SELECT SQL statement. Th
 Parameters:
 1. IV_SELECT – Open SQL statement as string
 
-   You can get more information in detailed description of IV_SELECT parameter (TODO).
+   You can get more information in [detailed description of IV_SELECT parameter](#Detailed-description-of-parameter-IV_SELECT).
 2. IT_PARAMETERS – lets to pass bind variables to SQL statement
 
-   You can get more information in detailed description of parameter IT_PARAMETERS (TODO).
+   You can get more information in [detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS).
 3. IT_FOR_ALL_ENTRIES_TABLE – lets to pass internal table as base table of FOR ALL ENTIRES SQL statement
 
-   You can get more information in detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE (TODO).
+   You can get more information in [detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE](#Detailed-description-of-parameter-IT_FOR_ALL_ENTRIES_TABLE).
 4. RV_CURSOR – returns cursor identifier that you can use in FETCH_NEXT_CURSOR/FETCH_NEXT_CURSOR_TO_ITAB methods calls
 
 See example in FETCH_NEXT_CURSOR_TO_ITAB method description.
@@ -317,7 +317,7 @@ Parameters:
 1. IV_UPDATE_STATEMENT – text of Update Open SQL statement
 2. IT_PARAMETERS – lets to pass bind variables to SQL statement
  
-You can get more information in detailed description of parameter IT_PARAMETERS (TODO)
+You can get more information in [detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS).
 3. RV_SUBRC – returns 0 if any record updated and 4 otherwise
 
 Example of simple update
@@ -348,7 +348,7 @@ Parameters:
 1. IV_DELETE_STATEMENT – text of delete Open SQL statement
 2. IT_PARAMETERS – lets to pass bind variables to SQL statement
 
-You can get more information in detailed description of parameter IT_PARAMETERS (TODO)
+You can get more information in [detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS).
 3. RV_SUBRC – returns 0 if any record deleted and 4 otherwise
 
 Example of simple delete
