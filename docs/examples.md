@@ -11,7 +11,7 @@
 * [Select with bind parameter](#Select-with-bind-parameter)
 * [Select with IN operator](#Select-with-IN-operator)
 * [Select for all entries](#Select-for-all-entries)
-* [Open cursor / fetch next cursor](#Open-cursor-/-fetch-next-cursor)
+* [Open cursor / fetch next cursor](#Open-cursor--fetch-next-cursor)
 * [Insert](#Insert)
 * [Simple update](#Simple-update)
 * [Update with WHERE condition](#Update-with-WHERE-condition)
