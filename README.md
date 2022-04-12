@@ -37,23 +37,32 @@ Production code - initialization
 
 Unit test code
 
+    DATA: ls_sbook          TYPE sbook,
+          lt_sbook          TYPE TABLE OF sbook,
+          ld_data           TYPE REF TO data,
+          lt_sbook_selected TYPE TABLE OF sbook,
+          lo_test_environment TYPE REF TO zif_zosql_test_environment.
+
+    FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
+
     " Unit test code - initialization
-    mo_test_environment = zcl_zosql_test_environment=>create( ).
-    mo_test_environment->clear_doubles( ).
-    go_db_layer = mo_test_environment->get_db_layer_for_unit_tests( ).
-    
+    lo_test_environment = zcl_zosql_test_environment=>create( ).
+    lo_test_environment->clear_doubles( ).
+    go_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
+
     " Unit test code - run
+    ls_sbook-mandt  = sy-mandt.
     ls_sbook-bookid = '102'.
     ls_sbook-carrid = '2'.
     ls_sbook-fldate = '20211002'.
     APPEND ls_sbook TO lt_sbook.
-    
-    mo_test_environment->insert_test_data( lt_sbook ).
-    
+
+    lo_test_environment->insert_test_data( lt_sbook ).
+
     PERFORM simple_select CHANGING ld_data.
     ASSIGN ld_data->* TO <lt_data>.
     MOVE-CORRESPONDING <lt_data> TO lt_sbook_selected.
-    
+
     cl_aunit_assert=>assert_equals( exp = lt_sbook act = lt_sbook_selected ).
     
 Code of simple_select form:
