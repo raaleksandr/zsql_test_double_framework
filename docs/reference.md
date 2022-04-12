@@ -85,13 +85,13 @@ Parameters:
 
 Example of simple select
 
-    db->select ( EXPORTING iv_select          = ‘SELECT * FROM SFLIGHT’
+    db->select ( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
                  IMPORTING ed_result_as_table = ld_result_table 
                            ev_subrc           = lv_subrc ).
 
 Example of select with where
 
-    db->select ( EXPORTING iv_select          = ‘SELECT * FROM SCARR WHERE carrid = ‘’AA’’’
+    db->select ( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
                  IMPORTING ed_result_as_table = ld_result_table 
                            ev_subrc           = lv_subrc ).
 
@@ -100,22 +100,22 @@ Example of select with parameters
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    db->select ( EXPORTING iv_select          = ‘SELECT * FROM SCARR WHERE carrid = :CARRID’
+    db->select ( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = :CARRID'
                            it_parameters      = lt_params
                  IMPORTING ed_result_as_table = ld_result_table 
                            ev_subrc           = lv_subrc ).
 
 Example of select with FOR ALL ENTRIES
     CONCATENATE 'SELECT *'
-      'FROM scarr’
+      'FROM scarr'
       'FOR ALL ENTRIES IN lt_scarr_base'
       'WHERE KEY_FIELD = lt_scarr_base-carrid'
       INTO lv_select SEPARATED BY space.
 
-    ls_scarr-carrid = ‘AA’.
+    ls_scarr-carrid = 'AA'.
     APPEND ls_scarr TO lt_scarr_base.
 
-    ls_scarr-carrid = ‘AB’.
+    ls_scarr-carrid = 'AB'.
     APPEND ls_scarr TO lt_scarr_base.
 
     db->select ( EXPORTING iv_select                = lv_select
@@ -136,7 +136,7 @@ Example of select with join
       'JOIN sflight ON sflight~carrid = sbook~carrid'
                   'AND sflight~connid = sbook~connid'
                   'AND sflight~fldate = sbook~fldate'
-      'WHERE sbook~customid = ‘‘1000’’’
+      'WHERE sbook~customid = ''1000'''
       'GROUP BY customid'
       'ORDER BY customid'
       INTO lv_select SEPARATED BY space.
@@ -210,7 +210,7 @@ Example
           lt_sflight_all TYPE TABLE OF sflight,
           lv_cursor TYPE cursor.
 
-    lv_cursor = db->open_cursor( iv_select = ‘SELECT * FROM sflight’ ).
+    lv_cursor = db->open_cursor( iv_select = 'SELECT * FROM sflight' ).
 
     DATA: lv_subrc TYPE sysubrc.
 
@@ -239,9 +239,9 @@ Example
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
-    ls_scarr-carrid = ‘YY’.
-    ls_scarr-carrname = ‘Y test carrier’.
-    ls_scarr-currcode = ‘USD’.
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Y test carrier'.
+    ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
     db->insert_by_itab( lt_scarr ).
@@ -262,12 +262,12 @@ Example
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
-    ls_scarr-carrid = ‘YY’.
-    ls_scarr-carrname = ‘Y test carrier’.
-    ls_scarr-currcode = ‘USD’.
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Y test carrier'.
+    ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    db->modify_by_itab( iv_table_name       = ‘SCARR’
+    db->modify_by_itab( iv_table_name       = 'SCARR'
                         it_lines_for_modify = lt_scarr ).
                         
 ### Method MODIFY_BY_ITAB
@@ -283,12 +283,12 @@ Example
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
-    ls_scarr-carrid = ‘YY’.
-    ls_scarr-carrname = ‘Y test carrier’.
-    ls_scarr-currcode = ‘USD’.
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Y test carrier'.
+    ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    db->modify_by_itab( iv_table_name       = ‘SCARR’
+    db->modify_by_itab( iv_table_name       = 'SCARR'
                         it_lines_for_modify = lt_scarr ).
 
 ### Method DELETE_BY_ITAB
@@ -305,10 +305,10 @@ Example
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
-    ls_scarr-carrid = ‘YY’.
+    ls_scarr-carrid = 'YY'.
     APPEND ls_scarr TO lt_scarr.
 
-    db->delete_by_itab( iv_table_name       = ‘SCARR’
+    db->delete_by_itab( iv_table_name       = 'SCARR'
                         it_lines_for_delete = lt_scarr ).
 
 ### Method UPDATE
@@ -324,19 +324,19 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple update
 
-    db->update( iv_update_statement = ‘UPDATE scarr SET carrname = ‘‘New name’’ WHERE carrid = ‘‘AA’’’ ).
+    db->update( iv_update_statement = 'UPDATE scarr SET carrname = ''New name'' WHERE carrid = ''AA''' ).
 
 Example of update with parameter
 
-    ls_param-parameter_name_in_select = ‘:CARRID’.
-    ls_param-parameter_value_single = ‘AA’.
+    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
     DATA: lv_update_statement TYPE string.
 
-    CONCATENATE ‘UPDATE scarr’
-      ‘SET carrname = ‘’New name’’’
-      ‘WHERE carrid = :CARRID’
+    CONCATENATE 'UPDATE scarr'
+      'SET carrname = ''New name'''
+      'WHERE carrid = :CARRID'
       INTO lv_update_statement SEPARATED BY space.
 
     db->update( iv_update_statement = lv_update_statement
@@ -355,21 +355,21 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple delete
 
-    db->delete( iv_update_statement = ‘DELETE scarr WHERE carrid = ‘‘AA’’’ ).
+    db->delete( iv_update_statement = 'DELETE scarr WHERE carrid = ''AA''' ).
 
 Example of delete with parameter
 
-    ls_param-parameter_name_in_select = ‘:CARRID’.
-    ls_param-parameter_value_single = ‘AA’.
+    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
     DATA: lv_delete_statement TYPE string.
 
-    CONCATENATE ‘DELETE scarr’
-      ‘WHERE carrid = :CARRID’
+    CONCATENATE 'DELETE scarr'
+      'WHERE carrid = :CARRID'
       INTO lv_delete_statement SEPARATED BY space.
 
-    db->delete( iv_delete_statement = ‘DELETE scarr WHERE carrid = :CARRID’
+    db->delete( iv_delete_statement = 'DELETE scarr WHERE carrid = :CARRID'
                 it_parameters       = lt_params ).
 
 ### Method COMMIT
@@ -381,7 +381,7 @@ This parameter lets you pass SQL statement itself.
 Example:
 
     …
-    IV_SELECT = ‘SELECT * FROM SFLIGHT’
+    IV_SELECT = 'SELECT * FROM SFLIGHT'
     …
 
 So the SQL statement which is executed with Z-SQL Test Double Framework layer ZIF_ZOSQL_DB_LAYER is a dynamic SQL statement in fact.
@@ -394,9 +394,9 @@ Detailed description of SQL select parts see in table below
 |SELECT <field_list>|Yes                             |Has the same syntax as in Open SQL|
 |SINGLE, DISTINCT   |Yes                             |Has the same syntax as in Open SQL|
 |FROM               |Yes                             |Has the same syntax as in Open SQL. Joins are supported including outer joins. Bind parameters in JOIN are also supported|
-|INTO               |No                              |Unlike implicit ‘INTO’ statement in Z-SQL Test Double framework you pass parameter to select method with result table when you call ZIF_ZOSQL_DB_LAYER method that contains IV_SELECT parameter.|
+|INTO               |No                              |Unlike implicit 'INTO' statement in Z-SQL Test Double framework you pass parameter to select method with result table when you call ZIF_ZOSQL_DB_LAYER method that contains IV_SELECT parameter.|
 |UP TO … ROWS       |Yes                             |Has the same syntax as in Open SQL. Bind parameters containing number of rows are also supported|
-|FOR ALL ENTRIES IN |Yes                             |If you want to execute SELECT for all entries you should include ‘FOR ALL ENTRIES IN’ part in select text implicitly. The name of base table in for all entries does not matter because anyway it takes it’s content from parameter IT_FOR_ALL_ENTRIES_TABLE|
+|FOR ALL ENTRIES IN |Yes                             |If you want to execute SELECT for all entries you should include 'FOR ALL ENTRIES IN' part in select text implicitly. The name of base table in for all entries does not matter because anyway it takes it's content from parameter IT_FOR_ALL_ENTRIES_TABLE|
 |WHERE              |Yes                             |Has the same syntax as in Open SQL. Bind parameters containing number of rows are also supported. Subqueries are supported with limitation that you must have at least 740 version of SAP Basis.|
 |GROUP BY           |Yes                             |Has the same syntax as in Open SQL|
 |HAVING             |Yes                             |Has the same syntax as in Open SQL.  Bind parameters containing number of rows are also supported. Subqueries are supported with limitation that you must have at least 740 version of SAP Basis.|
@@ -411,56 +411,56 @@ Each row describes one bind parameter.
 Each line contains fields:
 * PARAM_NAME_IN_SELECT – unique name which must be replaced with parameter value during execution of SQL. During SQL execution database layer will search for the name and replace it’s value with passed one. Name search is not case sensitive. The field is mandatory. 
 * PARAMETER_VALUE_SINGLE – value of parameter in case it is single value
-* PARAMETER_VALUE_RANGE – you can pass range table to use in ‘IN’ SQL conditions
+* PARAMETER_VALUE_RANGE – you can pass range table to use in 'IN’ SQL conditions
 * PARAMETER_VALUE_REF – ref to value of parameter as alternative to PARAMETER_VALUE_SINGLE
 
 You must fill one of fields PARAMETER_VALUE_REF, PARAMETER_VALUE_RANGE or PARAMETER_VALUE_REF
 
 Example of single value parameter
 
-    ls_param-parameter_name_in_select = ‘:CARRID’.
-    ls_param-parameter_value_single = ‘AA’.
+    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM scarr WHERE carrid = :carrid’
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid = :carrid'
                                            it_parameters = lt_params
                                  IMPORTING et_result_table = lt_scarr ).
 
 Example of parameter passed as ref to data
     
-    ls_param-parameter_name_in_select = ‘:CARRID’.
+    ls_param-parameter_name_in_select = ':CARRID'.
     
     CREATE DATA ls_param-parameter_value_ref TYPE S_CARR_ID.
     ASSIGN ls_param-parameter_value_ref->* TO <scarr>.
-    <scarr> = ‘AA’.
+    <scarr> = 'AA'.
     
     APPEND ls_param TO lt_params.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select       = ‘SELECT * FROM scarr WHERE carrid = :carrid’
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid = :carrid'
                                            it_parameters   = lt_params
                                  IMPORTING et_result_table = lt_scarr ).
 
-Example of parameters passed as range to perform ‘IN’ comparison
+Example of parameters passed as range to perform 'IN' comparison
 
-    ls_param-parameter_name_in_select = ‘:CARRID’.
+    ls_param-parameter_name_in_select = ':CARRID'.
 
-    ls_param_range_line-sign = ‘I’.
-    ls_param_range_line-option = ‘EQ’.
-    ls_param_range_line-low  = ‘AA’.
+    ls_param_range_line-sign = 'I'.
+    ls_param_range_line-option = 'EQ'.
+    ls_param_range_line-low  = 'AA'.
     APPEND ls_param_range_line TO ls_param-parameter_value_range.
 
-    ls_param_range_line-sign = ‘I’.
-    ls_param_range_line-option = ‘EQ’.
-    ls_param_range_line-low  = ‘AB’.
+    ls_param_range_line-sign = 'I'.
+    ls_param_range_line-option = 'EQ'.
+    ls_param_range_line-low  = 'AB'.
     APPEND ls_param_range_line TO ls_param-parameter_value_range.
 
     APPEND ls_param TO lt_params.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select       = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid IN :carrid'
                                            it_parameters   = lt_params
                                  IMPORTING et_result_table = lt_scarr ).
 
-If you use ‘IN’ comparison operator and pass empty range then the condition will be ignored just like in standard Open SQL.
+If you use 'IN' comparison operator and pass empty range then the condition will be ignored just like in standard Open SQL.
 
 ### Detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE
 In order to execute select FOR ALL ENTRIES you need to pass base table in parameter IT_FOR_ALL_ENTRIES_TABLE.
@@ -473,21 +473,21 @@ Example of simple select for all entries
     DATA: lt_search_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scarr.
 
-    ls_scarr-carrid = ‘AA’.
+    ls_scarr-carrid = 'AA'.
     APPEND ls_scarr TO lt_search_scarr.
 
-    ls_scarr-carrid = ‘AB’.
+    ls_scarr-carrid = 'AB'.
     APPEND ls_scarr TO lt_search_scarr.
 
     DATA: lt_selected_scarr TYPE TABLE OF scarr,
           lv_select               TYPE string.
 
-    CONCATENATE ‘SELECT * FROM scarr’
-      ‘FOR ALL ENTRIES IN ITAB’
-      ‘WHERE carrid = ITAB-carrid’
+    CONCATENATE 'SELECT * FROM scarr'
+      'FOR ALL ENTRIES IN ITAB'
+      'WHERE carrid = ITAB-carrid'
       INTO lv_select SEPARATED BY space.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid IN :carrid'
                                            it_for_all_entries_table = lt_selected_scarr
                                  IMPORTING et_result_table = lt_selected_scarr ).
 
@@ -501,19 +501,19 @@ Example of select for all entries with not structured base table
     DATA: lt_search_scarr TYPE TABLE OF char3,
           ls_scarr TYPE scarr.
 
-    APPEND ‘AA’ TO lt_search_scarr.
+    APPEND 'AA' TO lt_search_scarr.
 
-    APPEND ‘AB’ TO lt_search_scarr.
+    APPEND 'AB' TO lt_search_scarr.
 
     DATA: lt_selected_scarr TYPE TABLE OF scarr,
           lv_select         TYPE string.
 
-    CONCATENATE ‘SELECT * FROM scarr’
-      ‘FOR ALL ENTRIES IN ITAB’
-      ‘WHERE carrid = ITAB-TABLE_LINE’
+    CONCATENATE 'SELECT * FROM scarr'
+      'FOR ALL ENTRIES IN ITAB'
+      'WHERE carrid = ITAB-TABLE_LINE'
       INTO lv_select SEPARATED BY space.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select                = ‘SELECT * FROM scarr WHERE carrid IN :carrid’
+    lo_db_layer->select_to_itab( EXPORTING iv_select                = 'SELECT * FROM scarr WHERE carrid IN :carrid'
                                            it_for_all_entries_table = lt_selected_scarr
                                  IMPORTING et_result_table          = lt_selected_scarr ).
 
@@ -529,8 +529,8 @@ Example:
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scarr.
 
-    ls_scarr-carrid = ‘YY’.
-    ls_scarr-carrname = ‘Test carrier’.
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Test carrier'.
     APPEND ls_scarr TO lt_scarr.
     
     lo_test_environment->insert_test_data( lt_scarr ).
@@ -541,7 +541,7 @@ Example:
     
     DATA: lt_scarr_selected TYPE TABLE OF scarr.
     
-    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM sflight’
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_scarr_selected ).
 
 More complicated example is contained inside project named ZOSQL_DB_EXAMPLE_REP (run and open with SE38).
@@ -554,7 +554,7 @@ Just call this static method:
 ### Method CLEAR_ALL
 Clears all data in virtual database.
 Data can appear in virtual database either after INSERT_TEST_DATA method call or after insert/update/modify/delete operations performed with ZIF_ZOSQL_DB_LAYER in test mode.
-Works on virtual database and doesn’t delete anything in real database.
+Works on virtual database and doesn't delete anything in real database.
 
 ### Method CLEAR_DOUBLES
 The same as CLEAR_ALL
