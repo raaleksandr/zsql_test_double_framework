@@ -44,7 +44,7 @@ With Open SQL
 
 With Z-SQL Test Double Framework
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select = ‘SELECT * FROM sflight’
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_sflight ).
 
 ### Select with bind parameter
@@ -53,7 +53,7 @@ With open SQL
     DATA: lv_carrid TYPE scarr-carrid,
           lv_carrname TYPE scarr-carrname.
     
-    lv_carrid = ‘AB’.
+    lv_carrid = 'AB'.
     SELECT SINGLE carrname 
       FROM scarr
       WHERE carrid = lv_carrid.
@@ -63,7 +63,7 @@ With Z-SQL Test Double Framework
     DATA: lv_carrid TYPE scarr-carrid,
           lv_carrname TYPE scarr-carrname.
 
-    lv_carrid = ‘AB’.
+    lv_carrid = 'AB'.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
@@ -94,9 +94,9 @@ With open SQL
     FIELD-SYMBOLS: <fs_carrid_line> LIKE LINE OF lr_carrid.
 
     APPEND INITIAL LINE TO lr_carrid ASSIGNING <fs_carrid>.
-    <fs_carrid_line>-sing = ‘I’.
-    <fs_carrid_line>-option = ‘EQ’.
-    <fs_carrid_line>-low = ‘AB’.
+    <fs_carrid_line>-sing = 'I'.
+    <fs_carrid_line>-option = 'EQ'.
+    <fs_carrid_line>-low = 'AB'.
 
     SELECT * 
       FROM scarr
@@ -113,9 +113,9 @@ With Z-SQL Test Double Framework
           lv_select TYPE string.
 
     ls_param-param_name_in_select = ':CARRID_RANGE'.
-    ls_param_range_line-sign = ‘I’.
-    ls_param_range_line-option = ‘EQ’.
-    ls_param_range_line-low = ‘AB’.
+    ls_param_range_line-sign = 'I'.
+    ls_param_range_line-option = 'EQ'.
+    ls_param_range_line-low = 'AB'.
     APPEND ls_param_range_line TO ls_param-param_value_range.
     APPEND ls_param TO lt_params.
 
@@ -137,8 +137,8 @@ With Open SQL
 
     DATA: lt_scarr_ids TYPE TABLE OF ty_scarr.
 
-    APPEND ‘AA’ TO lt_scarr_ids.
-    APPEND ‘AB’ TO lt_scarr_ids.
+    APPEND 'AA' TO lt_scarr_ids.
+    APPEND 'AB' TO lt_scarr_ids.
 
     DATA: lt_scarr TYPE TABLE OF scarr.
 
@@ -156,16 +156,16 @@ With Z-SQL Test Double Framework
 
     DATA: lt_scarr_ids TYPE TABLE OF ty_scarr.
 
-    APPEND ‘AA’ TO lt_scarr_ids.
-    APPEND ‘AB’ TO lt_scarr_ids.
+    APPEND 'AA' TO lt_scarr_ids.
+    APPEND 'AB' TO lt_scarr_ids.
 
     DATA: lt_scarr TYPE TABLE OF scarr.
     DATA: lv_select TYPE string.
 
-    CONCATENATE ‘SELECT *’
-      ‘FROM scarr’
-      ‘FOR ALL ENTRIES IN lt_scarr_ids’
-      ‘WHERE carrid = lt_scarr_ids-carrid’
+    CONCATENATE 'SELECT *'
+      'FROM scarr'
+      'FOR ALL ENTRIES IN lt_scarr_ids'
+      'WHERE carrid = lt_scarr_ids-carrid'
       INTO lv_select SEPARATED BY SPACE.
 
     lo_db_layer->select_to_itab( EXPORTING iv_select                = lv_select
@@ -207,7 +207,7 @@ With Z-SQL Test Double Framework
 
     lv_package_size = 10.
 
-    lv_cursor = go_db_layer->open_cursor( ‘SELECT * FROM sflight’ ).
+    lv_cursor = go_db_layer->open_cursor( 'SELECT * FROM sflight' ).
 
     DO.
       go_db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
@@ -227,24 +227,24 @@ With open SQL
 
     DATA: ls_new_carrier TYPE scarr.
 
-    ls_new_carrier-carrid = ‘YY’.
-    ls_new_carrier-carrname = ‘New carrier’.
-    ls_new_carrier-currcode = ‘USD’.
+    ls_new_carrier-carrid = YY'.
+    ls_new_carrier-carrname = 'New carrier'.
+    ls_new_carrier-currcode = 'USD'.
     INSERT scarr FROM ls_new_carrier.
 
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Insert failed’.
+      WRITE 'Insert failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
 
     DATA: ls_new_carrier TYPE scarr.
 
-    ls_new_carrier-carrid = ‘YY’.
-    ls_new_carrier-carrname = ‘New carrier’.
-    ls_new_carrier-currcode = ‘USD’.
+    ls_new_carrier-carrid = 'YY'.
+    ls_new_carrier-carrname = 'New carrier'.
+    ls_new_carrier-currcode = 'USD'.
 
     DATA: lt_new_lines_scarr TYPE TABLE OF scarr.
 
@@ -257,7 +257,7 @@ With Z-SQL Test Double Framework
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE: ‘Insert failed’.
+      WRITE: 'Insert failed'.
     ENDIF.
     
 ### Simple update
@@ -265,25 +265,25 @@ With open SQL
 
     DATA: ls_updated_carrier TYPE scarr.
 
-    ls_updated_carrier-carrid = ‘YY’.
-    ls_updated_carrier-carrname = ‘New carrier’.
-    ls_updated_carrier-currcode = ‘USD’.
+    ls_updated_carrier-carrid = 'YY'.
+    ls_updated_carrier-carrname = 'New carrier'.
+    ls_updated_carrier-currcode = 'USD'.
 
     UPDATE scarr FROM ls_updated_carrier.
 
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Update failed’.
+      WRITE 'Update failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
 
     DATA: ls_new_carrier TYPE scarr.
 
-    ls_new_carrier-carrid = ‘YY’.
-    ls_new_carrier-carrname = ‘New carrier’.
-    ls_new_carrier-currcode = ‘USD’.
+    ls_new_carrier-carrid = 'YY'.
+    ls_new_carrier-carrname = 'New carrier'.
+    ls_new_carrier-currcode = 'USD'.
 
     DATA: lt_new_lines_scarr TYPE TABLE OF scarr.
 
@@ -297,19 +297,19 @@ With Z-SQL Test Double Framework
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE: ‘Update failed’.
+      WRITE: 'Update failed'.
     ENDIF.
 
 ### Update with WHERE condition
 With Open SQL
 
     UPDATE scarr
-      SET url = ‘http://yycarrier.org’
-      WHERE carrid = ‘YY’.
+      SET url = 'http://yycarrier.org'
+      WHERE carrid = 'YY'.
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Update failed’.
+      WRITE 'Update failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
@@ -317,16 +317,16 @@ With Z-SQL Test Double Framework
     DATA: lv_update TYPE string,
           lv_subrc    TYPE sysubrc.
 
-    CONCATENATE ‘UPDATE scarr’
-      ‘SET url = ‘‘http://yycarrier.org’’’
-      ‘WHERE carrid = ‘‘YY’’’
+    CONCATENATE 'UPDATE scarr'
+      'SET url = ''http://yycarrier.org'''
+      'WHERE carrid = ''YY'''
       INTO lv_update SEPARATED BY space.
 
     lv_subrc = lo_db_layer->update( iv_update_statement = lv_update ).
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE: ‘Update failed’.
+      WRITE: 'Update failed'.
     ENDIF.
 
 ### Update with bind parameters
@@ -335,8 +335,8 @@ With Open SQL
     DATA: lv_new_url  TYPE string,
           lv_carrid      TYPE scarr-carrid.
 
-    lv_carrid = ‘YY’.
-    lv_new_url = ‘http://yycarrier.org’.
+    lv_carrid = 'YY'.
+    lv_new_url = 'http://yycarrier.org'.
 
     UPDATE scarr
       SET url = lv_new_url
@@ -345,7 +345,7 @@ With Open SQL
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Update failed’.
+      WRITE 'Update failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
@@ -353,8 +353,8 @@ With Z-SQL Test Double Framework
     DATA: lv_new_url  TYPE string,
           lv_carrid      TYPE scarr-carrid.
 
-    lv_carrid = ‘YY’.
-    lv_new_url = ‘http://yycarrier.org’.
+    lv_carrid = 'YY'.
+    lv_new_url = 'http://yycarrier.org'.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
@@ -373,7 +373,7 @@ With Z-SQL Test Double Framework
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE: ‘Update failed’.
+      WRITE: 'Update failed'.
     ENDIF.
 
 ### Modify
@@ -381,9 +381,9 @@ With open SQL
 
     DATA: ls_mod_carrier TYPE scarr.
 
-    ls_mod_carrier-carrid = ‘YY’.
-    ls_mod_carrier-carrname = ‘New carrier’.
-    ls_mod_carrier-currcode = ‘USD’.
+    ls_mod_carrier-carrid = 'YY'.
+    ls_mod_carrier-carrname = 'New carrier'.
+    ls_mod_carrier-currcode = 'USD'.
     MODIFY scarr FROM ls_mod_carrier.
     COMMIT WORK.
 
@@ -391,9 +391,9 @@ With Z-SQL Test Double Framework
 
     DATA: ls_mod_carrier TYPE scarr.
 
-    ls_mod_carrier-carrid = ‘YY’.
-    ls_mod_carrier-carrname = ‘New carrier’.
-    ls_mod_carrier-currcode = ‘USD’.
+    ls_mod_carrier-carrid = 'YY'.
+    ls_mod_carrier-carrname = 'New carrier'.
+    ls_mod_carrier-currcode = 'USD'.
 
     DATA: lt_mod_lines_scarr TYPE TABLE OF scarr.
 
@@ -408,43 +408,43 @@ With Open SQL
 
     DATA: ls_scarr_to_delete TYPE scarr.
 
-    ls_scarr_to_delete-carrid = ‘YY’.
+    ls_scarr_to_delete-carrid = 'YY'.
 
     DELETE scarr FROM ls_scarr_to_delete.
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
 
     DATA: ls_scarr_to_delete TYPE scarr.
 
-    ls_scarr_to_delete-carrid = ‘YY’.
+    ls_scarr_to_delete-carrid = 'YY'.
 
     DATA: lt_scarr_to_delete TYPE TABLE OF scarr,
           lv_subrc                   TYPE sysubrc.
 
     APPEND ls_scarr_to_delete TO lt_scarr_to_delete.
     
-    lv_subrc = lo_db_layer->delete_by_itab( iv_table_name       = ‘SCARR’
+    lv_subrc = lo_db_layer->delete_by_itab( iv_table_name       = 'SCARR'
                                             it_lines_for_delete = lt_scarr_to_delete ).
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
 
 ### Delete with WHERE condition
 With Open SQL
 
     DELETE FROM scarr
-      WHERE carrid = ‘YY’.
+      WHERE carrid = 'YY'.
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
@@ -452,15 +452,15 @@ With Z-SQL Test Double Framework
     DATA: lv_delete TYPE string,
           lv_subrc  TYPE sysubrc.
 
-    CONCATENATE ‘DELETE FROM scarr’
-      ‘WHERE carrid = ‘‘YY’’’
+    CONCATENATE 'DELETE FROM scarr'
+      'WHERE carrid = ''YY'''
       INTO lv_delete SEPARATED BY space.
 
     lv_subrc = lo_db_layer->delete( lv_delete ).
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
 
 ### Delete with bind parameter
@@ -468,21 +468,21 @@ With Open SQL
 
     DATA: lv_carrid_to_delete TYPE scarr-carrid.
 
-    lv_carrid_to_delete = ‘YY’.
+    lv_carrid_to_delete = 'YY'.
 
     DELETE FROM scarr
       WHERE carrid = lv_carrid_to_delete.
     IF sy-subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
 
 With Z-SQL Test Double Framework
 
     DATA: lv_carrid_to_delete TYPE scarr-carrid.
 
-    lv_carrid_to_delete = ‘YY’.
+    lv_carrid_to_delete = 'YY'.
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
@@ -493,8 +493,8 @@ With Z-SQL Test Double Framework
     ls_param-parameter_value_single = lv_carrid_to_delete.
     APPEND ls_param TO lt_params.
 
-    CONCATENATE ‘DELETE FROM scarr’
-      ‘WHERE carrid =:CARRID’
+    CONCATENATE 'DELETE FROM scarr'
+      'WHERE carrid =:CARRID'
       INTO lv_delete SEPARATED BY SPACE.
 
     lv_subrc = lo_db_layer->delete( iv_delete_statement = lv_delete
@@ -502,5 +502,5 @@ With Z-SQL Test Double Framework
     IF lv_subrc = 0.
       COMMIT WORK.
     ELSE.
-      WRITE ‘Delete failed’.
+      WRITE 'Delete failed'.
     ENDIF.
