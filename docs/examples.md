@@ -39,11 +39,15 @@ You can see it in project examples, project unit tests or Reference chapter.
 
 ### Simple select
 With Open SQL
-
+    
+    DATA: lt_sflight TYPE TABLE OF sflight.
+    
     SELECT * FROM sflight INTO TABLE lt_sflight.
 
 With Z-SQL Test Double Framework
-
+    
+    DATA: lt_sflight TYPE TABLE OF sflight.
+    
     lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_sflight ).
 
