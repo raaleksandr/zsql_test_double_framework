@@ -51,10 +51,14 @@ Unit test code
     ls_sbook-carrid = '2'.
     ls_sbook-fldate = '20211002'.
     APPEND ls_sbook TO lt_sbook.
-
+    
+    " Insert data into virtual database
     lo_test_environment->insert_test_data( lt_sbook ).
-
+    
+    " Here we run production code using go_db_layer instance but in fact select is executed in "virtual" database not real
     PERFORM simple_select CHANGING ld_data.
+    
+    " Compare result of select with etalon
     ASSIGN ld_data->* TO <lt_data>.
     MOVE-CORRESPONDING <lt_data> TO lt_sbook_selected.
 
