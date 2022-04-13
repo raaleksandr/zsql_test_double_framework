@@ -58,7 +58,7 @@ Unit test code
     " Here we run production code using go_db_layer instance but in fact select is executed in "virtual" database not real
     PERFORM simple_select CHANGING ld_data.
     
-    " Compare result of select with etalon
+    " Check result
     ASSIGN ld_data->* TO <lt_data>.
     MOVE-CORRESPONDING <lt_data> TO lt_sbook_selected.
 
