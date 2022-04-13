@@ -372,6 +372,11 @@ With Z-SQL Test Double Framework
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = lv_carrid.
     APPEND ls_param TO lt_params.
+    
+    CONCATENATE 'UPDATE scarr'
+      'SET url = :NEW_URL'
+      'WHERE carrid = :CARRID'
+      INTO lv_update SEPARATED BY space.
 
     lv_subrc = lo_db_layer->update( iv_update_statement = lv_update
                                     it_parameters = lt_params ).
