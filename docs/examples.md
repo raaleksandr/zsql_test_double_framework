@@ -362,7 +362,8 @@ With Z-SQL Test Double Framework
 
     DATA: lt_params TYPE zosql_db_layer_params,
           ls_param  TYPE zosql_db_layer_param,
-          lv_update TYPE string.
+          lv_update TYPE string,
+          lv_subrc  TYPE sysubrc.
 
     ls_param-param_name_in_select = ':NEW_URL'.
     ls_param-parameter_value_single = lv_new_url.
