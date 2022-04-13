@@ -33,6 +33,24 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>GET_COUNT_DELETED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns number of deleted records in current operation</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>GET_COUNT_INSERTED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns number of inserted records in current operation</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>GET_COUNT_UPDATED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns number of updated records in current operation</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
      <CMPNAME>GET_DB_LAYER_FOR_PRODUCTION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Create instance of zif_zosql_db_layer for production use</DESCRIPT>

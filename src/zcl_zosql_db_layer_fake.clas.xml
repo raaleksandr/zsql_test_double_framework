@@ -58,6 +58,18 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_GET_COUNT_INSERTED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns counter of inserted records</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_GET_COUNT_UPDATED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns counter of updated records</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
      <CMPNAME>_IS_FAE_ITAB_WITHOUT_STRUCT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if for all entries ITAB lines are without structrure</DESCRIPT>
