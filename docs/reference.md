@@ -37,7 +37,7 @@ Instance of the interface can be created in different ways.
 
 1. For production (regular) mode directly with CREATE OBJECT
 
-        DATA: db_layer TYPE REF TO zif_zosql_db_layer
+        DATA: db_layer TYPE REF TO zif_zosql_db_layer.
         
         CREATE OBJECT db_layer TYPE zcl_zosql_db_layer.
 
