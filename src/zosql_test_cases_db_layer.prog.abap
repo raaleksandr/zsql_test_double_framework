@@ -149,6 +149,7 @@ CLASS ltc_cases_for_insert DEFINITION ABSTRACT FOR TESTING
 *?</asx:abap>
   PUBLIC SECTION.
     METHODS: insert_by_itab FOR TESTING RAISING zcx_zosql_error,
+      insert_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       insert_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
@@ -180,7 +181,9 @@ CLASS ltc_cases_for_update DEFINITION ABSTRACT FOR TESTING
     METHODS: update_by_itab FOR TESTING RAISING zcx_zosql_error,
       by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
       by_sql_with_params FOR TESTING RAISING zcx_zosql_error,
-      by_sql_params_set FOR TESTING RAISING zcx_zosql_error,
+      by_sql_param_in_set FOR TESTING RAISING zcx_zosql_error,
+      update_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
+      update_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       update_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
       update_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error.
 
@@ -252,6 +255,8 @@ CLASS ltc_cases_for_delete DEFINITION ABSTRACT FOR TESTING
     METHODS: delete_by_itab FOR TESTING RAISING zcx_zosql_error,
       by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
       by_sql_with_params FOR TESTING RAISING zcx_zosql_error,
+      delete_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
+      delete_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       delete_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error.
 
@@ -5206,6 +5211,23 @@ CLASS ltc_cases_for_insert IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_insert_table ).
   ENDMETHOD.
 
+  METHOD insert_by_itab_subrc_0.
+    DATA: ls_line         TYPE zosql_for_tst,
+          lt_insert_table TYPE TABLE OF zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_insert_table.
+
+    " WHEN
+    lv_subrc = f_cut->insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
+                                      it_new_lines  = lt_insert_table ).
+
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
+  ENDMETHOD.
+
   METHOD insert_by_itab_subrc_4.
 
     DATA: ls_line         TYPE zosql_for_tst,
@@ -5370,7 +5392,7 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
-  METHOD by_sql_params_set.
+  METHOD by_sql_param_in_set.
     DATA: ls_line                TYPE zosql_for_tst,
           lt_table_before_update TYPE TABLE OF zosql_for_tst,
           lv_update_statement    TYPE string.
@@ -5423,6 +5445,61 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD update_by_itab_subrc_0.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
+          lv_subrc               TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    insert_test_data( it_table = lt_table_before_update ).
+
+    " WHEN
+    DATA: lt_update_table TYPE TABLE OF zosql_for_tst.
+
+    ls_line-key_field = 'KEY1'.
+    ls_line-text_field1 = 'VALUE_1_1_UPD'.
+    APPEND ls_line TO lt_update_table.
+
+    lv_subrc = f_cut->update_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+                                      it_lines_for_update = lt_update_table ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = 0 exp = lv_subrc ).
+  ENDMETHOD.
+
+  METHOD update_by_sql_subrc_0.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
+          lv_update_statement    TYPE string,
+          lv_subrc               TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    insert_test_data( lt_table_before_update ).
+
+    " WHEN
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
+      'SET text_field2 = ''NEW_VAL_FIELD2'''
+      'WHERE TEXT_FIELD1 = ''VALUE2_1'''
+      INTO lv_update_statement SEPARATED BY space.
+
+    lv_subrc = f_cut->update( lv_update_statement ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD update_by_itab_subrc_4.
@@ -5707,6 +5784,60 @@ CLASS ltc_cases_for_delete IMPLEMENTATION.
     APPEND ls_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD delete_by_itab_subrc_0.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_modify TYPE TABLE OF zosql_for_tst,
+          lv_subrc               TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_modify.
+
+    insert_test_data( it_table = lt_table_before_modify ).
+
+    " WHEN
+    DATA: lt_delete_table TYPE TABLE OF zosql_for_tst.
+
+    CLEAR ls_line.
+    ls_line-key_field = 'KEY1'.
+    APPEND ls_line TO lt_delete_table.
+
+    lv_subrc = f_cut->delete_by_itab( iv_table_name       = 'ZOSQL_FOR_TST'
+                                      it_lines_for_delete = lt_delete_table ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
+  ENDMETHOD.
+
+  METHOD delete_by_sql_subrc_0.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_delete TYPE TABLE OF zosql_for_tst,
+          lv_delete_statement    TYPE string,
+          lv_subrc               TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_delete.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_line TO lt_table_before_delete.
+
+    insert_test_data( lt_table_before_delete ).
+
+    " WHEN
+    CONCATENATE 'DELETE FROM ZOSQL_FOR_TST'
+      'WHERE TEXT_FIELD1 = ''VALUE2_1'''
+      INTO lv_delete_statement SEPARATED BY space.
+
+    lv_subrc = f_cut->delete( lv_delete_statement ).
+
+    " THEN
+    cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
   ENDMETHOD.
 
   METHOD delete_by_itab_subrc_4.

@@ -53,6 +53,12 @@ private section.
     mt_cursors TYPE STANDARD TABLE OF ty_cursor WITH KEY cursor_number .
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
 
+  methods _GET_COUNT_INSERTED
+    returning
+      value(RV_COUNT_INSERTED) type I .
+  methods _GET_COUNT_UPDATED
+    returning
+      value(RV_COUNT_UPDATED) type I .
   methods _CLEAR_UPDATE_COUNTERS .
   methods _IS_FAE_ITAB_WITHOUT_STRUCT
     importing
@@ -291,7 +297,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     mo_zosql_test_environment->insert_test_data( it_table      = it_new_lines
                                                  iv_table_name = iv_table_name ).
 
-    IF mo_zosql_test_environment->count_inserted > 0.
+    IF _get_count_inserted( ) > 0.
       rv_subrc = 0.
     ELSE.
       rv_subrc = 4.
@@ -443,10 +449,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
     _clear_update_counters( ).
+
     mo_zosql_test_environment->insert_test_data( it_table      = it_lines_for_update
                                                  iv_table_name = iv_table_name ).
 
-    IF mo_zosql_test_environment->count_updated > 0.
+    IF _get_count_updated( ) > 0.
       rv_subrc = 0.
     ELSE.
       rv_subrc = 4.
@@ -559,6 +566,22 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         COLLECT lo_child_node_of_where->token_ucase INTO et_found_parameters.
       ENDIF.
     ENDLOOP.
+  endmethod.
+
+
+  method _GET_COUNT_INSERTED.
+    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
+
+    lo_test_environment ?= mo_zosql_test_environment.
+    rv_count_inserted = lo_test_environment->get_count_inserted( ).
+  endmethod.
+
+
+  method _GET_COUNT_UPDATED.
+    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
+
+    lo_test_environment ?= mo_zosql_test_environment.
+    rv_count_updated = lo_test_environment->get_count_updated( ).
   endmethod.
 
 

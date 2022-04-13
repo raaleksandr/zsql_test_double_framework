@@ -6,6 +6,15 @@ public section.
 
   interfaces ZIF_ZOSQL_TEST_ENVIRONMENT .
 
+  methods GET_COUNT_DELETED
+    returning
+      value(RV_COUNT_DELETED) type I .
+  methods GET_COUNT_INSERTED
+    returning
+      value(RV_COUNT_INSERTED) type I .
+  methods GET_COUNT_UPDATED
+    returning
+      value(RV_COUNT_UPDATED) type I .
   class-methods CREATE
     returning
       value(RO_RESULT) type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
@@ -50,10 +59,6 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
   method CLEAR_UPDATE_COUNTERS.
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
-    CLEAR: zif_zosql_test_environment~count_inserted,
-           zif_zosql_test_environment~count_updated,
-           zif_zosql_test_environment~count_deleted.
-
     LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
       CLEAR: <ls_virtual_table>-virt_table->count_inserted,
              <ls_virtual_table>-virt_table->count_updated,
@@ -74,6 +79,36 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
   method CREATE.
     CREATE OBJECT ro_result TYPE zcl_zosql_test_environment.
+  endmethod.
+
+
+  method GET_COUNT_DELETED.
+
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
+      rv_count_deleted = rv_count_deleted + <ls_virtual_table>-virt_table->count_deleted.
+    ENDLOOP.
+  endmethod.
+
+
+  method GET_COUNT_INSERTED.
+
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
+      rv_count_inserted = rv_count_inserted + <ls_virtual_table>-virt_table->count_inserted.
+    ENDLOOP.
+  endmethod.
+
+
+  method GET_COUNT_UPDATED.
+
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
+      rv_count_updated = rv_count_updated + <ls_virtual_table>-virt_table->count_updated.
+    ENDLOOP.
   endmethod.
 
 
