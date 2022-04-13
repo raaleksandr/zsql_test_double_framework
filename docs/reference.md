@@ -85,25 +85,25 @@ Parameters:
 
 Example of simple select
 
-    db->select ( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
-                 IMPORTING ed_result_as_table = ld_result_table 
-                           ev_subrc           = lv_subrc ).
+    db->select( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
+                IMPORTING ed_result_as_table = ld_result_table 
+                          ev_subrc           = lv_subrc ).
 
 Example of select with where
 
-    db->select ( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
-                 IMPORTING ed_result_as_table = ld_result_table 
-                           ev_subrc           = lv_subrc ).
+    db->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
+                IMPORTING ed_result_as_table = ld_result_table 
+                          ev_subrc           = lv_subrc ).
 
 Example of select with parameters
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    db->select ( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = :CARRID'
-                           it_parameters      = lt_params
-                 IMPORTING ed_result_as_table = ld_result_table 
-                           ev_subrc           = lv_subrc ).
+    db->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = :CARRID'
+                          it_parameters      = lt_params
+                IMPORTING ed_result_as_table = ld_result_table 
+                          ev_subrc           = lv_subrc ).
 
 Example of select with FOR ALL ENTRIES
     CONCATENATE 'SELECT *'
@@ -118,10 +118,10 @@ Example of select with FOR ALL ENTRIES
     ls_scarr-carrid = 'AB'.
     APPEND ls_scarr TO lt_scarr_base.
 
-    db->select ( EXPORTING iv_select                = lv_select
-                           it_for_all_entries_table = lt_scarr_base
-                 IMPORTING ed_result_as_table       = ld_result_table 
-                           ev_subrc                 = lv_subrc ).
+    db->select( EXPORTING iv_select                = lv_select
+                          it_for_all_entries_table = lt_scarr_base
+                IMPORTING ed_result_as_table       = ld_result_table 
+                          ev_subrc                 = lv_subrc ).
 
 Example of select with join
 
@@ -141,9 +141,9 @@ Example of select with join
       'ORDER BY customid'
       INTO lv_select SEPARATED BY space.
 
-    db->select ( EXPORTING iv_select          = lv_select
-                 IMPORTING ed_result_as_table = ld_result_table 
-                           ev_subrc           = lv_subrc ).
+    db->select( EXPORTING iv_select          = lv_select
+                IMPORTING ed_result_as_table = ld_result_table 
+                          ev_subrc           = lv_subrc ).
 
 ### Method SELECT_TO_ITAB
 Lets to execute SQL select statement and get result.
