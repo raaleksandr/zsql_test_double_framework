@@ -27,14 +27,9 @@ The main idea is that you use object with interface ZIF_ZOSQL_DB_LAYER in your p
 Production code - initialization
 
     go_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    PERFORM simple_select CHANGING ld_result.
+    PERFORM display_result USING ld_result.
     
-    " Production code - database select
-    FORM simple_select CHANGING cd_result TYPE REF TO data
-                                RAISING zcx_testable_db_layer.
-        go_db_layer->select( EXPORTING iv_select = 'SELECT * FROM sbook'
-                             IMPORTING ed_result_as_table = cd_result ).
-    ENDFORM.
-
 Unit test code
 
     DATA: ls_sbook          TYPE sbook,
@@ -67,8 +62,9 @@ Unit test code
     
 Code of simple_select form:
 
-    FORM simple_select CHANGING cd_result TYPE REF TO data.
-        go_db_layer->select( EXPORTING iv_select = ‘SELECT * FROM sbook’
+    FORM simple_select CHANGING cd_result TYPE REF TO data
+                            RAISING zcx_zosql_error.
+        go_db_layer->select( EXPORTING iv_select = 'SELECT * FROM sbook'
                              IMPORTING ed_result_as_table = cd_result ).
     ENDFORM.
   
