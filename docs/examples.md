@@ -295,8 +295,8 @@ With Z-SQL Test Double Framework
     
     DATA: lv_subrc TYPE sysubrc.
     
-    lv_subrc = lo_db_layer-> update_by_itab( iv_table_name       = 'SCARR'
-                                             it_lines_for_update = lt_new_lines_scarr ).
+    lv_subrc = lo_db_layer->update_by_itab( iv_table_name       = 'SCARR'
+                                            it_lines_for_update = lt_new_lines_scarr ).
                                              
     IF lv_subrc = 0.
       lo_db_layer->commit( ).
