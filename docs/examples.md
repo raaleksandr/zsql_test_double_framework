@@ -409,8 +409,8 @@ With Z-SQL Test Double Framework
 
     APPEND ls_mod_carrier TO lt_mod_lines_scarr.
 
-    lo_db_layer->modify_by_itab( iv_table_name = 'SCARR'
-                                 it_lines_to_modify = lt_mod_lines_scarr ).
+    lo_db_layer->modify_by_itab( iv_table_name       = 'SCARR'
+                                 it_lines_for_modify = lt_mod_lines_scarr ).
     lo_db_layer->commit( ).
 
 ### Simple delete
