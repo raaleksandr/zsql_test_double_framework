@@ -68,7 +68,7 @@ Code of simple_select form:
                              IMPORTING ed_result_as_table = cd_result ).
     ENDFORM.
   
-[Goto complete example](docs/quck_start.md)
+[Goto complete example](docs/quick_start.md)
 # Installation
 The project can be installed with ABAP Git. If you encounter error with dictionary types activation during 'Pull' of library with abap git please go to se11 and activate all objects manually. To ensure library is correctly installed you may run unit tests over the package and check whether tests have passed successfully.
 
