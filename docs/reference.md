@@ -225,7 +225,7 @@ Example
         EXIT.
       ENDIF.
 
-      APPEND lt_sflight TO lt_sflight_all.
+      APPEND LINES OF lt_sflight TO lt_sflight_all.
     ENDDO.
 
 ### Method INSERT_BY_ITAB
