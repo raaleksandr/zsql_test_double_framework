@@ -18,7 +18,9 @@ public section.
       value(RV_FOR_ALL_ENTRIES_TABNAME) type STRING .
   methods GET_UPDATE_TABLE_NAME
     returning
-      value(RV_UPDATE_TABLE_NAME) type STRING .
+      value(RV_UPDATE_TABLE_NAME) type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods GET_UP_TO_N_ROWS_VALUE
     returning
       value(RV_UP_TO_N_ROWS_VALUE_STR) type STRING .
@@ -245,7 +247,12 @@ CLASS ZCL_ZOSQL_PARSER_HELPER IMPLEMENTATION.
 
     get_key_nodes_of_sql_update( IMPORTING eo_node_update_table = lo_node_update_table ).
 
-    rv_update_table_name = lo_node_update_table->token.
+    IF lo_node_update_table IS BOUND.
+      rv_update_table_name = lo_node_update_table->token.
+    ELSE.
+      MESSAGE e087 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
   endmethod.
 
 
