@@ -96,6 +96,7 @@ Example of select with where
                                 ev_subrc           = lv_subrc ).
 
 Example of select with parameters
+
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
@@ -106,6 +107,7 @@ Example of select with parameters
                                 ev_subrc           = lv_subrc ).
 
 Example of select with FOR ALL ENTRIES
+
     CONCATENATE 'SELECT *'
       'FROM scarr'
       'FOR ALL ENTRIES IN lt_scarr_base'
@@ -236,6 +238,7 @@ Parameters:
 3. RV_SUBRC – returns 0 if any record inserted and 4 otherwise
 
 Example
+
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
@@ -280,6 +283,7 @@ Parameters:
 2. IT_LINES_FOR_MODIFY – update data as internal table. If IV_TABLE_NAME is empty then zif_zosql_ddb_layer tries to guess table name according to type of this parameter
 
 Example
+
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scar.
 
