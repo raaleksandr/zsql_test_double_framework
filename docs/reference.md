@@ -37,33 +37,33 @@ Instance of the interface can be created in different ways.
 
 1. For production (regular) mode directly with CREATE OBJECT
 
-        DATA: db_layer TYPE REF TO zif_zosql_db_layer.
+        DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer.
         
-        CREATE OBJECT db_layer TYPE zcl_zosql_db_layer.
+        CREATE OBJECT lo_db_layer TYPE zcl_zosql_db_layer.
 
 2. For production (regular) mode with factory method
 
-        DATA: db_layer TYPE REF TO zif_zosql_db_layer.
+        DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer.
         
-        db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+        lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
 3. For test mode directly with CREATE OBJECT
 
-        DATA: test_environment  TYPE REF TO zif_zosql_test_environment,
-              db_layer      TYPE REF TO zif_zosql_db_layer.
+        DATA: lo_test_environment  TYPE REF TO zif_zosql_test_environment,
+              lo_db_layer          TYPE REF TO zif_zosql_db_layer.
         
-        test_environment = zcl_zosql_test_environment=>create( ).
-        CREATE OBJECT db_layer TYPE zcl_zosql_db_layer_fake
+        lo_test_environment = zcl_zosql_test_environment=>create( ).
+        CREATE OBJECT lo_db_layer TYPE zcl_zosql_db_layer_fake
           EXPORTING
-            io_zosql_test_environment = test_environment.
+            io_zosql_test_environment = lo_test_environment.
 
 4. For test mode with special creation method (factory)
 
-        DATA: test_environment  TYPE REF TO zif_zosql_test_environment,
-              db_layer      TYPE REF TO zif_zosql_db_layer.
+        DATA: lo_test_environment  TYPE REF TO zif_zosql_test_environment,
+              lo_db_layer          TYPE REF TO zif_zosql_db_layer.
         
-        test_environment = zcl_zosql_test_environment=>create( ).
-        db_layer = test_environment->get_db_layer_for_unit_tests( ).
+        lo_test_environment = zcl_zosql_test_environment=>create( ).
+        lo_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
 
 ### Method SELECT
 Lets to execute SQL select statement and get result.
@@ -85,15 +85,15 @@ Parameters:
 
 Example of simple select
 
-    db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
-                      IMPORTING ed_result_as_table = ld_result_table 
-                                ev_subrc           = lv_subrc ).
+    lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
+                         IMPORTING ed_result_as_table = ld_result_table 
+                                   ev_subrc           = lv_subrc ).
 
 Example of select with where
 
-    db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
-                      IMPORTING ed_result_as_table = ld_result_table 
-                                ev_subrc           = lv_subrc ).
+    lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
+                         IMPORTING ed_result_as_table = ld_result_table 
+                                   ev_subrc           = lv_subrc ).
 
 Example of select with parameters
 
@@ -101,10 +101,10 @@ Example of select with parameters
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = :CARRID'
-                                it_parameters      = lt_params
-                      IMPORTING ed_result_as_table = ld_result_table 
-                                ev_subrc           = lv_subrc ).
+    lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = :CARRID'
+                                   it_parameters      = lt_params
+                         IMPORTING ed_result_as_table = ld_result_table 
+                                   ev_subrc           = lv_subrc ).
 
 Example of select with FOR ALL ENTRIES
 
@@ -120,10 +120,10 @@ Example of select with FOR ALL ENTRIES
     ls_scarr-carrid = 'AB'.
     APPEND ls_scarr TO lt_scarr_base.
 
-    db_layer->select( EXPORTING iv_select                = lv_select
-                                it_for_all_entries_table = lt_scarr_base
-                      IMPORTING ed_result_as_table       = ld_result_table 
-                                ev_subrc                 = lv_subrc ).
+    lo_db_layer->select( EXPORTING iv_select                = lv_select
+                                   it_for_all_entries_table = lt_scarr_base
+                         IMPORTING ed_result_as_table       = ld_result_table 
+                                   ev_subrc                 = lv_subrc ).
 
 Example of select with join
 
@@ -143,9 +143,9 @@ Example of select with join
       'ORDER BY customid'
       INTO lv_select SEPARATED BY space.
 
-    db_layer->select( EXPORTING iv_select          = lv_select
-                      IMPORTING ed_result_as_table = ld_result_table 
-                                ev_subrc           = lv_subrc ).
+    lo_db_layer->select( EXPORTING iv_select          = lv_select
+                         IMPORTING ed_result_as_table = ld_result_table 
+                                   ev_subrc           = lv_subrc ).
 
 ### Method SELECT_TO_ITAB
 Lets to execute SQL select statement and get result.
@@ -212,15 +212,15 @@ Example
           lt_sflight_all TYPE TABLE OF sflight,
           lv_cursor TYPE cursor.
 
-    lv_cursor = db->open_cursor( iv_select = 'SELECT * FROM sflight' ).
+    lv_cursor = lo_db_layer->open_cursor( iv_select = 'SELECT * FROM sflight' ).
 
     DATA: lv_subrc TYPE sysubrc.
 
     DO.
-      db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
-                                                     iv_package_size = 200
-                                           IMPORTING et_result_table = lt_sflight
-                                                     ev_subrc        = lv_subrc ).
+      lo_db_layer->fetch_next_cursor_to_itab( EXPORTING iv_cursor       = lv_cursor
+                                                        iv_package_size = 200
+                                              IMPORTING et_result_table = lt_sflight
+                                                        ev_subrc        = lv_subrc ).
       IF lv_subrc <> 0.
         EXIT.
       ENDIF.
@@ -247,7 +247,7 @@ Example
     ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    db_layer->insert_by_itab( lt_scarr ).
+    lo_db_layer->insert_by_itab( lt_scarr ).
 
 ### Method UPDATE_BY_ITAB
 Performs UPDATE operation on database table.
@@ -270,8 +270,8 @@ Example
     ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    db_layer->modify_by_itab( iv_table_name       = 'SCARR'
-                              it_lines_for_modify = lt_scarr ).
+    lo_db_layer->modify_by_itab( iv_table_name       = 'SCARR'
+                                 it_lines_for_modify = lt_scarr ).
                         
 ### Method MODIFY_BY_ITAB
 Performs MODIFY operation on database table.
@@ -292,8 +292,8 @@ Example
     ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    db_layer->modify_by_itab( iv_table_name       = 'SCARR'
-                              it_lines_for_modify = lt_scarr ).
+    lo_db_layer->modify_by_itab( iv_table_name       = 'SCARR'
+                                 it_lines_for_modify = lt_scarr ).
 
 ### Method DELETE_BY_ITAB
 Performs DELETE operation on database table.
@@ -312,8 +312,8 @@ Example
     ls_scarr-carrid = 'YY'.
     APPEND ls_scarr TO lt_scarr.
 
-    db_layer->delete_by_itab( iv_table_name       = 'SCARR'
-                              it_lines_for_delete = lt_scarr ).
+    lo_db_layer->delete_by_itab( iv_table_name       = 'SCARR'
+                                 it_lines_for_delete = lt_scarr ).
 
 ### Method UPDATE
 Allows execution of SQL Update statement passed as dynamic SQL query.
@@ -328,7 +328,7 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple update
 
-    db_layer->update( iv_update_statement = 'UPDATE scarr SET carrname = ''New name'' WHERE carrid = ''AA''' ).
+    lo_db_layer->update( iv_update_statement = 'UPDATE scarr SET carrname = ''New name'' WHERE carrid = ''AA''' ).
 
 Example of update with parameter
 
@@ -343,8 +343,8 @@ Example of update with parameter
       'WHERE carrid = :CARRID'
       INTO lv_update_statement SEPARATED BY space.
 
-    db_layer->update( iv_update_statement = lv_update_statement
-                      it_parameters = lt_params ).
+    lo_db_layer->update( iv_update_statement = lv_update_statement
+                         it_parameters = lt_params ).
 
 ### Method DELETE
 Allows execution of SQL Delete statement passed as dynamic SQL query.
@@ -359,7 +359,7 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple delete
 
-    db_layer->delete( iv_update_statement = 'DELETE scarr WHERE carrid = ''AA''' ).
+    lo_db_layer->delete( iv_update_statement = 'DELETE scarr WHERE carrid = ''AA''' ).
 
 Example of delete with parameter
 
@@ -373,8 +373,8 @@ Example of delete with parameter
       'WHERE carrid = :CARRID'
       INTO lv_delete_statement SEPARATED BY space.
 
-    db_layer->delete( iv_delete_statement = 'DELETE scarr WHERE carrid = :CARRID'
-                      it_parameters       = lt_params ).
+    lo_db_layer->delete( iv_delete_statement = 'DELETE scarr WHERE carrid = :CARRID'
+                         it_parameters       = lt_params ).
 
 ### Method COMMIT
 Allows to commit changes to database
@@ -426,9 +426,9 @@ Example of single value parameter
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid = :carrid'
-                                        it_parameters = lt_params
-                              IMPORTING et_result_table = lt_scarr ).
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid = :carrid'
+                                           it_parameters = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
 
 Example of parameter passed as ref to data
     
@@ -440,9 +440,9 @@ Example of parameter passed as ref to data
     
     APPEND ls_param TO lt_params.
 
-    db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid = :carrid'
-                                        it_parameters   = lt_params
-                              IMPORTING et_result_table = lt_scarr ).
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid = :carrid'
+                                           it_parameters   = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
 
 Example of parameters passed as range to perform 'IN' comparison
 
@@ -460,9 +460,9 @@ Example of parameters passed as range to perform 'IN' comparison
 
     APPEND ls_param TO lt_params.
 
-    db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid IN :carrid'
-                                        it_parameters   = lt_params
-                              IMPORTING et_result_table = lt_scarr ).
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid IN :carrid'
+                                           it_parameters   = lt_params
+                                 IMPORTING et_result_table = lt_scarr ).
 
 If you use 'IN' comparison operator and pass empty range then the condition will be ignored just like in standard Open SQL.
 
@@ -491,9 +491,9 @@ Example of simple select for all entries
       'WHERE carrid = ITAB-carrid'
       INTO lv_select SEPARATED BY space.
 
-    db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid IN :carrid'
-                                        it_for_all_entries_table = lt_selected_scarr
-                              IMPORTING et_result_table = lt_selected_scarr ).
+    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid IN :carrid'
+                                           it_for_all_entries_table = lt_selected_scarr
+                                 IMPORTING et_result_table = lt_selected_scarr ).
 
 In this example internal table of type SCARR is passed as for all entries base table with the field CARRID filled.
 In select the for all entries table is called ITAB and in where the same name is used in condition:
@@ -517,9 +517,9 @@ Example of select for all entries with not structured base table
       'WHERE carrid = ITAB-TABLE_LINE'
       INTO lv_select SEPARATED BY space.
 
-    db_layer->select_to_itab( EXPORTING iv_select                = 'SELECT * FROM scarr WHERE carrid IN :carrid'
-                                        it_for_all_entries_table = lt_selected_scarr
-                              IMPORTING et_result_table          = lt_selected_scarr ).
+    lo_db_layer->select_to_itab( EXPORTING iv_select                = 'SELECT * FROM scarr WHERE carrid IN :carrid'
+                                           it_for_all_entries_table = lt_selected_scarr
+                                 IMPORTING et_result_table          = lt_selected_scarr ).
 
 ## Interface ZIF_ZOSQL_TEST_ENVIRONMENT
 You can use the interface to manipulate virtual database data and to create instance of ZIF_ZOSQL_DB_LAYER for unit test mode.
