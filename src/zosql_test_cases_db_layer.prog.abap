@@ -185,7 +185,8 @@ CLASS ltc_cases_for_update DEFINITION ABSTRACT FOR TESTING
       update_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       update_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       update_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
-      update_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error.
+      update_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      empty_sql FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -1005,6 +1006,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE2_1'.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -5535,6 +5538,16 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
+  ENDMETHOD.
+
+  METHOD empty_sql.
+
+    TRY.
+        f_cut->update( '' ).
+        cl_aunit_assert=>fail( 'Exception should be raised' ).
+      CATCH zcx_zosql_error.
+        " Success
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.
 
