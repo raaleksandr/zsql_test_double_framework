@@ -435,8 +435,8 @@ Example of parameter passed as ref to data
     ls_param-param_name_in_select = ':CARRID'.
     
     CREATE DATA ls_param-parameter_value_ref TYPE S_CARR_ID.
-    ASSIGN ls_param-parameter_value_ref->* TO <scarr>.
-    <scarr> = 'AA'.
+    ASSIGN ls_param-parameter_value_ref->* TO <fs_carrid>.
+    <fs_carrid> = 'AA'.
     
     APPEND ls_param TO lt_params.
 
