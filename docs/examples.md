@@ -216,7 +216,7 @@ With open SQL
 
     lv_package_size = 10.
 
-    OPEN CURSOR lv_cursor WITH
+    OPEN CURSOR lv_cursor FOR
       SELECT * FROM sflight.
 
     DO.
@@ -225,7 +225,7 @@ With open SQL
       PACKAGE SIZE lv_package_size.
 
       IF sy-subrc = 0.
-        APPEND LINES OF lt_slfight_package TO lt_sflight_all.
+        APPEND LINES OF lt_sflight_package TO lt_sflight_all.
       ELSE.
         EXIT.
       ENDIF.
@@ -233,12 +233,15 @@ With open SQL
 
 With Z-SQL Test Double Framework
 
-    DATA: lt_sflight_package TYPE TABLE OF sflight,
+    DATA: lo_db_layer        TYPE REF TO zif_zosql_db_layer,
+          lt_sflight_package TYPE TABLE OF sflight,
           lt_sflight_all     TYPE TABLE OF sflight,
           lv_package_size    TYPE I,
           lv_cursor          TYPE cursor,
           lv_subrc           TYPE sysubrc.
-
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     lv_package_size = 10.
 
     lv_cursor = lo_db_layer->open_cursor( 'SELECT * FROM sflight' ).
