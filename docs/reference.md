@@ -20,7 +20,7 @@
 * [Detailed description of parameter IT_PARAMETERS](#Detailed-description-of-parameter-IT_PARAMETERS)
 * [Detailed description of parameter IT_FOR_ALL_ENTRIES_TABLE](#Detailed-description-of-parameter-IT_FOR_ALL_ENTRIES_TABLE)
 
-[Interface ZIF_ZOSQL_TEST_ENVIRONMENT](Interface-ZIF_ZOSQL_TEST_ENVIRONMENT)
+[Interface ZIF_ZOSQL_TEST_ENVIRONMENT](#Interface-ZIF_ZOSQL_TEST_ENVIRONMENT)
 * [How to create instance](#How-to-create-instance)
 * [Method CLEAR_ALL](#Method-CLEAR_ALL)
 * [Method CLEAR_DOUBLES](#Method-CLEAR_DOUBLES)
