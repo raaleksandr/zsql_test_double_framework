@@ -432,7 +432,7 @@ Example of single value parameter
 
 Example of parameter passed as ref to data
     
-    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-param_name_in_select = ':CARRID'.
     
     CREATE DATA ls_param-parameter_value_ref TYPE S_CARR_ID.
     ASSIGN ls_param-parameter_value_ref->* TO <scarr>.
@@ -446,7 +446,7 @@ Example of parameter passed as ref to data
 
 Example of parameters passed as range to perform 'IN' comparison
 
-    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-param_name_in_select = ':CARRID'.
 
     ls_param_range_line-sign = 'I'.
     ls_param_range_line-option = 'EQ'.
