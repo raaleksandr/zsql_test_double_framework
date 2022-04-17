@@ -560,7 +560,7 @@ With Z-SQL Test Double Framework
     APPEND ls_param TO lt_params.
 
     CONCATENATE 'DELETE FROM scarr'
-      'WHERE carrid =:CARRID'
+      'WHERE carrid = :CARRID'
       INTO lv_delete SEPARATED BY SPACE.
 
     lv_subrc = lo_db_layer->delete( iv_delete_statement = lv_delete
