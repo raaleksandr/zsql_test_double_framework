@@ -529,7 +529,7 @@ Example:
 
     DATA: lo_test_environment TYPE REF TO zif_zosql_test_environment.
 
-    lo_test_environment = Zcl_zosql_test_environtment=>create( ).
+    lo_test_environment = zcl_zosql_test_environment=>create( ).
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scarr.
 
@@ -541,7 +541,7 @@ Example:
     
     DATA: lo_db_layer TYPE REF TO zif_zolsq_db_layer.
 
-    lo_db_layer = Lo_test_environment->get_db_layer_for_unit_tests( ).
+    lo_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
     
     DATA: lt_scarr_selected TYPE TABLE OF scarr.
     
@@ -553,7 +553,7 @@ More complicated example is contained inside project named ZOSQL_DB_EXAMPLE_REP 
 ### How to create instance
 Just call this static method:
 
-    ZCL_ZOSQL_TEST_ENVIRONMENT=>CREATE
+    ZCL_ZOSQL_TEST_ENVIRONMENT=>CREATE( )
     
 ### Method CLEAR_ALL
 Clears all data in virtual database.
