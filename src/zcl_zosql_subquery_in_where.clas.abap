@@ -62,7 +62,9 @@ private section.
       value(RT_OPERANDS_WITH_DATASETS) type ZIF_ZOSQL_EXPRESSION_PROCESSOR=>TY_OPERANDS
     raising
       ZCX_ZOSQL_ERROR .
-  methods _PARSE_SUBQUERY_SQL .
+  methods _PARSE_SUBQUERY_SQL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _ADD_PARENT_FIELDS_TO_PARAMS
     returning
       value(RT_PARENT_FIELDS_AS_PARAMETERS) type ZOSQL_DB_LAYER_PARAMS

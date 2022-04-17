@@ -74,6 +74,9 @@ public section.
                  list_of_vals_value             TYPE string VALUE 'LIST_OF_VALS_VALUE',
                END OF node_type .
 
+  methods GET_SQL
+    returning
+      value(RV_SQL) type STRING .
   methods GET_NODE_AS_OBJECT
     importing
       !IV_NODE_ID type I
@@ -168,7 +171,9 @@ public section.
   methods GET_TOP_NODE_AS_OBJECT
     returning
       value(RO_TOP_NODE) type ref to ZCL_ZOSQL_PARSER_NODE .
-  methods RUN_RECURSIVE_DESCENT_PARSER .
+  methods RUN_RECURSIVE_DESCENT_PARSER
+    raising
+      ZCX_ZOSQL_ERROR .
   methods SET_SQL
     importing
       !IV_SQL type CLIKE .
@@ -242,7 +247,9 @@ private section.
   methods _UPDATE_SET_FIELD
     importing
       !IV_PARENT_ID type I .
-  methods _DELETE .
+  methods _DELETE
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _FOR_ALL_ENTRIES_IN
     importing
       !IV_PARENT_ID type I .
@@ -523,6 +530,11 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   endmethod.
 
 
+  method GET_SQL.
+    rv_sql = mv_sql.
+  endmethod.
+
+
   method GET_SQL_AS_RANGE_OF_TOKENS.
 
     DATA: lv_token                  TYPE string,
@@ -745,6 +757,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF mv_current_token_ucase <> 'FROM'.
+      MESSAGE e088 WITH mv_current_token INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       RETURN.
     ENDIF.
 

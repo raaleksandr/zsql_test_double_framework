@@ -94,16 +94,14 @@ private section.
   data MV_OUTER_JOIN_ADD_MODE_INDEX type I .
   data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
+  methods _RAISE_IF_NOT_SELECT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _POSITIONS_AS_STRING
     returning
       value(RV_POSITIONS_AS_STRING) type STRING .
-  methods _CREATE_DATASET_ITERATOR
-    importing
-      !IV_DATASET_NAME type CLIKE
-    returning
-      value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
-    raising
-      ZCX_ZOSQL_ERROR .
   methods _IF_DATASET_IS_TABLE
     importing
       !IO_ITERATOR_OF_DATASET type ref to ZIF_ZOSQL_ITERATOR
@@ -115,6 +113,13 @@ private section.
     exporting
       !EV_NAME type CLIKE
       !EV_ALIAS type CLIKE .
+  methods _CREATE_DATASET_ITERATOR
+    importing
+      !IV_DATASET_NAME type CLIKE
+    returning
+      value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _ADD_ANOTHER_JOIN
     importing
       !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
@@ -130,15 +135,15 @@ private section.
       value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _INIT_BY_ATTRIBUTES
+    importing
+      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
+      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_BY_SQL_PARSER
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _INIT_BY_ATTRIBUTES
-    importing
-      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
-      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_OUTER_JOIN_ADD_MODE
     returning
       value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
@@ -721,6 +726,8 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_node_from_table>     LIKE LINE OF lt_nodes_from_tables.
 
+    _raise_if_not_select( io_sql_parser ).
+
     CREATE OBJECT lo_parser_helper
       EXPORTING
         io_sql_parser = io_sql_parser.
@@ -831,6 +838,23 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
+
+
+  method _RAISE_IF_NOT_SELECT.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          lv_all_sql       TYPE string.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    IF lo_parser_helper->is_select( ) <> abap_true.
+      lv_all_sql = io_sql_parser->get_sql( ).
+      MESSAGE e089 WITH lv_all_sql INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
 
 
   method _RESET_POSITION.

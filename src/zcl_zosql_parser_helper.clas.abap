@@ -7,6 +7,9 @@ public section.
   methods GET_LIST_OF_SELECT_FROM_TABLES
     returning
       value(RT_DATASETS) type ZCL_ZOSQL_ITERATOR_POSITION=>TY_DATA_SETS .
+  methods IS_SELECT
+    returning
+      value(RV_IS_SELECT) type ABAP_BOOL .
   methods CONSTRUCTOR
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
@@ -267,6 +270,13 @@ CLASS ZCL_ZOSQL_PARSER_HELPER IMPLEMENTATION.
           lo_node_up_to_n_rows->get_token_of_nth_child_node( 2 ).
     ENDIF.
   endmethod.
+
+
+  METHOD is_select.
+    IF mo_sql_parser->get_top_node( )-node_type = zcl_zosql_parser_recurs_desc=>node_type-select.
+      rv_is_select = abap_true.
+    ENDIF.
+  ENDMETHOD.
 
 
   method _NEW_SYNTAX_HOST_CHAR_EXISTS.

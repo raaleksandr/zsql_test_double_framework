@@ -22,7 +22,9 @@ protected section.
     importing
       !IV_SQL type STRING
     returning
-      value(RO_SQL_PARSER) type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
+      value(RO_SQL_PARSER) type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods RETURN_RESULT_OF_SELECT_TOITAB
     importing
       !IT_RESULT_TABLE type STANDARD TABLE
