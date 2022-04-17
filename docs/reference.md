@@ -344,7 +344,7 @@ Example of update with parameter
       INTO lv_update_statement SEPARATED BY space.
 
     lo_db_layer->update( iv_update_statement = lv_update_statement
-                         it_parameters = lt_params ).
+                         it_parameters       = lt_params ).
 
 ### Method DELETE
 Allows execution of SQL Delete statement passed as dynamic SQL query.
@@ -359,7 +359,7 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple delete
 
-    lo_db_layer->delete( iv_update_statement = 'DELETE scarr WHERE carrid = ''AA''' ).
+    lo_db_layer->delete( iv_delete_statement = 'DELETE scarr WHERE carrid = ''AA''' ).
 
 Example of delete with parameter
 
