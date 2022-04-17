@@ -319,7 +319,10 @@ With open SQL
 
 With Z-SQL Test Double Framework
 
-    DATA: ls_new_carrier TYPE scarr.
+    DATA: lo_db_layer    TYPE REF TO zif_zosql_db_layer,
+          ls_new_carrier TYPE scarr.
+          
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_new_carrier-carrid = 'YY'.
     ls_new_carrier-carrname = 'New carrier'.
