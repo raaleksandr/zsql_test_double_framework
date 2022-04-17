@@ -78,7 +78,8 @@ With open SQL
           lv_carrname TYPE scarr-carrname.
     
     lv_carrid = 'AB'.
-    SELECT SINGLE carrname 
+    SELECT SINGLE carrname
+      INTO lv_carrname
       FROM scarr
       WHERE carrid = lv_carrid.
 
