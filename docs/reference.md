@@ -539,7 +539,7 @@ Example:
     
     lo_test_environment->insert_test_data( lt_scarr ).
     
-    DATA: lo_db_layer TYPE REF TO zif_zolsq_db_layer.
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer.
 
     lo_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
     
