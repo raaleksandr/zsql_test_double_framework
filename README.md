@@ -91,4 +91,5 @@ Restrictions for versions from 702 to 73x:
 
 # Program to run any Open SQL SELECT and get result as grid
 Additional bonus of the project is a program that lets you enter SQL Select in Open SQL syntax and just run to get result in ALV Grid.
-Program is called ZOSQL_RUN_SQL.
+
+The program is called ZOSQL_RUN_SQL.
