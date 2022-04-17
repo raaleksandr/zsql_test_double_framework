@@ -285,7 +285,7 @@ Parameters:
 Example
 
     DATA: lt_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scar.
+          ls_scarr TYPE scarr.
 
     ls_scarr-carrid = 'YY'.
     ls_scarr-carrname = 'Y test carrier'.
