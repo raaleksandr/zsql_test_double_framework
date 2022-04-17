@@ -16,6 +16,8 @@ The project Z-SQL Test Double Framework may be used from 7.02 version with some 
 
 [Reference](docs/reference.md)
 
+[Program to run Open SQL SELECT and get result in ALV](#Program-to-run-Open-SQL-SELECT-and-get-result-in-ALV)
+
 # General description
 ABAP unit tests should be fast and stable. If you want to test code that works with database then you should mock the database or it won't be a true unit test. SAP offers a very powerful library for this – Open SQL Test Double Framework, including Open SQL Test Double Frame work to mock database interaction from ABAP.
 But unfortunately the tool is available only since 7.51 version. A lot of projects with older versions cannot use it. These includes all ERP installations, SAP Solution Manager etc. 
@@ -89,7 +91,7 @@ Restrictions for versions from 702 to 73x:
 # Reference
 [Go to reference](docs/reference.md)
 
-# Program to run any Open SQL SELECT and get result as grid
+# Program to run Open SQL SELECT and get result in ALV
 Additional bonus of the project is a program that lets you enter SQL Select in Open SQL syntax and just run to get result in ALV Grid.
 
 The program is called ZOSQL_RUN_SQL.
