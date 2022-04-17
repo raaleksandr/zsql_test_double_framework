@@ -46,6 +46,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       view_with_condition FOR TESTING RAISING zcx_zosql_error,
       view_with_several_conditions FOR TESTING RAISING zcx_zosql_error,
       as_ref_to_data FOR TESTING RAISING zcx_zosql_error,
+      as_ref_to_data_col_order FOR TESTING RAISING zcx_zosql_error,
       select_without_corresponding FOR TESTING RAISING zcx_zosql_error,
       select_into_tab_with_string FOR TESTING RAISING zcx_zosql_error,
       select_into_tab_no_struct FOR TESTING RAISING zcx_zosql_error,
@@ -87,6 +88,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       group_by_having_with_param FOR TESTING RAISING zcx_zosql_error,
       group_by_without_aggr_funcs FOR TESTING RAISING zcx_zosql_error,
       group_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
+      group_by_when_no_data FOR TESTING RAISING zcx_zosql_error,
       order_by_descending FOR TESTING RAISING zcx_zosql_error,
       order_by_ascending FOR TESTING RAISING zcx_zosql_error,
       order_by_field_not_selected FOR TESTING RAISING zcx_zosql_error,
@@ -97,10 +99,15 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       for_all_ent_no_struct FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
       view_user_addr FOR TESTING RAISING zcx_zosql_error,
-      empty_result_ref_to_data FOR TESTING RAISING zcx_zosql_error.
+      empty_result_ref_to_data FOR TESTING RAISING zcx_zosql_error,
+      error_delete_instead_of_select FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
+
+  PRIVATE SECTION.
+    METHODS: given_no_data,
+      success_if_no_dump.
 ENDCLASS.       "ltc_cases_for_select
 
 CLASS ltc_cases_for_select_740 DEFINITION ABSTRACT FOR TESTING
@@ -259,7 +266,8 @@ CLASS ltc_cases_for_delete DEFINITION ABSTRACT FOR TESTING
       delete_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       delete_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
-      delete_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error.
+      delete_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error,
+      error_delete_without_from FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -1578,6 +1586,32 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     " THEN
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_initial_table ).
     cl_aunit_assert=>assert_equals( act = lv_subrc exp = 0 ).
+  ENDMETHOD.
+
+  METHOD as_ref_to_data_col_order.
+
+    DATA: ld_result_as_table TYPE REF TO data,
+          lo_table           TYPE REF TO cl_abap_tabledescr,
+          lo_struct          TYPE REF TO cl_abap_structdescr.
+
+    FIELD-SYMBOLS: <ls_comp> LIKE LINE OF lo_struct->components.
+
+    " Check field order corresponding to transparent table field order for SELECT *
+
+    f_cut->select( EXPORTING iv_select          = 'SELECT * FROM ZOSQL_FOR_TST'
+                   IMPORTING ed_result_as_table = ld_result_as_table ).
+
+    lo_table ?= cl_abap_tabledescr=>describe_by_data_ref( ld_result_as_table ).
+    lo_struct ?= lo_table->get_table_line_type( ).
+
+    LOOP AT lo_struct->components ASSIGNING <ls_comp>.
+      CASE sy-tabix.
+        WHEN 1.
+          cl_aunit_assert=>assert_equals( exp = 'MANDT' act = <ls_comp>-name ).
+        WHEN 2.
+          cl_aunit_assert=>assert_equals( exp = 'KEY_FIELD' act = <ls_comp>-name ).
+      ENDCASE.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD select_without_corresponding.
@@ -3713,6 +3747,31 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
                                     msg = 'Error in select with group by where ''GROUP BY'' field not present in ''SELECT'' field list' ).
   ENDMETHOD.
 
+  METHOD group_by_when_no_data.
+
+    " There was a bug (dump) for zcl_zosql_db_layer_fake when 2 conditions:
+    "   - Execute SQL with GROUP BY
+    "   - Virtual database in test enviroment is empty
+
+    " GIVEN
+    given_no_data( ).
+
+    " WHEN
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF zosql_for_tst.
+
+    CONCATENATE 'SELECT key_field'
+      'FROM zosql_for_tst'
+      'GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                           IMPORTING et_result_table = lt_result[] ).
+
+    " THEN
+    success_if_no_dump( ).
+  ENDMETHOD.
+
   METHOD order_by_descending.
     DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
           ls_initial_line  TYPE zosql_for_tst.
@@ -4483,6 +4542,20 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     IF sy-subrc <> 0.
       cl_aunit_assert=>fail( 'No KEY_FIELD field found in internal table when result is empty' ).
     ENDIF.
+  ENDMETHOD.
+
+  METHOD error_delete_instead_of_select.
+    TRY.
+        f_cut->select( iv_select = 'DELETE FROM zosql_for_tst' ).
+        cl_aunit_assert=>fail( 'Exception should be raised because it is not SELECT' ).
+      CATCH zcx_zosql_error.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD given_no_data.
+  ENDMETHOD.
+
+  METHOD success_if_no_dump.
   ENDMETHOD.
 ENDCLASS.
 
@@ -5884,5 +5957,13 @@ CLASS ltc_cases_for_delete IMPLEMENTATION.
 
     " THEN
     cl_aunit_assert=>assert_equals( exp = lv_subrc act = 4 ).
+  ENDMETHOD.
+
+  METHOD error_delete_without_from.
+    TRY.
+        f_cut->delete( 'DELETE zosql_for_tst' ).
+        cl_aunit_assert=>fail( 'Exception should be raised in case of incorrect DELETE sql statement' ).
+      CATCH zcx_zosql_error.
+    ENDTRY.
   ENDMETHOD.
 ENDCLASS.

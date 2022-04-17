@@ -239,6 +239,18 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>088</MSGNR>
+     <TEXT>After &apos;DELETE&apos; keyword &apos;FROM&apos; expected but &apos;&amp;&apos; found</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>089</MSGNR>
+     <TEXT>SQL is not &apos;SELECT&apos; statement: &amp;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>

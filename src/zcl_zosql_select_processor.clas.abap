@@ -73,6 +73,14 @@ private section.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
   data MT_ITER_POSITIONS_OF_DATA_SET type TY_ITERATOR_POSITIONS .
 
+  methods _RAISE_IF_NOT_SELECT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _IS_DATASET_EMPTY
+    returning
+      value(RV_IS_EMPTY) type ABAP_BOOL .
   methods _FILL_SELECT_FIELD
     importing
       !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
@@ -216,9 +224,13 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD APPLY_GROUP_BY.
+  METHOD apply_group_by.
 
     FIELD-SYMBOLS: <lt_data_set>             TYPE STANDARD TABLE.
+
+    IF _is_dataset_empty( ) = abap_true.
+      RETURN.
+    ENDIF.
 
     ASSIGN md_data_set->* TO <lt_data_set>.
 
@@ -241,6 +253,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   method CONSTRUCTOR.
     super->constructor( ).
 
+    _raise_if_not_select( io_sql_parser ).
     _fill_select_fields( io_sql_parser ).
     _star_to_field_list( io_from_iterator ).
     _fill_dataset_where_empty( io_from_iterator ).
@@ -501,6 +514,39 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  METHOD _is_dataset_empty.
+
+    FIELD-SYMBOLS: <lt_data_set> TYPE STANDARD TABLE.
+
+    IF md_data_set IS NOT BOUND.
+      rv_is_empty = abap_true.
+      RETURN.
+    ENDIF.
+
+    ASSIGN md_data_set->* TO <lt_data_set>.
+    IF <lt_data_set> IS INITIAL.
+      rv_is_empty = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
+  method _RAISE_IF_NOT_SELECT.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          lv_all_sql       TYPE string.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    IF lo_parser_helper->is_select( ) <> abap_true.
+      lv_all_sql = io_sql_parser->get_sql( ).
+      MESSAGE e089 WITH lv_all_sql INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
+
+
   method _STAR_TO_FIELD_LIST.
 
     TYPES: BEGIN OF ty_field,
@@ -545,9 +591,6 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
             APPEND ls_field TO lt_fields.
           ENDLOOP.
         ENDLOOP.
-
-        SORT lt_fields BY fieldname dataset_index.
-        DELETE ADJACENT DUPLICATES FROM lt_fields COMPARING fieldname.
 
         LOOP AT lt_fields INTO ls_field.
           APPEND INITIAL LINE TO lt_new_select_parameters ASSIGNING <ls_new_select_parameter>.

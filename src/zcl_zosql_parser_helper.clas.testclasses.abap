@@ -24,14 +24,50 @@ CLASS ltc_get_list_of_select_tables DEFINITION FOR TESTING
     DATA:
       f_cut TYPE REF TO zcl_zosql_parser_helper.  "class under test
 
-    METHODS: one_table_no_alias FOR TESTING,
-             one_table_with_alias FOR TESTING,
-             join FOR TESTING,
-             with_subquery FOR TESTING,
+    METHODS: one_table_no_alias FOR TESTING RAISING zcx_zosql_error,
+      one_table_with_alias FOR TESTING RAISING zcx_zosql_error,
+      join FOR TESTING RAISING zcx_zosql_error,
+      with_subquery FOR TESTING RAISING zcx_zosql_error,
       _run_method_and_get_result IMPORTING iv_sql             TYPE clike
-                                 RETURNING VALUE(rt_datasets) TYPE zcl_zosql_iterator_position=>ty_data_sets.
+                                 RETURNING VALUE(rt_datasets) TYPE zcl_zosql_iterator_position=>ty_data_sets
+                                 RAISING   zcx_zosql_error.
 ENDCLASS.       "ltc_Get_List_Of_Select_Tables
 
+CLASS ltc_get_delete_table_name DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+
+    METHODS: simple_delete FOR TESTING RAISING zcx_zosql_error,
+      with_where FOR TESTING RAISING zcx_zosql_error,
+      error_when_no_from_keyword FOR TESTING RAISING zcx_zosql_error.
+
+  PRIVATE SECTION.
+    DATA:
+      f_cut TYPE REF TO zcl_zosql_parser_helper.  "class under test
+
+    METHODS: _parameterized_test IMPORTING iv_sql              TYPE clike
+                                           iv_expected_tabname TYPE clike
+                                 RAISING   zcx_zosql_error.
+ENDCLASS.
+
+CLASS ltc_is_select DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    METHODS: really_select FOR TESTING RAISING zcx_zosql_error,
+             in_fact_delete FOR TESTING RAISING zcx_zosql_error.
+
+  PRIVATE SECTION.
+    DATA:
+      f_cut TYPE REF TO zcl_zosql_parser_helper.  "class under test
+
+    METHODS: _parameterized_test IMPORTING iv_sql             TYPE clike
+                                           iv_expected_result TYPE abap_bool
+                                 RAISING   zcx_zosql_error.
+ENDCLASS.
 
 CLASS ltc_get_list_of_select_tables IMPLEMENTATION.
 
@@ -152,6 +188,86 @@ CLASS ltc_get_list_of_select_tables IMPLEMENTATION.
 
     rt_datasets = f_cut->get_list_of_select_from_tables( ).
   ENDMETHOD.
+ENDCLASS.
 
+CLASS ltc_get_delete_table_name IMPLEMENTATION.
+  METHOD simple_delete.
+    _parameterized_test( iv_sql              = 'DELETE FROM zosql_for_tst'
+                         iv_expected_tabname = 'ZOSQL_FOR_TST' ).
+  ENDMETHOD.
 
+  METHOD with_where.
+
+    DATA: lv_delete TYPE string.
+
+    CONCATENATE
+      'DELETE FROM zosql_for_tst2'
+      '  WHERE key_field = ''test'''
+      INTO lv_delete SEPARATED BY space.
+
+    _parameterized_test( iv_sql              = lv_delete
+                         iv_expected_tabname = 'ZOSQL_FOR_TST2' ).
+  ENDMETHOD.
+
+  METHOD error_when_no_from_keyword.
+
+    TRY.
+        _parameterized_test( iv_sql              = 'DELETE zosql_for_tst'
+                             iv_expected_tabname = '##DOES NOT MATTER' ).
+
+        cl_aunit_assert=>fail( 'Exception should be raised in case of incorrect DELETE sql statement' ).
+      CATCH zcx_zosql_error.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD _parameterized_test.
+    DATA: lo_sql_parser          TYPE REF TO zcl_zosql_parser_recurs_desc,
+          lv_result_table_name   TYPE string,
+          lv_expected_table_name TYPE string.
+
+    CREATE OBJECT lo_sql_parser.
+    lo_sql_parser->set_sql( iv_sql ).
+    lo_sql_parser->run_recursive_descent_parser( ).
+
+    CREATE OBJECT f_cut
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
+
+    lv_result_table_name = zcl_zosql_utils=>to_upper_case( f_cut->get_delete_table_name( ) ).
+    lv_expected_table_name = zcl_zosql_utils=>to_upper_case( iv_expected_tabname ).
+
+    cl_aunit_assert=>assert_equals( act = lv_result_table_name exp = lv_expected_table_name ).
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_is_select IMPLEMENTATION.
+  METHOD really_select.
+    _parameterized_test( iv_sql             = 'SELECT * FROM zosql_for_tst'
+                         iv_expected_result = abap_true ).
+  ENDMETHOD.
+
+  METHOD in_fact_delete.
+    _parameterized_test( iv_sql             = 'DELETE FROM zosql_for_tst'
+                         iv_expected_result = abap_false ).
+  ENDMETHOD.
+
+  METHOD _parameterized_test.
+    DATA: lo_sql_parser          TYPE REF TO zcl_zosql_parser_recurs_desc,
+          lv_result_table_name   TYPE string,
+          lv_expected_table_name TYPE string.
+
+    CREATE OBJECT lo_sql_parser.
+    lo_sql_parser->set_sql( iv_sql ).
+    lo_sql_parser->run_recursive_descent_parser( ).
+
+    DATA: lv_result TYPE abap_bool.
+
+    CREATE OBJECT f_cut
+      EXPORTING
+        io_sql_parser = lo_sql_parser.
+
+    lv_result = f_cut->is_select( ).
+
+    cl_aunit_assert=>assert_equals( act = lv_result exp = iv_expected_result ).
+  ENDMETHOD.
 ENDCLASS.
