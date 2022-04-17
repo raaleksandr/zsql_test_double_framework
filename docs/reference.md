@@ -332,7 +332,7 @@ Example of simple update
 
 Example of update with parameter
 
-    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
