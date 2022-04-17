@@ -270,7 +270,7 @@ Example
     ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
 
-    lo_db_layer->modify_by_itab( iv_table_name       = 'SCARR'
+    lo_db_layer->update_by_itab( iv_table_name       = 'SCARR'
                                  it_lines_for_modify = lt_scarr ).
                         
 ### Method MODIFY_BY_ITAB
