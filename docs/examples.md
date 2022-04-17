@@ -52,6 +52,24 @@ With Z-SQL Test Double Framework
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_sflight ).
+                                 
+Examples contain production code.
+In order to write unit tests you just need to initialize lo_db_layer in different way like that:
+
+    DATA: lo_test_environment   TYPE REF TO zif_zosql_test_environment,
+          lo_db_layer           TYPE REF TO zif_zosql_db_layer,
+          ls_scarr              TYPE scarr,
+          lt_scarr              TYPE TABLE OF scarr.
+          
+    lo_test_environment = zcl_zosql_test_environment=>create( ).
+    
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Y Carrier'.
+    APPEND ls_scarr TO lt_scarr.
+    
+    lo_test_environment->insert_test_data( lt_scarr ).
+    
+    lo_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
 
 ### Select with bind parameter
 With open SQL
