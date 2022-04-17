@@ -121,10 +121,10 @@ With open SQL
 
     FIELD-SYMBOLS: <fs_carrid_line> LIKE LINE OF lr_carrid.
 
-    APPEND INITIAL LINE TO lr_carrid ASSIGNING <fs_carrid>.
-    <fs_carrid_line>-sing = 'I'.
+    APPEND INITIAL LINE TO lr_carrid ASSIGNING <fs_carrid_line>.
+    <fs_carrid_line>-sign   = 'I'.
     <fs_carrid_line>-option = 'EQ'.
-    <fs_carrid_line>-low = 'AB'.
+    <fs_carrid_line>-low    = 'AB'.
 
     SELECT * 
       FROM scarr
@@ -133,17 +133,20 @@ With open SQL
 
 With Z-SQL Test Double Framework
 
-    DATA: lt_scarr  TYPE TABLE OF scarr.
+    DATA: lo_db_layer  TYPE REF TO zif_zosql_db_layer,
+          lt_scarr     TYPE TABLE OF scarr.
 
-    DATA: lt_params TYPE zosql_db_layer_params,
-          ls_param  TYPE zosql_db_layer_param,
+    DATA: lt_params           TYPE zosql_db_layer_params,
+          ls_param            TYPE zosql_db_layer_param,
           ls_param_range_line TYPE zosql_db_layer_range_line,
-          lv_select TYPE string.
+          lv_select           TYPE string.
+          
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_param-param_name_in_select = ':CARRID_RANGE'.
-    ls_param_range_line-sign = 'I'.
-    ls_param_range_line-option = 'EQ'.
-    ls_param_range_line-low = 'AB'.
+    ls_param_range_line-sign      = 'I'.
+    ls_param_range_line-option    = 'EQ'.
+    ls_param_range_line-low       = 'AB'.
     APPEND ls_param_range_line TO ls_param-parameter_value_range.
     APPEND ls_param TO lt_params.
 
