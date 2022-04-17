@@ -45,9 +45,11 @@ With Open SQL
     SELECT * FROM sflight INTO TABLE lt_sflight.
 
 With Z-SQL Test Double Framework
+        
+    DATA: lo_db_layer  TYPE REF TO zif_zosql_db_layer,
+          lt_sflight   TYPE TABLE OF sflight.
     
-    DATA: lt_sflight TYPE TABLE OF sflight.
-    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_sflight ).
 
