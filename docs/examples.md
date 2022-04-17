@@ -50,7 +50,7 @@ With Z-SQL Test Double Framework
           lt_sflight   TYPE TABLE OF sflight.
     
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
-    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM sflight'
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM sflight'
                                  IMPORTING et_result_table = lt_sflight ).
 
 ### Select with bind parameter
