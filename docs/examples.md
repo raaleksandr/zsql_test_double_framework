@@ -357,8 +357,11 @@ With Open SQL
 
 With Z-SQL Test Double Framework
 
-    DATA: lv_update TYPE string,
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer,
+          lv_update   TYPE string,
           lv_subrc    TYPE sysubrc.
+          
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     CONCATENATE 'UPDATE scarr'
       'SET url = ''http://yycarrier.org'''
