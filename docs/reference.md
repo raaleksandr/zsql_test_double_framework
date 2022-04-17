@@ -422,12 +422,12 @@ You must fill one of fields PARAMETER_VALUE_REF, PARAMETER_VALUE_RANGE or PARAME
 
 Example of single value parameter
 
-    ls_param-parameter_name_in_select = ':CARRID'.
+    ls_param-param_name_in_select   = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid = :carrid'
-                                           it_parameters = lt_params
+    lo_db_layer->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM scarr WHERE carrid = :carrid'
+                                           it_parameters   = lt_params
                                  IMPORTING et_result_table = lt_scarr ).
 
 Example of parameter passed as ref to data
