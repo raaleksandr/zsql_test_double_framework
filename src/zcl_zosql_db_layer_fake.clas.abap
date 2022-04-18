@@ -59,6 +59,11 @@ private section.
   methods _GET_COUNT_UPDATED
     returning
       value(RV_COUNT_UPDATED) type I .
+  methods _IF_SELECT_FOR_ALL_ENTRIES
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_IS_SELECT_FOR_ALL_ENTRIES) type ABAP_BOOL .
   methods _CLEAR_UPDATE_COUNTERS .
   methods _IS_FAE_ITAB_WITHOUT_STRUCT
     importing
@@ -98,7 +103,7 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _SELECT
     importing
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
       !ET_RESULT_TABLE type ANY TABLE
@@ -106,7 +111,25 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _SELECT_FOR_ALL_ENTRIES
     importing
-      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
+      !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    exporting
+      !ET_RESULT_TABLE type ANY TABLE
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SELECT_FOR_ALL_ENT_EMPTY
+    importing
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
+      !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    exporting
+      !ET_RESULT_TABLE type ANY TABLE
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _SELECT_FOR_ALL_ENT_NOT_EMPTY
+    importing
+      !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     exporting
@@ -339,7 +362,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_sql_parser             TYPE REF TO zcl_zosql_parser_recurs_desc,
           lo_parser_helper          TYPE REF TO zcl_zosql_parser_helper,
           lv_up_to_n_rows_as_string TYPE string,
-          lo_node_select_single     TYPE REF TO zcl_zosql_parser_node.
+          lo_node_select_single     TYPE REF TO zcl_zosql_parser_node,
+          lo_parameters             TYPE REF TO zcl_zosql_parameters.
 
     FIELD-SYMBOLS: <lt_result_table>      TYPE STANDARD TABLE,
                    <ls_result_first_line> TYPE any.
@@ -349,22 +373,27 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     lo_sql_parser = parse_sql( iv_select ).
     ld_result_table = create_dynamic_tab_for_result( lo_sql_parser ).
 
+    CREATE OBJECT lo_parameters
+      EXPORTING
+        it_parameters = it_parameters.
+
     ASSIGN ld_result_table->* TO <lt_result_table>.
 
-    IF it_for_all_entries_table IS NOT INITIAL.
-      _select_for_all_entries( EXPORTING it_parameters              = it_parameters
-                                         it_for_all_entries_table   = it_for_all_entries_table
-                                         io_sql_parser              = lo_sql_parser
-                               IMPORTING et_result_table            = <lt_result_table> ).
+    IF _if_select_for_all_entries( lo_sql_parser ) = abap_true.
+      _select_for_all_entries( EXPORTING io_parameters            = lo_parameters
+                                         it_for_all_entries_table = it_for_all_entries_table
+                                         io_sql_parser            = lo_sql_parser
+                               IMPORTING et_result_table          = <lt_result_table> ).
     ELSE.
-      _select( EXPORTING it_parameters              = it_parameters
-                         io_sql_parser              = lo_sql_parser
-               IMPORTING et_result_table            = <lt_result_table> ).
+      _select( EXPORTING io_parameters   = lo_parameters
+                         io_sql_parser   = lo_sql_parser
+               IMPORTING et_result_table = <lt_result_table> ).
     ENDIF.
 
     CREATE OBJECT lo_parser_helper
       EXPORTING
         io_sql_parser = lo_sql_parser.
+
     lv_up_to_n_rows_as_string = lo_parser_helper->get_up_to_n_rows_value( ).
     lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_single = lo_node_select_single ).
 
@@ -585,6 +614,20 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
+  method _IF_SELECT_FOR_ALL_ENTRIES.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    IF lo_parser_helper->get_for_all_entries_tabname( ) IS NOT INITIAL.
+      rv_is_select_for_all_entries = abap_true.
+    ENDIF.
+  endmethod.
+
+
   METHOD _is_fae_itab_without_struct.
     IF zcl_zosql_utils=>is_structure( ia_for_all_entries_tab_line ) <> abap_true
       AND zcl_zosql_utils=>to_upper_case( iv_fieldname_in_fae_itab ) = 'TABLE_LINE'.
@@ -631,19 +674,14 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           lo_node_having           TYPE REF TO zcl_zosql_parser_node,
           lo_node_distinct         TYPE REF TO zcl_zosql_parser_node,
           lv_new_syntax            TYPE abap_bool,
-          lo_parameters            TYPE REF TO zcl_zosql_parameters,
           lo_having                TYPE REF TO zif_zosql_expression_processor.
 
     REFRESH et_result_table.
 
-    CREATE OBJECT lo_parameters
-      EXPORTING
-        it_parameters = it_parameters.
-
     CREATE OBJECT lo_from_iterator
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
-        io_parameters             = lo_parameters
+        io_parameters             = io_parameters
         io_sql_parser             = io_sql_parser.
 
     CREATE OBJECT lo_select
@@ -665,7 +703,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
                                                                  eo_node_having   = lo_node_having
                                                                  ev_new_syntax    = lv_new_syntax ).
 
-    _execute_sql( io_parameters            = lo_parameters
+    _execute_sql( io_parameters            = io_parameters
                   iv_new_syntax            = lv_new_syntax
                   io_iterator              = lo_from_iterator
                   io_sql_executor_for_line = lo_sql_executor_for_line
@@ -677,7 +715,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         CREATE OBJECT lo_having TYPE zcl_zosql_having_processor
           EXPORTING
             io_zosql_test_environment = mo_zosql_test_environment
-            io_parameters             = lo_parameters
+            io_parameters             = io_parameters
             iv_new_syntax             = lv_new_syntax.
 
         lo_having->initialize_by_parsed_sql( lo_node_having ).
@@ -711,29 +749,76 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD _SELECT_FOR_ALL_ENTRIES.
+  METHOD _select_for_all_entries.
+    IF it_for_all_entries_table IS NOT INITIAL.
+      _select_for_all_ent_not_empty( EXPORTING io_parameters            = io_parameters
+                                               it_for_all_entries_table = it_for_all_entries_table
+                                               io_sql_parser            = io_sql_parser
+                                     IMPORTING et_result_table          = et_result_table ).
+    ELSE.
+      _select_for_all_ent_empty( EXPORTING io_parameters            = io_parameters
+                                           it_for_all_entries_table = it_for_all_entries_table
+                                           io_sql_parser            = io_sql_parser
+                                 IMPORTING et_result_table          = et_result_table ).
+    ENDIF.
+  ENDMETHOD.
 
-    DATA: lt_parameters    LIKE it_parameters,
-          ld_result_table  TYPE REF TO data,
-          lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
-          lv_for_all_entries_tabname TYPE string.
 
-    FIELD-SYMBOLS: <la_for_all_entries_line> TYPE any,
+  METHOD _select_for_all_ent_empty.
+
+    DATA: ld_fae_empty_line        TYPE REF TO data,
+          lt_for_all_ent_params    TYPE zosql_db_layer_params,
+          lo_parameters_for_select TYPE REF TO zcl_zosql_parameters.
+
+    FIELD-SYMBOLS: <ls_fae_empty_line> TYPE any.
+
+    CREATE DATA ld_fae_empty_line LIKE LINE OF it_for_all_entries_table.
+    ASSIGN ld_fae_empty_line->* TO <ls_fae_empty_line>.
+
+    _add_for_all_entries_to_params( EXPORTING io_sql_parser               = io_sql_parser
+                                              is_for_all_entries_tab_line = <ls_fae_empty_line>
+                                    CHANGING  ct_parameters               = lt_for_all_ent_params ).
+
+    CREATE OBJECT lo_parameters_for_select
+      EXPORTING
+        it_parameters = io_parameters->get_all_parameters( ).
+
+    lo_parameters_for_select->add_ignore_parameters( lt_for_all_ent_params ).
+
+    _select( EXPORTING io_parameters   = lo_parameters_for_select
+                       io_sql_parser   = io_sql_parser
+             IMPORTING et_result_table = et_result_table ).
+  ENDMETHOD.
+
+
+  METHOD _SELECT_FOR_ALL_ENT_NOT_EMPTY.
+
+    DATA: lt_parameters              TYPE zosql_db_layer_params,
+          ld_result_table            TYPE REF TO data,
+          lo_parser_helper           TYPE REF TO zcl_zosql_parser_helper,
+          lv_for_all_entries_tabname TYPE string,
+          lo_parameters_one_fae_line TYPE REF TO zcl_zosql_parameters.
+
+    FIELD-SYMBOLS: <ls_for_all_entries_line> TYPE any,
                    <lt_result_one_fae_line>  TYPE ANY TABLE.
 
     CREATE DATA ld_result_table LIKE et_result_table.
     ASSIGN ld_result_table->* TO <lt_result_one_fae_line>.
 
-    LOOP AT it_for_all_entries_table ASSIGNING <la_for_all_entries_line>.
+    LOOP AT it_for_all_entries_table ASSIGNING <ls_for_all_entries_line>.
 
       REFRESH <lt_result_one_fae_line>.
 
-      lt_parameters = it_parameters.
+      lt_parameters = io_parameters->get_all_parameters( ).
       _add_for_all_entries_to_params( EXPORTING io_sql_parser               = io_sql_parser
-                                                is_for_all_entries_tab_line = <la_for_all_entries_line>
+                                                is_for_all_entries_tab_line = <ls_for_all_entries_line>
                                       CHANGING  ct_parameters               = lt_parameters ).
 
-      _select( EXPORTING it_parameters   = lt_parameters
+      CREATE OBJECT lo_parameters_one_fae_line
+        EXPORTING
+          it_parameters = lt_parameters.
+
+      _select( EXPORTING io_parameters   = lo_parameters_one_fae_line
                          io_sql_parser   = io_sql_parser
                IMPORTING et_result_table = <lt_result_one_fae_line> ).
 

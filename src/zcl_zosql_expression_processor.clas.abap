@@ -112,9 +112,6 @@ private section.
   constants C_BETWEEN type STRING value 'BETWEEN' ##NO_TEXT.
   constants C_LIKE type STRING value 'LIKE' ##NO_TEXT.
 
-  methods _CONSIDER_NOT_IN_ELEMENTARY
-    importing
-      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
   methods _CHECK_LIKE
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -129,6 +126,19 @@ private section.
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CONSIDER_NOT_IN_ELEMENTARY
+    importing
+      !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
+  methods _TRY_TO_GET_PARAMETER_NAME
+    importing
+      !IS_OPERAND type TY_FIELD
+    returning
+      value(RV_PARAMETER_NAME) type STRING .
+  methods _RAISE_IF_RIGHT_OPERAND_RANGE
+    importing
+      !IV_RIGHT_OPERAND type ANY
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _INIT_COMPARISON
     importing
       !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
@@ -138,16 +148,9 @@ private section.
   methods _INIT_LIKE
     importing
       !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE .
-  methods _RAISE_IF_RIGHT_OPERAND_RANGE
-    importing
-      !IV_RIGHT_OPERAND type ANY
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods _TRY_TO_GET_PARAMETER_NAME
-    importing
-      !IS_OPERAND type TY_FIELD
+  methods _NEED_TO_IGNORE_CONDITION
     returning
-      value(RV_PARAMETER_NAME) type STRING .
+      value(RV_CONDITION_MUST_BE_IGNORED) type ABAP_BOOL .
   methods _CHECK_BETWEEN
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -174,17 +177,17 @@ private section.
       !IA_MASK_FOR_LIKE type ANY
     returning
       value(RV_MASK_FOR_CP) type STRING .
+  methods _CHECK_IF_OPERAND_IS_PARAMETER
+    importing
+      !IS_OPERAND type TY_FIELD
+    returning
+      value(RV_IS_PARAMETER) type ABAP_BOOL .
   methods _GET_REF_TO_OPERAND
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
       !IS_OPERAND type TY_FIELD
     returning
       value(RD_REF_TO_OPERAND) type ref to DATA .
-  methods _CHECK_IF_OPERAND_IS_PARAMETER
-    importing
-      !IS_OPERAND type TY_FIELD
-    returning
-      value(RV_IS_PARAMETER) type ABAP_BOOL .
   methods _GET_REF_TO_OPERAND_DATASET
     importing
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
@@ -422,7 +425,12 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _CHECK_ELEMENTARY.
+  METHOD _check_elementary.
+
+    IF _need_to_ignore_condition( ) = abap_true.
+      rv_conditions_true = abap_true.
+      RETURN.
+    ENDIF.
 
     CASE mv_operation.
       WHEN c_in.
@@ -917,6 +925,25 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
       <ls_condition>-processor->initialize_by_parsed_sql( lo_node_operand ).
     ENDLOOP.
   ENDMETHOD.
+
+
+  method _NEED_TO_IGNORE_CONDITION.
+
+    DATA: lv_parameter_name TYPE string.
+
+    IF _check_if_operand_is_parameter( ms_right_operand ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    lv_parameter_name = _try_to_get_parameter_name( ms_right_operand ).
+    IF lv_parameter_name IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    IF mo_parameters->if_parameter_must_be_ignored( lv_parameter_name ) = abap_true.
+      rv_condition_must_be_ignored = abap_true.
+    ENDIF.
+  endmethod.
 
 
   method _RAISE_IF_CANNOT_COMPARE_VALS.

@@ -15,6 +15,7 @@ public section.
       !IV_ORDER_BY type STRING
       value(IV_DISTINCT) type ABAP_BOOL
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
+      !IV_FOR_ALL_ENTRIES type ABAP_BOOL
       !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY
       value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
       value(IV_NUMBER_OF_ROWS_TO_SELECT) type I optional
@@ -48,7 +49,7 @@ CLASS ZCL_ZOSQL_UTILS_740 IMPLEMENTATION.
 
   METHOD EXECUTE_SELECT_740.
 
-    IF it_for_all_entries_table IS NOT INITIAL.
+    IF it_for_all_entries_table IS NOT INITIAL OR iv_for_all_entries = abap_true.
 
       IF iv_order_by IS NOT INITIAL.
         MESSAGE e051 INTO zcl_zosql_utils=>dummy.

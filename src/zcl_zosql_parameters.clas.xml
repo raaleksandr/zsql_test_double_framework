@@ -14,6 +14,12 @@
    <DESCRIPTIONS>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARAMETERS</CLSNAME>
+     <CMPNAME>ADD_IGNORE_PARAMETERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Adds parameters that must be ignored by expression processor</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARAMETERS</CLSNAME>
      <CMPNAME>CHECK_PARAMETER_EXISTS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks placeholder of parameter on existence</DESCRIPT>
@@ -44,9 +50,21 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARAMETERS</CLSNAME>
+     <CMPNAME>IF_PARAMETER_MUST_BE_IGNORED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if parameter must be ignored</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARAMETERS</CLSNAME>
      <CMPNAME>MT_PARAMETERS</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parameters for SQL for Z-SQL Double Framework</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARAMETERS</CLSNAME>
+     <CMPNAME>_APPEND_PARAMETERS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Appends parameters with additional properties</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

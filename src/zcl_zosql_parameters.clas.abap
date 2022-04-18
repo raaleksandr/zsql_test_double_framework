@@ -4,6 +4,14 @@ class ZCL_ZOSQL_PARAMETERS definition
 
 public section.
 
+  methods ADD_IGNORE_PARAMETERS
+    importing
+      !IT_IGNORE_PARAMETERS type ZOSQL_DB_LAYER_PARAMS .
+  methods IF_PARAMETER_MUST_BE_IGNORED
+    importing
+      !IV_PARAMETER_NAME_IN_SELECT type CLIKE
+    returning
+      value(RV_PARAM_MUST_BE_IGNORED) type ABAP_BOOL .
   methods CHECK_PARAMETER_EXISTS
     importing
       !IV_PARAMETER_NAME_IN_SELECT type CLIKE
@@ -28,12 +36,30 @@ public section.
 protected section.
 private section.
 
-  data MT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS .
+  types:
+    BEGIN OF TY_PARAMETER .
+    INCLUDE TYPE zosql_db_layer_param.
+    TYPES: ignore_flag TYPE abap_bool,
+         END OF ty_parameter .
+
+  data:
+    MT_PARAMETERS type STANDARD TABLE OF ty_parameter WITH KEY param_name_in_select .
+
+  methods _APPEND_PARAMETERS
+    importing
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+      value(IV_IGNORE_FLAG) type ABAP_BOOL default ABAP_FALSE .
 ENDCLASS.
 
 
 
 CLASS ZCL_ZOSQL_PARAMETERS IMPLEMENTATION.
+
+
+  method ADD_IGNORE_PARAMETERS.
+    _append_parameters( it_parameters  = it_ignore_parameters
+                        iv_ignore_flag = abap_true ).
+  endmethod.
 
 
   METHOD CHECK_PARAMETER_EXISTS.
@@ -48,12 +74,14 @@ CLASS ZCL_ZOSQL_PARAMETERS IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
-    mt_parameters = it_parameters.
+    _append_parameters( it_parameters  = it_parameters
+                        iv_ignore_flag = abap_false ).
   endmethod.
 
 
   method GET_ALL_PARAMETERS.
-    rt_parameters = mt_parameters.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = mt_parameters
+                                               IMPORTING et_table_dest = rt_parameters ).
   endmethod.
 
 
@@ -64,7 +92,7 @@ CLASS ZCL_ZOSQL_PARAMETERS IMPLEMENTATION.
       IF zcl_zosql_utils=>to_upper_case( iv_parameter_name_in_select )
         = zcl_zosql_utils=>to_upper_case( <ls_parameter>-param_name_in_select ).
 
-        rs_parameter_data = <ls_parameter>.
+        MOVE-CORRESPONDING <ls_parameter> TO rs_parameter_data.
         EXIT.
       ENDIF.
     ENDLOOP.
@@ -84,5 +112,37 @@ CLASS ZCL_ZOSQL_PARAMETERS IMPLEMENTATION.
     ELSE.
       rd_ref_to_value_of_parameter = zcl_zosql_utils=>copy_and_return_as_ref_to_data( ls_parameter_data-parameter_value_single ).
     ENDIF.
+  endmethod.
+
+
+  method IF_PARAMETER_MUST_BE_IGNORED.
+
+    DATA: ls_parameter_data TYPE zosql_db_layer_param.
+
+    FIELD-SYMBOLS: <ls_parameter> LIKE LINE OF mt_parameters.
+
+    ls_parameter_data = get_parameter_data( iv_parameter_name_in_select ).
+    IF ls_parameter_data IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    READ TABLE mt_parameters WITH KEY param_name_in_select = ls_parameter_data-param_name_in_select
+      ASSIGNING <ls_parameter>.
+    IF sy-subrc = 0.
+      rv_param_must_be_ignored = <ls_parameter>-ignore_flag.
+    ENDIF.
+  endmethod.
+
+
+  method _APPEND_PARAMETERS.
+
+    FIELD-SYMBOLS: <ls_parameter_src>  LIKE LINE OF it_parameters,
+                   <ls_parameter_dest> LIKE LINE OF mt_parameters.
+
+    LOOP AT it_parameters ASSIGNING <ls_parameter_src>.
+      APPEND INITIAL LINE TO mt_parameters ASSIGNING <ls_parameter_dest>.
+      MOVE-CORRESPONDING <ls_parameter_src> TO <ls_parameter_dest>.
+      <ls_parameter_dest>-ignore_flag = iv_ignore_flag.
+    ENDLOOP.
   endmethod.
 ENDCLASS.
