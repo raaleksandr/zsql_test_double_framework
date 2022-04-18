@@ -555,10 +555,11 @@ Example of parameter passed as ref to data
 
 Example of parameters passed as range to perform 'IN' comparison
 
-    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
-          ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE zosql_db_layer_params,
-          lt_scarr        TYPE TABLE OF scarr.
+    DATA: lo_db_layer         TYPE REF TO zif_zosql_db_layer,
+          ls_param            TYPE zosql_db_layer_param,
+          ls_param_range_line TYPE zosql_db_layer_range_line,
+          lt_params           TYPE zosql_db_layer_params,
+          lt_scarr            TYPE TABLE OF scarr.
         
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     
