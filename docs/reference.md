@@ -162,7 +162,7 @@ Example of select with FOR ALL ENTRIES
     CONCATENATE 'SELECT *'
       'FROM scarr'
       'FOR ALL ENTRIES IN lt_scarr_base'
-      'WHERE KEY_FIELD = lt_scarr_base-carrid'
+      'WHERE carrid = lt_scarr_base-carrid'
       INTO lv_select SEPARATED BY space.
 
     ls_scarr-carrid = 'AA'.
