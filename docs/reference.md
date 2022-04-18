@@ -93,6 +93,24 @@ Example of simple select
                          IMPORTING ed_result_as_table = ld_result_table 
                                    ev_subrc           = lv_subrc ).
 
+Examples contain production code.
+In order to write unit tests you just need to initialize lo_db_layer in different way like that:
+
+    DATA: lo_test_environment   TYPE REF TO zif_zosql_test_environment,
+          lo_db_layer           TYPE REF TO zif_zosql_db_layer,
+          ls_scarr              TYPE scarr,
+          lt_scarr              TYPE TABLE OF scarr.
+          
+    lo_test_environment = zcl_zosql_test_environment=>create( ).
+    
+    ls_scarr-carrid = 'YY'.
+    ls_scarr-carrname = 'Y Carrier'.
+    APPEND ls_scarr TO lt_scarr.
+    
+    lo_test_environment->insert_test_data( lt_scarr ).
+    
+    lo_db_layer = lo_test_environment->get_db_layer_for_unit_tests( ).
+
 Example of select with where
     
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
