@@ -85,18 +85,36 @@ Parameters:
 
 Example of simple select
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ld_result_table TYPE REF TO data,
+          lv_subrc        TYPE sysubrc.
+          
     lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
                          IMPORTING ed_result_as_table = ld_result_table 
                                    ev_subrc           = lv_subrc ).
 
 Example of select with where
+    
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ld_result_table TYPE REF TO data,
+          lv_subrc        TYPE sysubrc.
 
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SCARR WHERE carrid = ''AA'''
                          IMPORTING ed_result_as_table = ld_result_table 
                                    ev_subrc           = lv_subrc ).
 
 Example of select with parameters
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ld_result_table TYPE REF TO data,
+          lv_subrc        TYPE sysubrc,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
@@ -107,6 +125,19 @@ Example of select with parameters
                                    ev_subrc           = lv_subrc ).
 
 Example of select with FOR ALL ENTRIES
+
+    TYPES: BEGIN OF ltys_scarr_base,
+             carrid  TYPE scarr-carrid,
+           END OF ltys_scarr_base.
+           
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_scarr        TYPE ltys_scarr_base,
+          lt_scarr_base   TYPE TABLE OF ltys_scarr_base,
+          lv_select       TYPE string,
+          ld_result_table TYPE REF TO data,
+          lv_subrc        TYPE sysubrc.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     CONCATENATE 'SELECT *'
       'FROM scarr'
@@ -127,6 +158,12 @@ Example of select with FOR ALL ENTRIES
 
 Example of select with join
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ld_result_table TYPE REF TO data,
+          lv_subrc        TYPE sysubrc.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     CONCATENATE
       'SELECT sbook~customid AS customid'
            'MIN( scustom~name ) AS customer_name'
@@ -208,9 +245,12 @@ Parameters:
 
 Example
 
-    DATA: lt_sflight TYPE TABLE OF sflight,
+    DATA: lo_db_layer    TYPE REF TO zif_zosql_db_layer,
+          lt_sflight     TYPE TABLE OF sflight,
           lt_sflight_all TYPE TABLE OF sflight,
-          lv_cursor TYPE cursor.
+          lv_cursor      TYPE cursor.
+          
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     lv_cursor = lo_db_layer->open_cursor( iv_select = 'SELECT * FROM sflight' ).
 
@@ -239,10 +279,13 @@ Parameters:
 
 Example
 
-    DATA: lt_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scarr.
-
-    ls_scarr-carrid = 'YY'.
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer,
+          lt_scarr    TYPE TABLE OF scarr,
+          ls_scarr    TYPE scarr.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
+    ls_scarr-carrid   = 'YY'.
     ls_scarr-carrname = 'Y test carrier'.
     ls_scarr-currcode = 'USD'.
     APPEND ls_scarr TO lt_scarr.
@@ -262,8 +305,11 @@ Parameters:
 
 Example
 
-    DATA: lt_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scarr.
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer,
+          lt_scarr    TYPE TABLE OF scarr,
+          ls_scarr    TYPE scarr.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_scarr-carrid = 'YY'.
     ls_scarr-carrname = 'Y test carrier'.
@@ -284,9 +330,12 @@ Parameters:
 
 Example
 
-    DATA: lt_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scarr.
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer,
+          lt_scarr    TYPE TABLE OF scarr,
+          ls_scarr    TYPE scarr.
 
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     ls_scarr-carrid = 'YY'.
     ls_scarr-carrname = 'Y test carrier'.
     ls_scarr-currcode = 'USD'.
@@ -306,8 +355,11 @@ Parameters:
 
 Example
 
-    DATA: lt_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scarr.
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer,
+          lt_scarr    TYPE TABLE OF scarr,
+          ls_scarr    TYPE scarr.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_scarr-carrid = 'YY'.
     APPEND ls_scarr TO lt_scarr.
@@ -328,9 +380,19 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple update
 
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+
     lo_db_layer->update( iv_update_statement = 'UPDATE scarr SET carrname = ''New name'' WHERE carrid = ''AA''' ).
 
 Example of update with parameter
+
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
@@ -359,10 +421,20 @@ You can get more information in [detailed description of parameter IT_PARAMETERS
 
 Example of simple delete
 
+    DATA: lo_db_layer TYPE REF TO zif_zosql_db_layer.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     lo_db_layer->delete( iv_delete_statement = 'DELETE FROM scarr WHERE carrid = ''AA''' ).
 
 Example of delete with parameter
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     ls_param-param_name_in_select = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
@@ -422,6 +494,13 @@ You must fill one of fields PARAMETER_VALUE_REF, PARAMETER_VALUE_RANGE or PARAME
 
 Example of single value parameter
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_scarr        TYPE TABLE OF scarr.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+
     ls_param-param_name_in_select   = ':CARRID'.
     ls_param-parameter_value_single = 'AA'.
     APPEND ls_param TO lt_params.
@@ -432,9 +511,18 @@ Example of single value parameter
 
 Example of parameter passed as ref to data
     
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_scarr        TYPE TABLE OF scarr.
+          
+    FIELD-SYMBOLS: <fs_carrid> TYPE s_carr_id.
+    
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     ls_param-param_name_in_select = ':CARRID'.
     
-    CREATE DATA ls_param-parameter_value_ref TYPE S_CARR_ID.
+    CREATE DATA ls_param-parameter_value_ref TYPE s_carr_id.
     ASSIGN ls_param-parameter_value_ref->* TO <fs_carrid>.
     <fs_carrid> = 'AA'.
     
@@ -446,16 +534,23 @@ Example of parameter passed as ref to data
 
 Example of parameters passed as range to perform 'IN' comparison
 
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          ls_param        TYPE zosql_db_layer_param,
+          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_scarr        TYPE TABLE OF scarr.
+        
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+    
     ls_param-param_name_in_select = ':CARRID'.
 
-    ls_param_range_line-sign = 'I'.
+    ls_param_range_line-sign   = 'I'.
     ls_param_range_line-option = 'EQ'.
-    ls_param_range_line-low  = 'AA'.
+    ls_param_range_line-low    = 'AA'.
     APPEND ls_param_range_line TO ls_param-parameter_value_range.
 
-    ls_param_range_line-sign = 'I'.
+    ls_param_range_line-sign   = 'I'.
     ls_param_range_line-option = 'EQ'.
-    ls_param_range_line-low  = 'AB'.
+    ls_param_range_line-low    = 'AB'.
     APPEND ls_param_range_line TO ls_param-parameter_value_range.
 
     APPEND ls_param TO lt_params.
@@ -474,8 +569,11 @@ In select statement string (parameter IV_SELECT) it does not matter how you call
 
 Example of simple select for all entries
 
-    DATA: lt_search_scarr TYPE TABLE OF scarr,
-          ls_scarr TYPE scarr.
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          lt_search_scarr TYPE TABLE OF scarr,
+          ls_scarr        TYPE scarr.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     ls_scarr-carrid = 'AA'.
     APPEND ls_scarr TO lt_search_scarr.
@@ -491,9 +589,9 @@ Example of simple select for all entries
       'WHERE carrid = ITAB-carrid'
       INTO lv_select SEPARATED BY space.
 
-    lo_db_layer->select_to_itab( EXPORTING iv_select = 'SELECT * FROM scarr WHERE carrid IN :carrid'
+    lo_db_layer->select_to_itab( EXPORTING iv_select                = 'SELECT * FROM scarr WHERE carrid IN :carrid'
                                            it_for_all_entries_table = lt_selected_scarr
-                                 IMPORTING et_result_table = lt_selected_scarr ).
+                                 IMPORTING et_result_table          = lt_selected_scarr ).
 
 In this example internal table of type SCARR is passed as for all entries base table with the field CARRID filled.
 In select the for all entries table is called ITAB and in where the same name is used in condition:
@@ -502,8 +600,11 @@ carrid = ITAB-carrid
 
 Example of select for all entries with not structured base table
 
-    DATA: lt_search_scarr TYPE TABLE OF char3,
-          ls_scarr TYPE scarr.
+    DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
+          lt_search_scarr TYPE TABLE OF char3,
+          ls_scarr        TYPE scarr.
+
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
     APPEND 'AA' TO lt_search_scarr.
 
@@ -553,7 +654,9 @@ More complicated example is contained inside project named ZOSQL_DB_EXAMPLE_REP 
 ### How to create instance
 Just call this static method:
 
-    ZCL_ZOSQL_TEST_ENVIRONMENT=>CREATE( )
+    DATA: lo_test_environment TYPE REF TO zif_zosql_test_environment.
+
+    lo_test_environment = zcl_zosql_test_environment=>create( ).
     
 ### Method CLEAR_ALL
 Clears all data in virtual database.
