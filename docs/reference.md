@@ -89,6 +89,8 @@ Example of simple select
           ld_result_table TYPE REF TO data,
           lv_subrc        TYPE sysubrc.
           
+    lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
+          
     lo_db_layer->select( EXPORTING iv_select          = 'SELECT * FROM SFLIGHT'
                          IMPORTING ed_result_as_table = ld_result_table 
                                    ev_subrc           = lv_subrc ).
