@@ -230,6 +230,7 @@ private section.
       value(IV_DISTINCT) type ABAP_BOOL
       !IV_NEW_SYNTAX type ABAP_BOOL
       !IT_FOR_ALL_ENTRIES_TABLE type ANY TABLE
+      value(IV_FOR_ALL_ENTRIES) type ABAP_BOOL
       !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY
       value(IV_DO_INTO_CORRESPONDING) type ABAP_BOOL default ABAP_TRUE
       value(IV_NUMBER_OF_ROWS_TO_SELECT) type I optional
@@ -864,6 +865,7 @@ endmethod.
               iv_order_by                   = iv_order_by
               iv_distinct                   = iv_distinct
               it_for_all_entries_table      = it_for_all_entries_table
+              iv_for_all_entries            = iv_for_all_entries
               is_dynamic_struct_with_params = is_dynamic_struct_with_params
               iv_do_into_corresponding      = iv_do_into_corresponding
               iv_number_of_rows_to_select   = iv_number_of_rows_to_select
@@ -873,7 +875,7 @@ endmethod.
           RETURN.
         ENDIF.
 
-        IF it_for_all_entries_table IS NOT INITIAL.
+        IF it_for_all_entries_table IS NOT INITIAL OR iv_for_all_entries = abap_true.
 
           IF iv_order_by IS NOT INITIAL.
             MESSAGE e051 INTO zcl_zosql_utils=>dummy.
@@ -1291,7 +1293,7 @@ ENDMETHOD.
       ENDIF.
 
       REPLACE ALL OCCURRENCES OF <ls_parameter_with_name>-param_name_in_select IN cv_sql
-        WITH lv_param_name_in_select.
+        WITH lv_param_name_in_select IGNORING CASE.
     ENDLOOP.
 
     _consider_if_host_already_was( CHANGING cv_sql = cv_sql ).
@@ -1304,7 +1306,8 @@ ENDMETHOD.
           lv_having_ready_for_select  TYPE string,
           ld_struct_with_params       TYPE REF TO data,
           ld_result_table_prepared    TYPE REF TO data,
-          lv_number_of_rows_to_select TYPE i.
+          lv_number_of_rows_to_select TYPE i,
+          lv_for_all_entries_flag     TYPE abap_bool.
 
     FIELD-SYMBOLS: <ls_result_first_line>  TYPE any,
                    <ls_struct_with_params> TYPE any,
@@ -1340,6 +1343,10 @@ ENDMETHOD.
       _raise_new_syntax_impossible( ).
     ENDIF.
 
+    IF iv_for_all_entries_tabname IS NOT INITIAL.
+      lv_for_all_entries_flag = abap_true.
+    ENDIF.
+
     _execute_select( EXPORTING iv_select                     = iv_select
                                iv_from                       = lv_from_ready_for_select
                                iv_where                      = lv_where_ready_for_select
@@ -1349,6 +1356,7 @@ ENDMETHOD.
                                iv_distinct                   = iv_distinct
                                iv_new_syntax                 = iv_new_syntax
                                it_for_all_entries_table      = it_for_all_entries_table
+                               iv_for_all_entries            = lv_for_all_entries_flag
                                is_dynamic_struct_with_params = <ls_struct_with_params>
                                iv_do_into_corresponding      = iv_do_into_corresponding
                                iv_number_of_rows_to_select   = lv_number_of_rows_to_select

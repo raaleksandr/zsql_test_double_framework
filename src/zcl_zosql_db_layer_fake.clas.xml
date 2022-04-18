@@ -70,6 +70,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_IF_SELECT_FOR_ALL_ENTRIES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns TRUE if it is select for all entries</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
      <CMPNAME>_IS_FAE_ITAB_WITHOUT_STRUCT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if for all entries ITAB lines are without structrure</DESCRIPT>
@@ -91,6 +97,18 @@
      <CMPNAME>_SELECT_FOR_ALL_ENTRIES</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Perform select for all entries</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_SELECT_FOR_ALL_ENT_EMPTY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Perform select for all entries when base table is empty</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER_FAKE</CLSNAME>
+     <CMPNAME>_SELECT_FOR_ALL_ENT_NOT_EMPTY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Perform select for all entries when base table not empty</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

@@ -66,6 +66,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
       select_order_by FOR TESTING RAISING zcx_zosql_error,
+      param_lower_case_in_select FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch FOR TESTING RAISING zcx_zosql_error,
@@ -97,6 +98,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       order_by_with_join FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_compare_2_fld FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_no_struct FOR TESTING RAISING zcx_zosql_error,
+      for_all_ent_empty_base_tab FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
       view_user_addr FOR TESTING RAISING zcx_zosql_error,
       empty_result_ref_to_data FOR TESTING RAISING zcx_zosql_error,
@@ -4233,6 +4235,61 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
+  METHOD for_all_ent_empty_base_tab.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " Check if for all entries works when base table is empty
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lv_select             TYPE string,
+          lt_base_table_initial TYPE TABLE OF zosql_for_tst.
+
+    REFRESH lt_base_table_initial.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'FOR ALL ENTRIES IN lt_base_table_initial'
+      'WHERE KEY_FIELD = lt_base_table_initial-key_field'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select                  = lv_select
+                                     it_for_all_entries_table   = lt_base_table_initial
+                           IMPORTING et_result_table            = lt_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY1'.
+    ls_expected_line-text_field1 = 'VALUE1'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
   METHOD select_from_table_with_include.
 
     DATA: lt_initial_table TYPE TABLE OF zosql_for_tst4,
@@ -4314,6 +4371,58 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD param_lower_case_in_select.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lt_params TYPE zosql_db_layer_params,
+          ls_param  TYPE zosql_db_layer_param,
+          lv_select TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'WHERE KEY_FIELD = :key_field'
+      INTO lv_select SEPARATED BY space.
+
+    ls_param-param_name_in_select = ':KEY_FIELD'.
+    ls_param-parameter_value_single = 'KEY2'.
+    APPEND ls_param TO lt_params.
+
+    " WHEN
+    DATA: lt_result_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                                     it_parameters   = lt_params
+                           IMPORTING et_result_table = lt_result_table ).
+
+    " THEN
+    DATA: lt_expected_table TYPE TABLE OF zosql_for_tst,
+          ls_expected_line  TYPE zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    ls_expected_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD sql_separated_by_line_breaks.
