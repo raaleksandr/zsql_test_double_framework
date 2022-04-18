@@ -641,7 +641,7 @@ Example of select for all entries with not structured base table
       INTO lv_select SEPARATED BY space.
 
     lo_db_layer->select_to_itab( EXPORTING iv_select                = lv_select
-                                           it_for_all_entries_table = lt_selected_scarr
+                                           it_for_all_entries_table = lt_search_scarr
                                  IMPORTING et_result_table          = lt_selected_scarr ).
 
 ## Interface ZIF_ZOSQL_TEST_ENVIRONMENT
