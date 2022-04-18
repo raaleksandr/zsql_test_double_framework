@@ -180,7 +180,8 @@ Example of select with join
 
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ld_result_table TYPE REF TO data,
-          lv_subrc        TYPE sysubrc.
+          lv_subrc        TYPE sysubrc,
+          lv_select       TYPE string.
 
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     
