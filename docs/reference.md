@@ -131,7 +131,7 @@ Example of select with parameters
           ld_result_table TYPE REF TO data,
           lv_subrc        TYPE sysubrc,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params.
+          lt_params       TYPE zosql_db_layer_params.
     
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     
@@ -410,7 +410,7 @@ Example of update with parameter
 
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params.
+          lt_params       TYPE zosql_db_layer_params.
     
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
 
@@ -451,7 +451,7 @@ Example of delete with parameter
 
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params.
+          lt_params       TYPE zosql_db_layer_params.
     
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
     
@@ -516,7 +516,7 @@ Example of single value parameter
 
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_params       TYPE zosql_db_layer_params,
           lt_scarr        TYPE TABLE OF scarr.
     
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
@@ -533,7 +533,7 @@ Example of parameter passed as ref to data
     
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_params       TYPE zosql_db_layer_params,
           lt_scarr        TYPE TABLE OF scarr.
           
     FIELD-SYMBOLS: <fs_carrid> TYPE s_carr_id.
@@ -556,7 +556,7 @@ Example of parameters passed as range to perform 'IN' comparison
 
     DATA: lo_db_layer     TYPE REF TO zif_zosql_db_layer,
           ls_param        TYPE zosql_db_layer_param,
-          lt_params       TYPE TABLE OF zosql_db_layer_params,
+          lt_params       TYPE zosql_db_layer_params,
           lt_scarr        TYPE TABLE OF scarr.
         
     lo_db_layer = zcl_zosql_test_environment=>get_db_layer_for_production( ).
@@ -651,6 +651,7 @@ Example:
     DATA: lo_test_environment TYPE REF TO zif_zosql_test_environment.
 
     lo_test_environment = zcl_zosql_test_environment=>create( ).
+    
     DATA: lt_scarr TYPE TABLE OF scarr,
           ls_scarr TYPE scarr.
 
