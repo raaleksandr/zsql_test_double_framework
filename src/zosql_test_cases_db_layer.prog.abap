@@ -807,6 +807,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -865,6 +867,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-qty       = 1.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -908,6 +912,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     ls_expected_line-text_field1 = 'SOME VALUE2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1141,6 +1147,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-key_field2 = 'KEY2_1'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -1218,6 +1226,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     CLEAR ls_expected_line.
     ls_expected_line-key_field  = 'KEY3'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1333,6 +1343,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'SOME_TEXT2'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -1386,6 +1398,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-key_field   = 'KEY3'.
     ls_expected_line-text_field1 = 'SOME_TEXT1'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1487,6 +1501,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-key_field   = 'KEY2'.
     ls_expected_line-text_field1 = 'SOME_TEXT1'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -1758,6 +1774,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND 'KEY1' TO lt_expected_result.
     APPEND 'KEY2' TO lt_expected_result.
 
+    SORT: lt_result_table, lt_expected_result.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_result ).
   ENDMETHOD.
 
@@ -1857,6 +1875,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -1920,6 +1940,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE2_1'.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -2061,6 +2083,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     APPEND 'KEY1' TO lt_expected_table.
     APPEND 'KEY3' TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -2521,6 +2545,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table1.
 
+    SORT: lt_result_table1, lt_expected_table1.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table1 exp = lt_expected_table1 msg = 'Incorrect package 1' ).
 
     ls_expected_line-mandt       = sy-mandt.
@@ -2534,6 +2560,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE4_1'.
     ls_expected_line-text_field2 = 'VALUE4_2'.
     APPEND ls_expected_line TO lt_expected_table2.
+
+    SORT: lt_result_table2, lt_expected_table2.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table2 exp = lt_expected_table2 msg = 'Incorrect package 2' ).
 
@@ -2626,6 +2654,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field2 = 'VALUE2_2'.
     APPEND ls_expected_line TO lt_expected_table1.
 
+    SORT: lt_result_table1, lt_expected_table1.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table1 exp = lt_expected_table1 msg = 'Incorrect package 1' ).
 
     ls_expected_line-mandt       = sy-mandt.
@@ -2639,6 +2669,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE4_1'.
     ls_expected_line-text_field2 = 'VALUE4_2'.
     APPEND ls_expected_line TO lt_expected_table2.
+
+    SORT: lt_result_table2, lt_expected_table2.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table2 exp = lt_expected_table2 msg = 'Incorrect package 2' ).
 
@@ -2713,6 +2745,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-amount      = '200'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -2782,6 +2816,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'AVALUE2_1'.
     ls_expected_line-amount      = '300'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -2972,6 +3008,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-amount      = '200'.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -3074,6 +3112,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected-cnt       = 1.
     APPEND ls_expected TO lt_expected.
 
+    SORT: lt_result, lt_expected.
+
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
@@ -3132,6 +3172,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected-key_field = 'KEY2'.
     ls_expected-cnt       = 1.
     APPEND ls_expected TO lt_expected.
+
+    SORT: lt_result, lt_expected.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
@@ -3194,6 +3236,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected-key_field = 'KEY2'.
     ls_expected-cnt       = 1.
     APPEND ls_expected TO lt_expected.
+
+    SORT: lt_result, lt_expected.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
@@ -3332,6 +3376,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-qty              = 5.
     ls_expected_line-some_other_field = 'VAL3'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -3517,6 +3563,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-cnt       = 1.
     APPEND ls_expected_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
@@ -3687,6 +3735,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
 
     APPEND 'KEY1' TO lt_expected_table.
     APPEND 'KEY2' TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -4167,6 +4217,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected-key_field2  = 'KEY2_1'.
     APPEND ls_expected TO lt_expected.
 
+    SORT: lt_result, lt_expected.
+
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected ).
   ENDMETHOD.
 
@@ -4231,6 +4283,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE3_1'.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
@@ -5362,6 +5416,8 @@ CLASS ltc_cases_for_select_740 IMPLEMENTATION.
     ls_expected_line-text_field1 = 'VALUE3_1'.
     ls_expected_line-text_field2 = 'VALUE3_2'.
     APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
