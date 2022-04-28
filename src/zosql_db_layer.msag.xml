@@ -251,6 +251,48 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>090</MSGNR>
+     <TEXT>Wrong token &apos;&amp;&apos; is not expected in this position</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>091</MSGNR>
+     <TEXT>You should not use &apos;INTO&apos; in SQL text string. Use method parameters</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>092</MSGNR>
+     <TEXT>Value &apos;&amp;&apos; is not a correct constant and is not found in IT_PARAMETERS</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>093</MSGNR>
+     <TEXT>Alias &apos;&amp;&apos; is duplicated in SQL</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>094</MSGNR>
+     <TEXT>Incorrect expression bracket not closed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>095</MSGNR>
+     <TEXT>Incorrect &amp; expression &apos;&amp;&apos;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>096</MSGNR>
+     <TEXT>Unexpected end of statement after &apos;&amp;&apos;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>

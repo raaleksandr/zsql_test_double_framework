@@ -14,6 +14,7 @@ protected section.
   methods CREATE_DYNAMIC_TAB_FOR_RESULT
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
     returning
       value(RD_DYNAMIC_TABLE_SELECT_RESULT) type ref to DATA
     raising
@@ -119,13 +120,19 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
   METHOD create_dynamic_tab_for_result.
     DATA: lo_select           TYPE REF TO zcl_zosql_select_processor,
           lo_from_iter        TYPE REF TO zcl_zosql_from_iterator,
-          lo_iter_pos         TYPE REF TO zcl_zosql_iterator_position.
+          lo_iter_pos         TYPE REF TO zcl_zosql_iterator_position,
+          lo_parameters       TYPE REF TO zcl_zosql_parameters.
 
     FIELD-SYMBOLS: <lt_select_result> TYPE STANDARD TABLE.
 
+    CREATE OBJECT lo_parameters
+      EXPORTING
+        it_parameters = it_parameters.
+
     CREATE OBJECT lo_from_iter
       EXPORTING
-        io_sql_parser = io_sql_parser.
+        io_sql_parser = io_sql_parser
+        io_parameters = lo_parameters.
 
     CREATE OBJECT lo_select
       EXPORTING
@@ -259,7 +266,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     lo_sql_parser->set_sql( iv_select ).
     lo_sql_parser->run_recursive_descent_parser( ).
 
-    ed_result_as_table = create_dynamic_tab_for_result( lo_sql_parser ).
+    ed_result_as_table = create_dynamic_tab_for_result( io_sql_parser = lo_sql_parser
+                                                        it_parameters = it_parameters ).
     ASSIGN ed_result_as_table->* TO <lt_select_result>.
 
     zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                = iv_select

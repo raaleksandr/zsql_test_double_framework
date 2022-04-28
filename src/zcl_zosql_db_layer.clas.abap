@@ -83,6 +83,21 @@ private section.
   methods _RAISE_NEW_SYNTAX_IMPOSSIBLE
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CREATE_ITERATOR_FOR_SELECT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
+    returning
+      value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CREATE_ITER_FOR_UPD_DEL
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _IF_ORDER_BY_PRIMARY_KEY
     importing
       !IV_ORDER_BY type CLIKE
@@ -99,11 +114,6 @@ private section.
       value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _CREATE_STANDARD_LIKE_ANY_TAB
-    importing
-      !IT_ANY_TABLE type ANY TABLE
-    returning
-      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _SPLIT_SELECT_INTO_PARTS
     importing
       !IV_SELECT type CLIKE
@@ -143,6 +153,11 @@ private section.
       !EV_SUBRC type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CREATE_STANDARD_LIKE_ANY_TAB
+    importing
+      !IT_ANY_TABLE type ANY TABLE
+    returning
+      value(RD_REF_TO_STANDARD_TABLE) type ref to DATA .
   methods _PREPARE_SET_FOR_UPDATE
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -209,6 +224,7 @@ private section.
     importing
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     returning
       value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA
     raising
@@ -541,7 +557,8 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
     ls_cursor_parameters-cursor = rv_cursor.
     ls_cursor_parameters-ref_to_result_dataset =
-      create_dynamic_tab_for_result( lo_sql_parser ).
+      create_dynamic_tab_for_result( io_sql_parser = lo_sql_parser
+                                     it_parameters = it_parameters ).
     APPEND ls_cursor_parameters TO mt_database_cursor_parameters.
   endmethod.
 
@@ -731,16 +748,17 @@ endmethod.
       EXPORTING
         it_parameters = lt_parameters.
 
-    CREATE OBJECT lo_where_processor
-      EXPORTING
-        io_parameters = lo_parameters.
-
     IF io_sql_parser IS BOUND.
       CREATE OBJECT lo_parser_helper
         EXPORTING
           io_sql_parser = io_sql_parser.
       lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
     ENDIF.
+
+    CREATE OBJECT lo_where_processor
+      EXPORTING
+        io_parameters = lo_parameters
+        io_iterator   = io_iterator.
 
     lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( lo_node_where ).
 
@@ -775,6 +793,45 @@ endmethod.
     lo_table = cl_abap_tabledescr=>create( lo_struct ).
     CREATE DATA rd_internal_table TYPE HANDLE lo_table.
   ENDMETHOD.
+
+
+  method _CREATE_ITERATOR_FOR_SELECT.
+
+    DATA: lo_parameters TYPE REF TO zcl_zosql_parameters.
+
+    CREATE OBJECT lo_parameters
+      EXPORTING
+        it_parameters = it_parameters.
+
+    CREATE OBJECT ro_iterator TYPE zcl_zosql_from_iterator
+      EXPORTING
+        io_zosql_test_environment = zcl_zosql_test_environment=>create( )
+        io_parameters             = lo_parameters
+        io_sql_parser             = io_sql_parser.
+  endmethod.
+
+
+  method _CREATE_ITER_FOR_UPD_DEL.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          lv_table_name    TYPE string.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    CASE abap_true.
+      WHEN lo_parser_helper->is_update( ).
+        lv_table_name = lo_parser_helper->get_update_table_name( ).
+      WHEN lo_parser_helper->is_delete( ).
+        lv_table_name = lo_parser_helper->get_delete_table_name( ).
+    ENDCASE.
+
+    CREATE OBJECT ro_iterator TYPE zcl_zosql_table_iterator
+      EXPORTING
+        io_zosql_test_environment = zcl_zosql_test_environment=>create( )
+        iv_table_name             = lv_table_name.
+  endmethod.
 
 
   METHOD _CREATE_STANDARD_LIKE_ANY_TAB.
@@ -1150,12 +1207,17 @@ endmethod.
 
 METHOD _PREPARE_FOR_SELECT.
 
-  DATA: lt_parameters_with_name TYPE ty_parameters_with_name.
+  DATA: lt_parameters_with_name TYPE ty_parameters_with_name,
+        lo_iterator             TYPE REF TO zif_zosql_iterator.
 
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
 
+  lo_iterator = _create_iterator_for_select( io_sql_parser = io_sql_parser
+                                             it_parameters = it_parameters ).
+
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  io_sql_parser           = io_sql_parser ).
+                                                                  io_sql_parser           = io_sql_parser
+                                                                  io_iterator             = lo_iterator ).
 
   _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                          iv_name_of_struct_with_params = iv_name_of_struct_with_params
@@ -1181,12 +1243,16 @@ ENDMETHOD.
 
 METHOD _PREPARE_FOR_UPDATE_DELETE.
 
-  DATA: lt_parameters_with_name TYPE ty_parameters_with_name.
+  DATA: lt_parameters_with_name TYPE ty_parameters_with_name,
+        lo_iterator             TYPE REF TO zif_zosql_iterator.
 
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
 
+  lo_iterator = _create_iter_for_upd_del( io_sql_parser ).
+
   ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  io_sql_parser           = io_sql_parser ).
+                                                                  io_sql_parser           = io_sql_parser
+                                                                  io_iterator             = lo_iterator ).
 
   _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                          iv_name_of_struct_with_params = iv_name_of_struct_with_params

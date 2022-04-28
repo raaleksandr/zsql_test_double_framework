@@ -7,9 +7,18 @@ public section.
   methods GET_LIST_OF_SELECT_FROM_TABLES
     returning
       value(RT_DATASETS) type ZCL_ZOSQL_ITERATOR_POSITION=>TY_DATA_SETS .
+  methods IS_DELETE
+    returning
+      value(RV_IS_DELETE) type ABAP_BOOL .
+  methods IS_NEW_SYNTAX
+    returning
+      value(RV_IS_NEW_SYNTAX) type ABAP_BOOL .
   methods IS_SELECT
     returning
       value(RV_IS_SELECT) type ABAP_BOOL .
+  methods IS_UPDATE
+    returning
+      value(RV_IS_UPDATE) type ABAP_BOOL .
   methods CONSTRUCTOR
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
@@ -272,9 +281,36 @@ CLASS ZCL_ZOSQL_PARSER_HELPER IMPLEMENTATION.
   endmethod.
 
 
+  METHOD IS_DELETE.
+    IF mo_sql_parser->get_top_node( )-node_type = zcl_zosql_parser_recurs_desc=>node_type-delete.
+      rv_is_delete = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
+  method IS_NEW_SYNTAX.
+
+    CASE abap_true.
+      WHEN is_select( ).
+        get_key_nodes_of_sql_select( IMPORTING ev_new_syntax = rv_is_new_syntax ).
+      WHEN is_update( ).
+        get_key_nodes_of_sql_update( IMPORTING ev_new_syntax = rv_is_new_syntax ).
+      WHEN is_delete( ).
+        get_key_nodes_of_sql_delete( IMPORTING ev_new_syntax = rv_is_new_syntax ).
+    ENDCASE.
+  endmethod.
+
+
   METHOD is_select.
     IF mo_sql_parser->get_top_node( )-node_type = zcl_zosql_parser_recurs_desc=>node_type-select.
       rv_is_select = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD IS_UPDATE.
+    IF mo_sql_parser->get_top_node( )-node_type = zcl_zosql_parser_recurs_desc=>node_type-update.
+      rv_is_update = abap_true.
     ENDIF.
   ENDMETHOD.
 

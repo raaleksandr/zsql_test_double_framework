@@ -19,6 +19,7 @@ CLASS ZCL_ZOSQL_JOIN_PROCESSOR IMPLEMENTATION.
   method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
     CREATE OBJECT ro_processor TYPE zcl_zosql_join_processor
       EXPORTING
-        io_parameters = mo_parameters.
+        io_parameters = mo_parameters
+        io_iterator   = mo_iterator.
   endmethod.
 ENDCLASS.

@@ -27,7 +27,8 @@ CLASS ZCL_ZOSQL_HAVING_PROCESSOR IMPLEMENTATION.
     CREATE OBJECT ro_processor TYPE zcl_zosql_having_processor
       EXPORTING
         io_parameters             = mo_parameters
-        io_zosql_test_environment = mo_zosql_test_environment.
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_iterator               = mo_iterator.
   endmethod.
 
 

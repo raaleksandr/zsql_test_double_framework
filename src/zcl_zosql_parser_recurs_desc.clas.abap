@@ -72,6 +72,8 @@ public section.
                  delete_tabname                 TYPE string VALUE 'DELETE_TABNAME',
                  list_of_vals_opening_bracket   TYPE string VALUE 'LIST_OF_VALS_OPENING_BRACKET',
                  list_of_vals_value             TYPE string VALUE 'LIST_OF_VALS_VALUE',
+                 list_of_vals_comma             TYPE string VALUE 'LIST_OF_VALS_COMMA',
+                 list_of_vals_closing_bracket   TYPE string VALUE 'LIST_OF_VALS_CLOSING_BRACKET',
                END OF node_type .
 
   methods GET_SQL
@@ -204,27 +206,50 @@ private section.
                having TYPE string VALUE 'HAVING',
              END OF expression_type .
 
+  methods _PARSED_ALL_TOKENS
+    returning
+      value(RV_PARSED_ALL_TOKENS) type ABAP_BOOL .
+  methods _RAISE_IF_NOT_ALL_PARSED
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_LEFT_PART
     importing
       !IV_PARENT_ID type I
       value(IV_EXPRESSION_TYPE) type STRING
     returning
       value(RV_LEFT_PART_NODE_ID) type I .
+  methods _RAISE_UNEXPECTED_END
+    importing
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _RAISE_WRONG_EXPRESSION
+    importing
+      !IV_PARENT_ID type I
+      !IV_EXPRESSION_TYPE type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _HAVING
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_EXISTS
     importing
       value(IV_PARENT_ID) type I
     returning
-      value(RV_IT_WAS_EXISTS_CONDITION) type ABAP_BOOL .
+      value(RV_IT_WAS_EXISTS_CONDITION) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _POP_POSITION_AND_STATE .
   methods _PUSH_POSITION_AND_STATE .
   methods _SUBQUERY
     importing
       value(IV_PARENT_ID) type I
     returning
-      value(RV_IT_WAS_SUBQUERY) type ABAP_BOOL .
+      value(RV_IT_WAS_SUBQUERY) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _DELETE_NODE
     importing
       !IV_NODE_ID type I .
@@ -233,17 +258,25 @@ private section.
       value(IV_PARENT_ID) type I
       value(IV_EXPRESSION_TYPE) type STRING
     returning
-      value(RV_IT_WAS_IN) type ABAP_BOOL .
+      value(RV_IT_WAS_IN) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _MINIMIZE_NESTED_NODE_CHAINS .
   methods _UP_TO_N_ROWS
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    returning
+      value(RV_FOUND) type ABAP_BOOL .
   methods _WHERE
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _UPDATE
     returning
-      value(RV_IT_WAS_UPDATE) type ABAP_BOOL .
+      value(RV_IT_WAS_UPDATE) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _UPDATE_SET_FIELD
     importing
       !IV_PARENT_ID type I .
@@ -273,25 +306,35 @@ private section.
   methods _RIGHT_OPERAND_IN
     importing
       !IV_PARENT_ID type I
-      value(IV_EXPRESSION_TYPE) type STRING .
+      value(IV_EXPRESSION_TYPE) type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_IN_BRACKETS
     importing
       value(IV_PARENT_ID) type I
       value(IV_EXPRESSION_TYPE) type STRING
     returning
-      value(RV_IT_WAS_EXPR_IN_BRACKETS) type ABAP_BOOL .
+      value(RV_IT_WAS_EXPR_IN_BRACKETS) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION
     importing
       value(IV_PARENT_ID) type I
-      value(IV_EXPRESSION_TYPE) type STRING .
+      value(IV_EXPRESSION_TYPE) type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_AND
     importing
       value(IV_PARENT_ID) type I
-      value(IV_EXPRESSION_TYPE) type STRING optional .
+      value(IV_EXPRESSION_TYPE) type STRING optional
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_NOT
     importing
       value(IV_PARENT_ID) type I
-      value(IV_EXPRESSION_TYPE) type STRING .
+      value(IV_EXPRESSION_TYPE) type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _EXPRESSION_LIKE
     importing
       !IV_PARENT_ID type I
@@ -305,15 +348,21 @@ private section.
   methods _EXPRESSION_OR
     importing
       value(IV_PARENT_ID) type I
-      value(IV_EXPRESSION_TYPE) type STRING .
+      value(IV_EXPRESSION_TYPE) type STRING
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _JOIN
     importing
       !IV_PARENT_ID type I
     returning
-      value(RV_IT_WAS_JOIN) type ABAP_BOOL .
+      value(RV_IT_WAS_JOIN) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _ON_EXPRESSION
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _ALIAS
     importing
       !IV_PARENT_ID type I .
@@ -322,7 +371,9 @@ private section.
       !IV_PARENT_ID type I .
   methods _FROM
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _FUNCTION_WITHOUT_ALIAS
     importing
       value(IV_PARENT_ID) type I
@@ -359,7 +410,9 @@ private section.
       value(RV_NEW_NODE_ID) type I .
   methods _SELECT
     returning
-      value(RV_IT_WAS_SELECT) type ABAP_BOOL .
+      value(RV_IT_WAS_SELECT) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
 ENDCLASS.
 
 
@@ -674,6 +727,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       _delete( ).
     ENDDO.
 
+    _raise_if_not_all_parsed( ).
+
     _minimize_nested_node_chains( ).
   endmethod.
 
@@ -974,6 +1029,9 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
       _step_forward( ).
 
       rv_it_was_expr_in_brackets = abap_true.
+    ELSE.
+      MESSAGE e094 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
   ENDMETHOD.
 
@@ -1131,6 +1189,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                iv_node_type = node_type-expression_comparison_operator ).
 
     IF _step_forward( ) <> abap_true.
+      _raise_wrong_expression( iv_parent_id       = iv_parent_id
+                               iv_expression_type = iv_expression_type ).
       RETURN.
     ENDIF.
 
@@ -1397,6 +1457,10 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ENDIF.
 
     IF _step_forward( ) <> abap_true.
+      IF lv_join_node_id IS NOT INITIAL.
+        _raise_unexpected_end( iv_parent_id ).
+      ENDIF.
+
       RETURN.
     ENDIF.
 
@@ -1544,6 +1608,11 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
   ENDMETHOD.
 
 
+  method _PARSED_ALL_TOKENS.
+    rv_parsed_all_tokens = mv_reached_to_end_flag.
+  endmethod.
+
+
   method _POP_POSITION_AND_STATE.
 
     DATA: ls_stack_rec TYPE ty_pos_and_state_stack_rec.
@@ -1563,6 +1632,40 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
     ls_stack_rec-current_position = mv_current_token_index.
     ls_stack_rec-parsed_tree      = mt_parsed_tree.
     APPEND ls_stack_rec TO mt_pos_and_state_stack.
+  endmethod.
+
+
+  METHOD _raise_if_not_all_parsed.
+    IF _parsed_all_tokens( ) <> abap_true.
+
+      CASE mv_current_token_ucase.
+        WHEN 'INTO'.
+          MESSAGE e091 INTO zcl_zosql_utils=>dummy.
+        WHEN OTHERS.
+          MESSAGE e090 WITH mv_current_token INTO zcl_zosql_utils=>dummy.
+      ENDCASE.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  method _RAISE_UNEXPECTED_END.
+
+    DATA: lv_sql_part TYPE string.
+
+    lv_sql_part = get_node_sql( iv_parent_id ).
+    MESSAGE e096 WITH lv_sql_part INTO zcl_zosql_utils=>dummy.
+    zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+  endmethod.
+
+
+  method _RAISE_WRONG_EXPRESSION.
+    DATA: lv_expression   TYPE string.
+
+    lv_expression = get_node_sql( iv_parent_id ).
+
+    MESSAGE e095 WITH iv_expression_type lv_expression INTO zcl_zosql_utils=>dummy.
+    zcl_zosql_utils=>raise_exception_from_sy_msg( ).
   endmethod.
 
 
@@ -1603,8 +1706,10 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   method _RIGHT_OPERAND_LIST_OF_VALS.
 
-    IF zcl_zosql_utils=>get_first_n_chars( iv_string              = mv_current_token
-                                           iv_how_many_characters = 1 ) <> '('.
+    CONSTANTS: lc_opening_bracket TYPE char1 VALUE '(',
+               lc_closing_bracket TYPE char1 VALUE ')'.
+
+    IF mv_current_token <> lc_opening_bracket.
       RETURN.
     ENDIF.
 
@@ -1613,18 +1718,23 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     DO.
 
-      FIND FIRST OCCURRENCE OF ')' IN mv_current_token.
-      IF sy-subrc = 0.
-        rv_is_list_of_vals = abap_true.
-        EXIT.
-      ENDIF.
-
       IF _step_forward( ) <> abap_true.
         EXIT.
       ENDIF.
 
-      _add_node( iv_parent_id = iv_parent_id
-                 iv_node_type = node_type-list_of_vals_value ).
+      CASE mv_current_token.
+        WHEN lc_closing_bracket.
+          _add_node( iv_parent_id = iv_parent_id
+                     iv_node_type = node_type-list_of_vals_closing_bracket ).
+          rv_is_list_of_vals = abap_true.
+          EXIT.
+        WHEN ','.
+          _add_node( iv_parent_id = iv_parent_id
+                     iv_node_type = node_type-list_of_vals_comma ).
+        WHEN OTHERS.
+          _add_node( iv_parent_id = iv_parent_id
+                     iv_node_type = node_type-list_of_vals_value ).
+      ENDCASE.
     ENDDO.
 
     _step_forward( ).
@@ -1633,7 +1743,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
   METHOD _select.
 
-    DATA: lv_select_node_id TYPE i.
+    DATA: lv_select_node_id     TYPE i,
+          lv_up_to_n_rows_found TYPE abap_bool.
 
     IF mv_current_token_ucase = 'SELECT'.
       rv_it_was_select = abap_true.
@@ -1667,9 +1778,13 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
 
     _select_fields( lv_select_node_id ).
 
+    lv_up_to_n_rows_found = _up_to_n_rows( lv_select_node_id ).
+
     _from( lv_select_node_id ).
 
-    _up_to_n_rows( lv_select_node_id ).
+    IF lv_up_to_n_rows_found <> abap_true.
+      _up_to_n_rows( lv_select_node_id ).
+    ENDIF.
 
     _for_all_entries_in( lv_select_node_id ).
 
@@ -1939,6 +2054,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                iv_node_type = node_type-up_to_n_rows ).
 
     _step_forward( ).
+
+    rv_found = abap_true.
   endmethod.
 
 

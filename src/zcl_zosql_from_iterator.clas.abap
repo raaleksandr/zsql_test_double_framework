@@ -14,6 +14,12 @@ public section.
   types:
     ty_data_sets TYPE STANDARD TABLE OF ty_data_set WITH DEFAULT KEY .
 
+  methods ADD_ADDITIONAL_DATASET
+    importing
+      !IV_DATASET_NAME type CLIKE
+      !IV_DATASET_ALIAS type CLIKE optional
+    raising
+      ZCX_ZOSQL_ERROR .
   methods GET_KEY_FIELDS_OF_DATA_SET
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
@@ -102,17 +108,6 @@ private section.
   methods _POSITIONS_AS_STRING
     returning
       value(RV_POSITIONS_AS_STRING) type STRING .
-  methods _IF_DATASET_IS_TABLE
-    importing
-      !IO_ITERATOR_OF_DATASET type ref to ZIF_ZOSQL_ITERATOR
-    returning
-      value(RV_IS_TABLE) type ABAP_BOOL .
-  methods _GET_DATASET_NAME_AND_ALIAS
-    importing
-      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
-    exporting
-      !EV_NAME type CLIKE
-      !EV_ALIAS type CLIKE .
   methods _CREATE_DATASET_ITERATOR
     importing
       !IV_DATASET_NAME type CLIKE
@@ -120,6 +115,17 @@ private section.
       value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
+  methods _GET_DATASET_NAME_AND_ALIAS
+    importing
+      !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
+    exporting
+      !EV_NAME type CLIKE
+      !EV_ALIAS type CLIKE .
+  methods _IF_DATASET_IS_TABLE
+    importing
+      !IO_ITERATOR_OF_DATASET type ref to ZIF_ZOSQL_ITERATOR
+    returning
+      value(RV_IS_TABLE) type ABAP_BOOL .
   methods _ADD_ANOTHER_JOIN
     importing
       !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
@@ -135,15 +141,15 @@ private section.
       value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _INIT_BY_ATTRIBUTES
-    importing
-      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
-      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_BY_SQL_PARSER
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _INIT_BY_ATTRIBUTES
+    importing
+      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
+      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_OUTER_JOIN_ADD_MODE
     returning
       value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
@@ -197,6 +203,26 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
 
+  method ADD_ADDITIONAL_DATASET.
+    DATA: ls_dataset_with_position  LIKE LINE OF mt_datasets_with_position.
+
+    ls_dataset_with_position-dataset_name  = zcl_zosql_utils=>to_upper_case( iv_dataset_name ).
+    ls_dataset_with_position-dataset_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_alias ).
+    ls_dataset_with_position-iterator = _create_dataset_iterator( ls_dataset_with_position-dataset_name ).
+
+    IF iv_dataset_alias IS NOT INITIAL.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = ls_dataset_with_position-dataset_alias
+        TRANSPORTING NO FIELDS.
+      IF sy-subrc = 0.
+        MESSAGE e093 WITH iv_dataset_alias INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
+    ENDIF.
+
+    APPEND ls_dataset_with_position TO mt_datasets_with_position.
+  endmethod.
+
+
   METHOD constructor.
 
     DATA: lo_factory          TYPE REF TO zif_zosql_factory,
@@ -244,13 +270,15 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
   method GET_KEY_FIELDS_OF_DATA_SET.
 
-    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+    DATA: lo_virt_table            TYPE REF TO zcl_zosql_one_virt_table,
+          lv_dataset_name_or_alias TYPE string.
 
     FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position.
 
-    READ TABLE mt_datasets_with_position WITH KEY dataset_name = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
     IF sy-subrc <> 0.
-      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
     ENDIF.
 
     IF sy-subrc <> 0.
@@ -271,12 +299,15 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
   method GET_LINE_FOR_DATA_SET_REF.
 
+    DATA: lv_dataset_name_or_alias TYPE string.
+
     FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position,
                    <ls_data_set_line> TYPE any.
 
-    READ TABLE mt_datasets_with_position WITH KEY dataset_name = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
     IF sy-subrc <> 0.
-      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = iv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
     ENDIF.
 
     IF <ls_data_set_data> IS ASSIGNED.
@@ -439,7 +470,8 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     CREATE OBJECT ls_join_condition-expression_processor TYPE zcl_zosql_join_processor
       EXPORTING
-        io_parameters = mo_parameters.
+        io_parameters = mo_parameters
+        io_iterator   = me.
 
     ls_join_condition-expression_processor->initialize_by_parsed_sql( lo_node_join_on ).
 

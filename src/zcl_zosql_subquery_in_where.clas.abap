@@ -27,9 +27,19 @@ private section.
   data MO_PARAMETERS_OF_PARENT_QUERY type ref to ZCL_ZOSQL_PARAMETERS .
   data MO_SUBQUERY_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
 
+  methods _ADD_DATASETS_OF_PARENT_QUERY
+    importing
+      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _GET_PARAMETERS_FROM_PARENT
     returning
       value(RT_PARAMETERS_OF_PARENT) type ZOSQL_DB_LAYER_PARAMS .
+  methods _GET_SUBQUERY_FROM_ITERATOR
+    returning
+      value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _RUN_QUERY_AND_GET_RESULT
     importing
       !IT_PARAMETERS type ZOSQL_DB_LAYER_PARAMS
@@ -106,6 +116,21 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
     APPEND LINES OF lt_parameters_field_values TO lt_parameters.
 
     rd_ref_to_result_as_table = _run_query_and_get_result( lt_parameters ).
+  ENDMETHOD.
+
+
+  METHOD _add_datasets_of_parent_query.
+
+    DATA: lt_datasets_of_parent TYPE zcl_zosql_iterator_position=>ty_data_sets.
+
+    FIELD-SYMBOLS: <ls_dataset_of_parent> LIKE LINE OF lt_datasets_of_parent.
+
+    lt_datasets_of_parent = mo_current_rec_of_parent_query->get_data_set_list( ).
+
+    LOOP AT lt_datasets_of_parent ASSIGNING <ls_dataset_of_parent>.
+      io_from_iterator->add_additional_dataset( iv_dataset_name  = <ls_dataset_of_parent>-dataset_name
+                                                iv_dataset_alias = <ls_dataset_of_parent>-dataset_alias ).
+    ENDLOOP.
   ENDMETHOD.
 
 
@@ -204,12 +229,16 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
 
     DATA: lo_subquery_where              TYPE REF TO zif_zosql_expression_processor,
           lo_node_where                  TYPE REF TO zcl_zosql_parser_node,
-          lo_zosql_parser_helper         TYPE REF TO zcl_zosql_parser_helper.
+          lo_zosql_parser_helper         TYPE REF TO zcl_zosql_parser_helper,
+          lo_from_iterator               TYPE REF TO zif_zosql_iterator.
+
+    lo_from_iterator = _get_subquery_from_iterator( ).
 
     CREATE OBJECT lo_subquery_where TYPE zcl_zosql_where_processor
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
         io_parameters             = mo_parameters_of_parent_query
+        io_iterator               = lo_from_iterator
         iv_new_syntax             = mv_new_syntax.
 
     CREATE OBJECT lo_zosql_parser_helper
@@ -220,6 +249,22 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
     lo_subquery_where->initialize_by_parsed_sql( lo_node_where ).
 
     rt_operands_with_datasets = lo_subquery_where->get_list_of_operands( ).
+  endmethod.
+
+
+  method _GET_SUBQUERY_FROM_ITERATOR.
+
+    DATA: lo_from_iterator TYPE REF TO zcl_zosql_from_iterator.
+
+    CREATE OBJECT lo_from_iterator
+      EXPORTING
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_sql_parser             = mo_subquery_sql_parser
+        io_parameters             = mo_parameters_of_parent_query.
+
+    _add_datasets_of_parent_query( lo_from_iterator ).
+
+    ro_iterator = lo_from_iterator.
   endmethod.
 
 

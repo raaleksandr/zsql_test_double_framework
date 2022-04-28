@@ -333,6 +333,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_PARSED_ALL_TOKENS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if position is at last token that means all parsed</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
      <CMPNAME>_POP_POSITION_AND_STATE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Return position and state from stack top element</DESCRIPT>
@@ -342,6 +348,24 @@
      <CMPNAME>_PUSH_POSITION_AND_STATE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Push position and state to stack</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_RAISE_IF_NOT_ALL_PARSED</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception if not all tokens are parsed</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_RAISE_UNEXPECTED_END</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises error that unexpected end of expression reached</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
+     <CMPNAME>_RAISE_WRONG_EXPRESSION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception when expression is incorrect</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_PARSER_RECURS_DESC</CLSNAME>
