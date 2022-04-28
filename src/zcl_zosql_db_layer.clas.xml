@@ -64,6 +64,18 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_ITERATOR_FOR_SELECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates iterator object for SELECT statement</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_ITER_FOR_UPD_DEL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates iterator for update and delete</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
      <CMPNAME>_CREATE_STANDARD_LIKE_ANY_TAB</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Creates dynamic standard table with same type as given table</DESCRIPT>

@@ -9,16 +9,17 @@ public section.
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE .
 
   methods ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE
-    redefinition .
-  methods ZIF_ZOSQL_EXPRESSION_PROCESSOR~INITIALIZE_BY_PARSED_SQL
     redefinition .
 protected section.
 
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
 
+  methods INITIALIZE
+    redefinition .
   methods _CHECK_ELEMENTARY
     redefinition .
   methods _CHECK_WITH_COMPARE_OPERATOR
@@ -103,6 +104,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
     DATA: lo_factory TYPE REF TO zif_zosql_factory.
 
     super->constructor( io_parameters = io_parameters
+                        io_iterator   = io_iterator
                         iv_new_syntax = iv_new_syntax ).
 
     IF io_zosql_test_environment IS BOUND.
@@ -114,17 +116,7 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
-  method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
-    CREATE OBJECT ro_processor TYPE zcl_zosql_where_processor
-      EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment
-        io_parameters             = mo_parameters
-        iv_new_syntax             = mv_new_syntax.
-  endmethod.
-
-
-  METHOD zif_zosql_expression_processor~initialize_by_parsed_sql.
-
+  method INITIALIZE.
     DATA: lt_child_nodes_next_level TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           lo_first_node             TYPE REF TO zcl_zosql_parser_node.
 
@@ -144,11 +136,21 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
       WHEN zcl_zosql_parser_recurs_desc=>node_type-expression_exists.
         _init_exists( io_parent_node_of_expr ).
       WHEN OTHERS.
-        CALL METHOD super->zif_zosql_expression_processor~initialize_by_parsed_sql
+        CALL METHOD super->initialize
           EXPORTING
             io_parent_node_of_expr = io_parent_node_of_expr.
     ENDCASE.
-  ENDMETHOD.
+  endmethod.
+
+
+  method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
+    CREATE OBJECT ro_processor TYPE zcl_zosql_where_processor
+      EXPORTING
+        io_zosql_test_environment = mo_zosql_test_environment
+        io_parameters             = mo_parameters
+        io_iterator               = mo_iterator
+        iv_new_syntax             = mv_new_syntax.
+  endmethod.
 
 
   METHOD _check_elementary.

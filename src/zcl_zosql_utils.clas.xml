@@ -22,6 +22,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>CHAR_CAN_CONVERT_TO_NUMBER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if string contains correct number</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>CHECK_ENDS_WITH_TOKEN</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Check if select string ends with certain token</DESCRIPT>
@@ -109,6 +115,12 @@
      <CMPNAME>IS_CHAR</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if variable is a char (string, char etc)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>IS_CHAR_IN_QUOTES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if character string is contained in quotes</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>

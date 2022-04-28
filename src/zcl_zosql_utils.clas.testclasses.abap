@@ -24,8 +24,7 @@ CLASS ltc_zosql_utils DEFINITION FOR TESTING
     DATA:
       f_cut TYPE REF TO zcl_zosql_utils.  "class under test
 
-    METHODS: clear_quotes_from_value FOR TESTING,
-             ends_with_positive FOR TESTING,
+    METHODS: ends_with_positive FOR TESTING,
              ends_with_negative FOR TESTING,
              ends_with_different_case FOR TESTING,
              delete_end_token FOR TESTING,
@@ -71,14 +70,52 @@ CLASS ltc_split_cond_into_tokens DEFINITION FOR TESTING
              split_by_tab FOR TESTING.
 ENDCLASS.       "ltc_split_cond_into_tokens
 
+CLASS ltc_char_can_convert_to_number DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    METHODS: integer_value FOR TESTING,
+             float_value FOR TESTING,
+             incorrect_value FOR TESTING.
+
+  PRIVATE SECTION.
+    METHODS: _run_the_test IMPORTING iv_char            TYPE clike
+                                     iv_expected_result TYPE abap_bool.
+ENDCLASS.
+
+CLASS ltc_is_char_in_quotes DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    METHODS: in_quotes FOR TESTING,
+             just_quotes FOR TESTING,
+             not_in_quotes FOR TESTING,
+             only_one_quote_at_start FOR TESTING.
+
+  PRIVATE SECTION.
+    METHODS: _run_the_test IMPORTING iv_char            TYPE clike
+                                     iv_expected_result TYPE abap_bool.
+ENDCLASS.
+
+CLASS ltc_clear_quotes_from_value DEFINITION FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    METHODS: base_case FOR TESTING,
+             empty_string_in_quotes FOR TESTING,
+             one_quote_missing FOR TESTING,
+             quotes_inside FOR TESTING,
+             just_text_without_quotes FOR TESTING.
+
+  PRIVATE SECTION.
+    METHODS: _run_the_test IMPORTING iv_value_before    TYPE clike
+                                     iv_expected_result TYPE clike.
+ENDCLASS.
+
 CLASS ltc_zosql_utils IMPLEMENTATION.
-
-  METHOD clear_quotes_from_value.
-    DATA: lv_result TYPE string.
-
-    lv_result = zcl_zosql_utils=>clear_quotes_from_value( '''SOME VALUE''' ).
-    cl_aunit_assert=>assert_equals( act = lv_result exp = 'SOME VALUE' ).
-  ENDMETHOD.
 
   METHOD ends_with_positive.
     DATA: lv_result TYPE abap_bool.
@@ -293,4 +330,86 @@ CLASS ltc_split_cond_into_tokens IMPLEMENTATION.
 
     cl_aunit_assert=>assert_equals( act = lt_result_tokens exp = lt_expected_tokens ).
   ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_char_can_convert_to_number IMPLEMENTATION.
+  METHOD integer_value.
+    _run_the_test( iv_char = '25' iv_expected_result = abap_true ).
+  ENDMETHOD.
+
+  METHOD float_value.
+    _run_the_test( iv_char = '25.5' iv_expected_result = abap_true ).
+  ENDMETHOD.
+
+  METHOD incorrect_value.
+    _run_the_test( iv_char = '25incorrect' iv_expected_result = abap_false ).
+  ENDMETHOD.
+
+  METHOD _run_the_test.
+    DATA: lv_result TYPE abap_bool.
+
+    lv_result = zcl_zosql_utils=>char_can_convert_to_number( iv_char ).
+    cl_aunit_assert=>assert_equals( act = lv_result exp = iv_expected_result ).
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_is_char_in_quotes IMPLEMENTATION.
+  METHOD in_quotes.
+    _run_the_test( iv_char = '''Some text in quotes''' iv_expected_result = abap_true ).
+  ENDMETHOD.
+
+  METHOD just_quotes.
+    _run_the_test( iv_char = '''''' iv_expected_result = abap_true ).
+  ENDMETHOD.
+
+  METHOD not_in_quotes.
+    _run_the_test( iv_char = 'Some text not in quotes' iv_expected_result = abap_false ).
+  ENDMETHOD.
+
+  METHOD only_one_quote_at_start.
+    _run_the_test( iv_char = '''Some text with only one quote at start' iv_expected_result = abap_false ).
+  ENDMETHOD.
+
+  METHOD _run_the_test.
+    DATA: lv_result TYPE abap_bool.
+
+    lv_result = zcl_zosql_utils=>is_char_in_quotes( iv_char ).
+    cl_aunit_assert=>assert_equals( act = lv_result exp = iv_expected_result ).
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS ltc_clear_quotes_from_value IMPLEMENTATION.
+
+  METHOD base_case.
+    _run_the_test( iv_value_before    = '''SOME TEXT'''
+                   iv_expected_result = 'SOME TEXT' ).
+  ENDMETHOD.
+
+  METHOD empty_string_in_quotes.
+    _run_the_test( iv_value_before    = ''''''
+                   iv_expected_result = '' ).
+  ENDMETHOD.
+
+  METHOD one_quote_missing.
+    _run_the_test( iv_value_before    = '''SOME TEXT'
+                   iv_expected_result = '''SOME TEXT' ).
+  ENDMETHOD.
+
+  METHOD quotes_inside.
+    _run_the_test( iv_value_before    = '''Quote ''Inside'' text'''
+                   iv_expected_result = 'Quote ''Inside'' text' ).
+  ENDMETHOD.
+
+  METHOD just_text_without_quotes.
+    _run_the_test( iv_value_before    = 'SOME TEXT'
+                   iv_expected_result = 'SOME TEXT' ).
+  ENDMETHOD.
+
+  METHOD _run_the_test.
+    DATA: lv_result TYPE string.
+
+    lv_result = zcl_zosql_utils=>clear_quotes_from_value( iv_value_before ).
+    cl_aunit_assert=>assert_equals( act = lv_result exp = iv_expected_result ).
+  ENDMETHOD.
+
 ENDCLASS.

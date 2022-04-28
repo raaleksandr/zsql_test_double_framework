@@ -371,7 +371,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     CLEAR: et_result_table, es_result_line, ev_subrc.
 
     lo_sql_parser = parse_sql( iv_select ).
-    ld_result_table = create_dynamic_tab_for_result( lo_sql_parser ).
+    ld_result_table = create_dynamic_tab_for_result( io_sql_parser = lo_sql_parser
+                                                     it_parameters = it_parameters ).
 
     CREATE OBJECT lo_parameters
       EXPORTING
@@ -533,6 +534,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
         io_parameters             = io_parameters
+        io_iterator               = io_iterator
         iv_new_syntax             = iv_new_syntax.
 
     CREATE OBJECT lo_zosql_parser_helper
@@ -716,6 +718,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
           EXPORTING
             io_zosql_test_environment = mo_zosql_test_environment
             io_parameters             = io_parameters
+            io_iterator               = lo_from_iterator
             iv_new_syntax             = lv_new_syntax.
 
         lo_having->initialize_by_parsed_sql( lo_node_having ).
