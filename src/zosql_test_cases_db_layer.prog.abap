@@ -112,11 +112,15 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       error_into_in_select FOR TESTING RAISING zcx_zosql_error,
       error_bad_value_in_where FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_where FOR TESTING RAISING zcx_zosql_error,
-      error_bad_table_name FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_select FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_group_by FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_having FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_order_by FOR TESTING RAISING zcx_zosql_error,
+      error_bad_table_name FOR TESTING RAISING zcx_zosql_error,
+      error_bad_table_alias FOR TESTING RAISING zcx_zosql_error,
+      error_bad_alias_in_subquery FOR TESTING RAISING zcx_zosql_error,
+      error_bad_aggregation_func FOR TESTING RAISING zcx_zosql_error,
+      error_between_not_finished FOR TESTING RAISING zcx_zosql_error,
       error_join_not_finished FOR TESTING RAISING zcx_zosql_error,
       error_join_cond_not_finished FOR TESTING RAISING zcx_zosql_error,
       error_join_cond_bad_bracket FOR TESTING RAISING zcx_zosql_error.
@@ -5024,6 +5028,38 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       iv_select = 'SELECT * FROM bad_table_name WHERE key_field = ''SOME VALUE''' ).
   ENDMETHOD.
 
+  METHOD error_bad_table_alias.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field'
+      '  FROM zosql_for_tst as t'
+      '  WHERE bad_alias~key_field = ''TEST'''
+      INTO lv_select SEPARATED BY space.
+
+    select_must_be_with_exception( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_bad_alias_in_subquery.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field'
+      '  FROM zosql_for_tst as t'
+      '  WHERE EXISTS ('
+      '    SELECT *'
+      '      FROM zosql_for_tst2 as t2'
+      '      WHERE bad_alias~key_field = t~key_field )'
+      INTO lv_select SEPARATED BY space.
+
+    select_must_be_with_exception( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_bad_aggregation_func.
+    select_must_be_with_exception(
+      iv_select = 'SELECT bad_aggr_func( key_field ) FROM zosql_for_tst' ).
+  ENDMETHOD.
+
   METHOD error_bad_field_in_select.
     select_must_be_with_exception(
       iv_select = 'SELECT bad_field FROM zosql_for_tst WHERE key_field = ''SOME VALUE''' ).
@@ -5051,6 +5087,18 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
   METHOD error_bad_field_in_order_by.
     select_must_be_with_exception(
       iv_select = 'SELECT * FROM zosql_for_tst2 ORDER BY bad_field' ).
+  ENDMETHOD.
+
+  METHOD error_between_not_finished.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field'
+      '  FROM zosql_for_tst'
+      '  WHERE key_field BETWEEN'
+      INTO lv_select SEPARATED BY space.
+
+    select_must_be_with_exception( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_join_not_finished.

@@ -8,7 +8,8 @@ public section.
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT
       !IV_SUBQUERY_SQL type CLIKE
-      !IO_ITERATION_POSITION_PARENT type ref to ZCL_ZOSQL_ITERATOR_POSITION
+      !IO_ITERATION_POSITION_PARENT type ref to ZCL_ZOSQL_ITERATOR_POSITION optional
+      !IO_ITERATOR_PARENT type ref to ZIF_ZOSQL_ITERATOR optional
       !IO_PARAMETERS_OF_PARENT_QUERY type ref to ZCL_ZOSQL_PARAMETERS
       value(IV_NEW_SYNTAX) type ABAP_BOOL default ABAP_FALSE .
   methods RUN_SUBQUERY_AND_GET_RESULT
@@ -24,6 +25,7 @@ private section.
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
   data MV_SUBQUERY_SQL type STRING .
   data MO_CURRENT_REC_OF_PARENT_QUERY type ref to ZCL_ZOSQL_ITERATOR_POSITION .
+  data MO_ITERATOR_OF_PARENT_QUERY type ref to ZIF_ZOSQL_ITERATOR .
   data MO_PARAMETERS_OF_PARENT_QUERY type ref to ZCL_ZOSQL_PARAMETERS .
   data MO_SUBQUERY_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
 
@@ -100,15 +102,16 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
 
     mv_subquery_sql                = iv_subquery_sql.
     mo_current_rec_of_parent_query = io_iteration_position_parent.
+    mo_iterator_of_parent_query    = io_iterator_parent.
     mo_parameters_of_parent_query  = io_parameters_of_parent_query.
     mv_new_syntax                  = iv_new_syntax.
   endmethod.
 
 
-  METHOD RUN_SUBQUERY_AND_GET_RESULT.
+  METHOD run_subquery_and_get_result.
 
-    DATA: lt_parameters_field_values     TYPE zosql_db_layer_params,
-          lt_parameters        TYPE zosql_db_layer_params.
+    DATA: lt_parameters_field_values TYPE zosql_db_layer_params,
+          lt_parameters              TYPE zosql_db_layer_params.
 
     lt_parameters = _get_parameters_from_parent( ).
 
@@ -125,7 +128,18 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_dataset_of_parent> LIKE LINE OF lt_datasets_of_parent.
 
-    lt_datasets_of_parent = mo_current_rec_of_parent_query->get_data_set_list( ).
+    IF mo_current_rec_of_parent_query IS BOUND.
+      lt_datasets_of_parent = mo_current_rec_of_parent_query->get_data_set_list( ).
+    ELSE.
+      TRY.
+          DATA: lo_from_iterator_of_parent TYPE REF TO zcl_zosql_from_iterator.
+
+          lo_from_iterator_of_parent ?= mo_iterator_of_parent_query.
+          lt_datasets_of_parent = lo_from_iterator_of_parent->get_data_set_list( ).
+        CATCH cx_root.
+          REFRESH lt_datasets_of_parent.
+      ENDTRY.
+    ENDIF.
 
     LOOP AT lt_datasets_of_parent ASSIGNING <ls_dataset_of_parent>.
       io_from_iterator->add_additional_dataset( iv_dataset_name  = <ls_dataset_of_parent>-dataset_name
@@ -155,13 +169,6 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
       IF _data_set_exists_in_subquery( <ls_operand>-dataset_name_or_alias ) <> abap_true
         AND _data_set_exists_in_parent( <ls_operand>-dataset_name_or_alias ) = abap_true.
 
-        ld_ref_to_parent_dataset_value =
-          mo_current_rec_of_parent_query->get_field_ref_of_data_set(
-            iv_dataset_name_or_alias = <ls_operand>-dataset_name_or_alias
-            iv_fieldname             = <ls_operand>-fieldname ).
-
-        CHECK ld_ref_to_parent_dataset_value IS BOUND.
-
         APPEND INITIAL LINE TO rt_parent_fields_as_parameters ASSIGNING <ls_parameter>.
 
         CONCATENATE <ls_operand>-dataset_name_or_alias
@@ -169,16 +176,33 @@ CLASS ZCL_ZOSQL_SUBQUERY_IN_WHERE IMPLEMENTATION.
           INTO <ls_parameter>-param_name_in_select
           SEPARATED BY '~'.
 
+        CHECK mo_current_rec_of_parent_query IS BOUND.
+
+        ld_ref_to_parent_dataset_value =
+          mo_current_rec_of_parent_query->get_field_ref_of_data_set(
+            iv_dataset_name_or_alias = <ls_operand>-dataset_name_or_alias
+            iv_fieldname             = <ls_operand>-fieldname ).
+
+        CHECK ld_ref_to_parent_dataset_value IS BOUND.
+
         <ls_parameter>-parameter_value_ref = ld_ref_to_parent_dataset_value.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
 
-  method _DATA_SET_EXISTS_IN_PARENT.
-    rv_exists =
-      mo_current_rec_of_parent_query->check_data_set_exists( iv_dataset_name_or_alias ).
-  endmethod.
+  METHOD _data_set_exists_in_parent.
+
+    TRY.
+        DATA: lo_from_iterator_of_parent TYPE REF TO zcl_zosql_from_iterator.
+
+        lo_from_iterator_of_parent ?= mo_iterator_of_parent_query.
+        rv_exists = lo_from_iterator_of_parent->check_data_set_exists( iv_dataset_name_or_alias ).
+
+      CATCH cx_root.
+        rv_exists = mo_current_rec_of_parent_query->check_data_set_exists( iv_dataset_name_or_alias ).
+    ENDTRY.
+  ENDMETHOD.
 
 
   method _DATA_SET_EXISTS_IN_SUBQUERY.

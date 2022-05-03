@@ -62,6 +62,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
+     <CMPNAME>_CHECK_SUBQUERY_CORRECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if subquery SQL syntax is correct</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_WHERE_PROCESSOR</CLSNAME>
      <CMPNAME>_GET_REF_TO_RIGHT_OPERAND_SUBQ</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Returns reference to right operand if it is subquery result</DESCRIPT>

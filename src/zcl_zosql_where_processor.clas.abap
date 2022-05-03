@@ -14,6 +14,8 @@ public section.
 
   methods ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE
     redefinition .
+  methods ZIF_ZOSQL_EXPRESSION_PROCESSOR~INITIALIZE_BY_PARSED_SQL
+    redefinition .
 protected section.
 
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
@@ -48,6 +50,9 @@ private section.
       !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
     returning
       value(RV_CONDITIONS_TRUE) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_SUBQUERY_CORRECT
     raising
       ZCX_ZOSQL_ERROR .
   methods _GET_SUBQUERY_SPECIFICATOR
@@ -153,6 +158,12 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  METHOD zif_zosql_expression_processor~initialize_by_parsed_sql.
+    super->zif_zosql_expression_processor~initialize_by_parsed_sql( io_parent_node_of_expr ).
+    _check_subquery_correct( ).
+  ENDMETHOD.
+
+
   METHOD _check_elementary.
 
     DATA: lv_processed TYPE abap_bool.
@@ -225,6 +236,26 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
 
       rv_value_is_subquery = abap_true.
     ENDIF.
+  endmethod.
+
+
+  method _CHECK_SUBQUERY_CORRECT.
+
+    DATA: lo_subquery TYPE REF TO zcl_zosql_subquery_in_where.
+
+    IF mv_right_part_subquery_sql IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    CREATE OBJECT lo_subquery
+      EXPORTING
+        io_zosql_test_environment     = mo_zosql_test_environment
+        iv_subquery_sql               = mv_right_part_subquery_sql
+        io_iterator_parent            = mo_iterator
+        io_parameters_of_parent_query = mo_parameters
+        iv_new_syntax                 = mv_new_syntax.
+
+    lo_subquery->run_subquery_and_get_result( ).
   endmethod.
 
 
