@@ -49,6 +49,11 @@ public section.
       value(RT_DATA_SET_COMPONENTS) type CL_ABAP_STRUCTDESCR=>INCLUDED_VIEW
     raising
       ZCX_ZOSQL_ERROR .
+  methods CHECK_DATA_SET_EXISTS
+    importing
+      !IV_DATASET_NAME_OR_ALIAS type CLIKE
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
 protected section.
 private section.
 
@@ -221,6 +226,18 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     APPEND ls_dataset_with_position TO mt_datasets_with_position.
   endmethod.
+
+
+  METHOD check_data_set_exists.
+
+    DATA: ld_ref_to_dataset_line TYPE REF TO data.
+
+    ld_ref_to_dataset_line = get_line_for_data_set_ref( iv_dataset_name_or_alias ).
+
+    IF ld_ref_to_dataset_line IS BOUND.
+      rv_exists = abap_true.
+    ENDIF.
+  ENDMETHOD.
 
 
   METHOD constructor.
