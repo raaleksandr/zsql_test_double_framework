@@ -226,7 +226,9 @@ CLASS ltc_cases_for_update DEFINITION ABSTRACT FOR TESTING
       error_empty_sql FOR TESTING RAISING zcx_zosql_error,
       error_bad_table FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_set FOR TESTING RAISING zcx_zosql_error,
-      error_bad_value_set FOR TESTING RAISING zcx_zosql_error.
+      error_bad_value_set FOR TESTING RAISING zcx_zosql_error,
+      error_set_not_finished FOR TESTING RAISING zcx_zosql_error,
+      error_set_not_finished2 FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -305,10 +307,17 @@ CLASS ltc_cases_for_delete DEFINITION ABSTRACT FOR TESTING
       delete_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       delete_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
       delete_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error,
-      error_delete_without_from FOR TESTING RAISING zcx_zosql_error.
+      error_delete_without_from FOR TESTING RAISING zcx_zosql_error,
+      error_bad_table_name FOR TESTING RAISING zcx_zosql_error,
+      error_bad_token_after_tab FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
+
+  PRIVATE SECTION.
+    METHODS: assert_exception_raised IMPORTING iv_delete                  TYPE clike
+                                               iv_expected_exception_text TYPE clike OPTIONAL
+                                     RAISING   zcx_zosql_error.
 ENDCLASS.
 
 CLASS ltc_cases_for_select IMPLEMENTATION.
@@ -6389,6 +6398,14 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
     assert_exception_raised( iv_update = lv_update ).
   ENDMETHOD.
 
+  METHOD error_set_not_finished.
+    assert_exception_raised( iv_update = 'UPDATE zosql_for_tst SET text_field =' ).
+  ENDMETHOD.
+
+  METHOD error_set_not_finished2.
+    assert_exception_raised( iv_update = 'UPDATE zosql_for_tst SET text_field' ).
+  ENDMETHOD.
+
   METHOD assert_exception_raised.
     DATA: lo_exception         TYPE REF TO zcx_zosql_error,
           lv_text_of_exception TYPE string.
@@ -6741,10 +6758,29 @@ CLASS ltc_cases_for_delete IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD error_delete_without_from.
+    assert_exception_raised( 'DELETE zosql_for_tst' ).
+  ENDMETHOD.
+
+  METHOD error_bad_table_name.
+    assert_exception_raised( 'DELETE FROM bad_table' ).
+  ENDMETHOD.
+
+  METHOD error_bad_token_after_tab.
+    assert_exception_raised( 'DELETE FROM bad_table bad_token_instead_of_where' ).
+  ENDMETHOD.
+
+  METHOD assert_exception_raised.
+    DATA: lo_exception         TYPE REF TO zcx_zosql_error,
+          lv_text_of_exception TYPE string.
+
     TRY.
-        f_cut->delete( 'DELETE zosql_for_tst' ).
-        cl_aunit_assert=>fail( 'Exception should be raised in case of incorrect DELETE sql statement' ).
-      CATCH zcx_zosql_error.
+        f_cut->delete( iv_delete ).
+        cl_aunit_assert=>fail( 'Exception expected' ).
+      CATCH zcx_zosql_error INTO lo_exception.
+        lv_text_of_exception = lo_exception->get_text( ).
+        IF iv_expected_exception_text IS NOT INITIAL.
+          cl_aunit_assert=>assert_equals( act = lv_text_of_exception exp = iv_expected_exception_text ).
+        ENDIF.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.
