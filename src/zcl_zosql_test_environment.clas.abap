@@ -140,7 +140,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
-    lv_table_name = iv_table_name.
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
 
     IF lv_table_name IS INITIAL.
       lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_lines_for_delete ).
@@ -162,10 +162,15 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DATA_OF_TABLE.
+
+    DATA: lv_table_name TYPE string.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
     REFRESH et_table[].
-    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = iv_table_name ASSIGNING <ls_virtual_table>.
+
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
+    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
     IF sy-subrc = 0.
       <ls_virtual_table>-virt_table->get_data( IMPORTING et_table = et_table ).
     ENDIF.
@@ -173,14 +178,18 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DATA_OF_TABLE_AS_REF.
+
+    DATA: lv_table_name  TYPE string.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
-    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = iv_table_name ASSIGNING <ls_virtual_table>.
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
+    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
     IF sy-subrc = 0.
       rd_ref_to_data = <ls_virtual_table>-virt_table->get_data_as_ref( ).
-    ELSEIF _is_transparent_table( iv_table_name ) = abap_true.
-      _create_table_record( iv_table_name ).
-      rd_ref_to_data = zif_zosql_test_environment~get_data_of_table_as_ref( iv_table_name ).
+    ELSEIF _is_transparent_table( lv_table_name ) = abap_true.
+      _create_table_record( lv_table_name ).
+      rd_ref_to_data = zif_zosql_test_environment~get_data_of_table_as_ref( lv_table_name ).
     ENDIF.
   endmethod.
 
@@ -197,7 +206,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
-    lv_table_name = iv_table_name.
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
 
     IF lv_table_name IS INITIAL.
       lv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_table ).
@@ -213,6 +222,22 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
       READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
     ENDIF.
     <ls_virtual_table>-virt_table->insert_test_data_from_itab( it_table ).
+  endmethod.
+
+
+  method ZIF_ZOSQL_TEST_ENVIRONMENT~INSERT_TEST_DATA_LINE.
+
+    DATA: ld_dynamic_table TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_dynamic_table> TYPE STANDARD TABLE.
+
+    CREATE DATA ld_dynamic_table LIKE STANDARD TABLE OF is_line_as_struct.
+    ASSIGN ld_dynamic_table->* TO <lt_dynamic_table>.
+
+    APPEND is_line_as_struct TO <lt_dynamic_table>.
+
+    zif_zosql_test_environment~insert_test_data( it_table      = <lt_dynamic_table>
+                                                 iv_table_name = iv_table_name ).
   endmethod.
 
 

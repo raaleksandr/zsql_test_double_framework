@@ -293,6 +293,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>097</MSGNR>
+     <TEXT>The database column &apos;&amp;&apos; is unknown</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>
@@ -318,7 +324,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>704</MSGNR>
-     <TEXT>Invalid format for URL</TEXT>
+     <TEXT>Invalid format for URL &apos;&amp;&apos;</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>

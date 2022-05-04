@@ -53,7 +53,9 @@ public section.
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
     returning
-      value(RV_EXISTS) type ABAP_BOOL .
+      value(RV_EXISTS) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
 protected section.
 private section.
 

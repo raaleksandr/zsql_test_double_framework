@@ -8,7 +8,9 @@ public section.
   methods CONSTRUCTOR
     importing
       !IV_TABLE_NAME type CLIKE
-      !IO_SET_IN_UPDATE_SQL type ref to ZCL_ZOSQL_SET_PROCESSOR .
+      !IO_SET_IN_UPDATE_SQL type ref to ZCL_ZOSQL_SET_PROCESSOR
+    raising
+      ZCX_ZOSQL_ERROR .
 protected section.
 
   methods UPDATE_REC_BEFORE_SET_TO_BUF

@@ -297,12 +297,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
-     <CMPNAME>_RAISE_IF_CONSTANT_INCORRECT</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Raises exception if constant value has not correct format</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_EXPRESSION_PROCESSOR</CLSNAME>
      <CMPNAME>_RAISE_IF_RIGHT_OPERAND_RANGE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if right operand is range and raises error if true</DESCRIPT>

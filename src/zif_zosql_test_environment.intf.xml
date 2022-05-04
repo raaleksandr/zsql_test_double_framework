@@ -59,6 +59,12 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Insert test data to fake store of table from internal table</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>INSERT_TEST_DATA_LINE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Insert one line into test table to fake store from struct</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
