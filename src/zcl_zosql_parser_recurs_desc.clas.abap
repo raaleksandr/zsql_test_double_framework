@@ -279,7 +279,9 @@ private section.
       ZCX_ZOSQL_ERROR .
   methods _UPDATE_SET_FIELD
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _DELETE
     raising
       ZCX_ZOSQL_ERROR .
@@ -288,7 +290,9 @@ private section.
       !IV_PARENT_ID type I .
   methods _UPDATE_SET_FIELDS
     importing
-      !IV_PARENT_ID type I .
+      !IV_PARENT_ID type I
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _GROUP_BY
     importing
       !IV_PARENT_ID type I .
@@ -1970,18 +1974,18 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                                       iv_node_type = node_type-update_set_field_name ).
 
     IF _step_forward( ) <> abap_true.
-      RETURN.
+      _raise_unexpected_end( iv_parent_id ).
     ENDIF.
 
     IF mv_current_token <> '='.
-      RETURN.
+      _raise_unexpected_end( iv_parent_id ).
     ENDIF.
 
     _add_node( iv_parent_id = lv_set_field_node_id
                iv_node_type = node_type-update_set_equal_operator ).
 
     IF _step_forward( ) <> abap_true.
-      RETURN.
+      _raise_unexpected_end( iv_parent_id ).
     ENDIF.
 
     _add_node( iv_parent_id = lv_set_field_node_id

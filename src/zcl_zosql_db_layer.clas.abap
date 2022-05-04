@@ -186,7 +186,9 @@ private section.
       !IV_WHERE type CLIKE
       !IS_DYNAMIC_STRUCT_WITH_PARAMS type ANY
     returning
-      value(RV_SUBRC) type SYSUBRC .
+      value(RV_SUBRC) type SYSUBRC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CONSIDER_IF_HOST_ALREADY_WAS
     changing
       !CV_SQL type CLIKE .
@@ -890,16 +892,24 @@ endmethod.
   ENDMETHOD.
 
 
-  method _EXECUTE_DELETE.
-    IF iv_where IS NOT INITIAL.
-      DELETE FROM (iv_table_name)
-        WHERE (iv_where).
-    ELSE.
-      DELETE FROM (iv_table_name).
-    ENDIF.
+  METHOD _execute_delete.
 
-    rv_subrc = sy-subrc.
-  endmethod.
+    DATA: lx_exception TYPE REF TO cx_root.
+
+    TRY.
+        IF iv_where IS NOT INITIAL.
+          DELETE FROM (iv_table_name)
+            WHERE (iv_where).
+        ELSE.
+          DELETE FROM (iv_table_name).
+        ENDIF.
+
+        rv_subrc = sy-subrc.
+
+      CATCH cx_root INTO lx_exception.
+        zcl_zosql_utils=>raise_from_any_exception( lx_exception ).
+    ENDTRY.
+  ENDMETHOD.
 
 
   METHOD _execute_select.
@@ -1471,6 +1481,8 @@ ENDMETHOD.
     DATA: lo_parser_helper     TYPE REF TO zcl_zosql_parser_helper,
           lo_node_where        TYPE REF TO zcl_zosql_parser_node.
 
+    CLEAR: ev_table_name, ev_where, ev_new_syntax.
+
     CREATE OBJECT eo_sql_parser.
     eo_sql_parser->set_sql( iv_delete_statement ).
     eo_sql_parser->run_recursive_descent_parser( ).
@@ -1482,7 +1494,10 @@ ENDMETHOD.
                                                              ev_new_syntax        = ev_new_syntax ).
 
     ev_table_name    = lo_parser_helper->get_delete_table_name( ).
-    ev_where         = lo_node_where->get_node_sql_without_self( ).
+
+    IF lo_node_where IS BOUND.
+      ev_where         = lo_node_where->get_node_sql_without_self( ).
+    ENDIF.
   endmethod.
 
 
