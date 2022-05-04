@@ -10,6 +10,7 @@
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
@@ -59,6 +60,12 @@
      <CMPNAME>UPDATE_REC_BEFORE_SET_TO_BUF</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Performs additional update of record before write to buffer</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SQL_EXEC_DELETE</CLSNAME>
+     <CMPNAME>_RAISE_TABLE_INCORRECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raise exception if table name is incorrect</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

@@ -116,6 +116,8 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       error_bad_field_in_group_by FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_having FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_order_by FOR TESTING RAISING zcx_zosql_error,
+      error_bad_field_in_list FOR TESTING RAISING zcx_zosql_error,
+      error_bad_field_in_range FOR TESTING RAISING zcx_zosql_error,
       error_bad_table_name FOR TESTING RAISING zcx_zosql_error,
       error_bad_table_alias FOR TESTING RAISING zcx_zosql_error,
       error_bad_alias_in_subquery FOR TESTING RAISING zcx_zosql_error,
@@ -131,9 +133,9 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
   PRIVATE SECTION.
     METHODS: given_no_data,
       success_if_no_dump,
-      select_must_be_with_exception IMPORTING iv_select                  TYPE clike
-                                              iv_expected_exception_text TYPE clike OPTIONAL
-                                    RAISING   zcx_zosql_error.
+      assert_exception_raised IMPORTING iv_select                  TYPE clike
+                                        iv_expected_exception_text TYPE clike OPTIONAL
+                              RAISING   zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
 CLASS ltc_cases_for_select_740 DEFINITION ABSTRACT FOR TESTING
@@ -215,14 +217,24 @@ CLASS ltc_cases_for_update DEFINITION ABSTRACT FOR TESTING
       by_sql_no_params FOR TESTING RAISING zcx_zosql_error,
       by_sql_with_params FOR TESTING RAISING zcx_zosql_error,
       by_sql_param_in_set FOR TESTING RAISING zcx_zosql_error,
+      by_sql_lower_case FOR TESTING RAISING zcx_zosql_error,
       update_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       update_by_sql_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       update_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
       update_by_sql_subrc_4 FOR TESTING RAISING zcx_zosql_error,
-      empty_sql FOR TESTING RAISING zcx_zosql_error.
+      update_by_sql_no_where FOR TESTING RAISING zcx_zosql_error,
+      error_empty_sql FOR TESTING RAISING zcx_zosql_error,
+      error_bad_table FOR TESTING RAISING zcx_zosql_error,
+      error_bad_field_set FOR TESTING RAISING zcx_zosql_error,
+      error_bad_value_set FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
+
+  PRIVATE SECTION.
+    METHODS: assert_exception_raised IMPORTING iv_update                  TYPE clike
+                                               iv_expected_exception_text TYPE clike OPTIONAL
+                                     RAISING   zcx_zosql_error.
 ENDCLASS.
 
 CLASS ltc_cases_for_update_740 DEFINITION ABSTRACT FOR TESTING
@@ -5000,31 +5012,31 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD error_delete_instead_of_select.
-    select_must_be_with_exception( iv_select = 'DELETE FROM zosql_for_tst' ).
+    assert_exception_raised( iv_select = 'DELETE FROM zosql_for_tst' ).
   ENDMETHOD.
 
   METHOD error_wrong_part_of_select.
-    select_must_be_with_exception( iv_select = 'SELECT * FROM zosql_for_tst ##BAD_TOKEN' ).
+    assert_exception_raised( iv_select = 'SELECT * FROM zosql_for_tst ##BAD_TOKEN' ).
   ENDMETHOD.
 
   METHOD error_into_in_select.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select                  = 'SELECT * FROM zosql_for_tst INTO TABLE lt_itab'
       iv_expected_exception_text = 'You should not use ''INTO'' in SQL text string. Use method parameters' ).
   ENDMETHOD.
 
   METHOD error_bad_value_in_where.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT * FROM zosql_for_tst WHERE key_field = bad_value_no_brackets' ).
   ENDMETHOD.
 
   METHOD error_bad_field_in_where.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT * FROM zosql_for_tst WHERE bad_field = ''SOME VALUE''' ).
   ENDMETHOD.
 
   METHOD error_bad_table_name.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT * FROM bad_table_name WHERE key_field = ''SOME VALUE''' ).
   ENDMETHOD.
 
@@ -5037,7 +5049,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  WHERE bad_alias~key_field = ''TEST'''
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_bad_alias_in_subquery.
@@ -5052,21 +5064,21 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '      WHERE bad_alias~key_field = t~key_field )'
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_bad_aggregation_func.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT bad_aggr_func( key_field ) FROM zosql_for_tst' ).
   ENDMETHOD.
 
   METHOD error_bad_field_in_select.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT bad_field FROM zosql_for_tst WHERE key_field = ''SOME VALUE''' ).
   ENDMETHOD.
 
   METHOD error_bad_field_in_group_by.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT sum( amount ) FROM zosql_for_tst2 GROUP BY bad_field' ).
   ENDMETHOD.
 
@@ -5081,12 +5093,38 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  HAVING sum( bad_field ) > 5'
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_bad_field_in_order_by.
-    select_must_be_with_exception(
+    assert_exception_raised(
       iv_select = 'SELECT * FROM zosql_for_tst2 ORDER BY bad_field' ).
+  ENDMETHOD.
+
+  METHOD error_bad_field_in_list.
+
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field'
+      '  FROM zosql_for_tst'
+      '  WHERE key_field IN (''VALUE1'',bad_field)'
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_bad_field_in_range.
+
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field'
+      '  FROM zosql_for_tst'
+      '  WHERE key_field IN bad_range'
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_between_not_finished.
@@ -5098,7 +5136,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  WHERE key_field BETWEEN'
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_join_not_finished.
@@ -5110,7 +5148,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  JOIN'
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_join_cond_not_finished.
@@ -5122,7 +5160,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  JOIN zosql_for_tst2 ON zosql_for_tst~key_field = '
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD error_join_cond_bad_bracket.
@@ -5134,7 +5172,7 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
       '  JOIN zosql_for_tst2 ON ( zosql_for_tst~key_field = zosql_for_tst2~key_field'
       INTO lv_select SEPARATED BY space.
 
-    select_must_be_with_exception( iv_select = lv_select ).
+    assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
   METHOD given_no_data.
@@ -5143,16 +5181,18 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
   METHOD success_if_no_dump.
   ENDMETHOD.
 
-  METHOD select_must_be_with_exception.
+  METHOD assert_exception_raised.
 
-    DATA: lo_exception TYPE REF TO zcx_zosql_error.
+    DATA: lo_exception         TYPE REF TO zcx_zosql_error,
+          lv_text_of_exception TYPE string.
 
     TRY.
         f_cut->select( iv_select ).
         cl_aunit_assert=>fail( 'Exception expected' ).
       CATCH zcx_zosql_error INTO lo_exception.
+        lv_text_of_exception = lo_exception->get_text( ).
         IF iv_expected_exception_text IS NOT INITIAL.
-          cl_aunit_assert=>assert_equals( act = lo_exception->get_text( ) exp = iv_expected_exception_text ).
+          cl_aunit_assert=>assert_equals( act = lv_text_of_exception exp = iv_expected_exception_text ).
         ENDIF.
     ENDTRY.
   ENDMETHOD.
@@ -6124,6 +6164,55 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
+  METHOD by_sql_lower_case.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
+          lv_update_statement    TYPE string.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    insert_test_data( lt_table_before_update ).
+
+    " WHEN
+    CONCATENATE 'UPDATE zosql_for_tst'
+      'SET text_field2 = ''NEW_VAL_FIELD2'''
+      'WHERE text_field1 = ''VALUE2_1'''
+      INTO lv_update_statement SEPARATED BY space.
+
+    f_cut->update( lv_update_statement ).
+
+    " THEN
+    DATA: lt_result_table   TYPE TABLE OF zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
+                           IMPORTING et_result_table = lt_result_table ).
+
+    clear_mandant_field( CHANGING ct_internal_table = lt_result_table ).
+
+    CLEAR ls_line.
+    ls_line-key_field = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_expected_table.
+
+    CLEAR ls_line.
+    ls_line-key_field = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'NEW_VAL_FIELD2'.
+    APPEND ls_line TO lt_expected_table.
+
+    SORT: lt_result_table, lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
   METHOD update_by_itab_subrc_0.
     DATA: ls_line                TYPE zosql_for_tst,
           lt_table_before_update TYPE TABLE OF zosql_for_tst,
@@ -6214,13 +6303,104 @@ CLASS ltc_cases_for_update IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lv_subrc exp = 4 ).
   ENDMETHOD.
 
-  METHOD empty_sql.
+  METHOD update_by_sql_no_where.
+    DATA: ls_line                TYPE zosql_for_tst,
+          lt_table_before_update TYPE TABLE OF zosql_for_tst,
+          lv_update_statement    TYPE string,
+          lv_subrc               TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    APPEND ls_line TO lt_table_before_update.
+
+    insert_test_data( lt_table_before_update ).
+
+    " WHEN
+    CONCATENATE 'UPDATE ZOSQL_FOR_TST'
+      'SET text_field2 = ''NEW_VAL_FIELD2'''
+      INTO lv_update_statement SEPARATED BY space.
+
+    f_cut->update( lv_update_statement ).
+
+    " THEN
+    DATA: lt_table_after_update TYPE TABLE OF zosql_for_tst,
+          lt_table_expected     TYPE TABLE OF zosql_for_tst.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
+                           IMPORTING et_result_table = lt_table_after_update ).
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'NEW_VAL_FIELD2'.
+    APPEND ls_line TO lt_table_expected.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'NEW_VAL_FIELD2'.
+    APPEND ls_line TO lt_table_expected.
+
+    SORT: lt_table_after_update, lt_table_expected.
+
+    cl_aunit_assert=>assert_equals( act = lt_table_after_update exp = lt_table_expected ).
+  ENDMETHOD.
+
+  METHOD error_empty_sql.
+    assert_exception_raised( iv_update = '' ).
+  ENDMETHOD.
+
+  METHOD error_bad_table.
+    DATA: lv_update TYPE string.
+
+    CONCATENATE
+      'UPDATE bad_table'
+      '  SET bad_field = ''BAD_VALUE'''
+      INTO lv_update SEPARATED BY space.
+
+    assert_exception_raised( iv_update = lv_update ).
+  ENDMETHOD.
+
+  METHOD error_bad_field_set.
+    DATA: lv_update TYPE string.
+
+    CONCATENATE
+      'UPDATE zosql_for_tst'
+      '  SET bad_field = ''SOME_VALUE'''
+      INTO lv_update SEPARATED BY space.
+
+    assert_exception_raised( iv_update                  = lv_update
+                             iv_expected_exception_text = 'The database column ''BAD_FIELD'' is unknown' ).
+  ENDMETHOD.
+
+  METHOD error_bad_value_set.
+    DATA: lv_update TYPE string.
+
+    CONCATENATE
+      'UPDATE zosql_for_tst'
+      '  SET text_field1 = bad_value'
+      INTO lv_update SEPARATED BY space.
+
+    assert_exception_raised( iv_update = lv_update ).
+  ENDMETHOD.
+
+  METHOD assert_exception_raised.
+    DATA: lo_exception         TYPE REF TO zcx_zosql_error,
+          lv_text_of_exception TYPE string.
 
     TRY.
-        f_cut->update( '' ).
-        cl_aunit_assert=>fail( 'Exception should be raised' ).
-      CATCH zcx_zosql_error.
-        " Success
+        f_cut->update( iv_update ).
+        cl_aunit_assert=>fail( 'Exception expected' ).
+      CATCH zcx_zosql_error INTO lo_exception.
+        lv_text_of_exception = lo_exception->get_text( ).
+        IF iv_expected_exception_text IS NOT INITIAL.
+          cl_aunit_assert=>assert_equals( act = lv_text_of_exception exp = iv_expected_exception_text ).
+        ENDIF.
     ENDTRY.
   ENDMETHOD.
 ENDCLASS.

@@ -8,7 +8,9 @@ public section.
   methods CONSTRUCTOR
     importing
       !IO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods UPDATE_RECORD
     importing
       !ID_REF_TO_RECORD type ref to DATA
@@ -28,6 +30,39 @@ private section.
   data:
     MT_SET_FIELDS  TYPE STANDARD TABLE OF ty_set_field WITH KEY fieldname .
 
+  methods _CHECK_FIELD_NAME
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IS_SET_FIELD type TY_SET_FIELD
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_FOR_CORRECTNESS
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_SET_FIELD_CORRECT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IS_SET_FIELD type TY_SET_FIELD
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_SET_FIELD_VALUE
+    importing
+      !IS_SET_FIELD type TY_SET_FIELD
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _IF_FIELD_EXISTS_IN_TABLE
+    importing
+      !IV_TABLE_NAME type CLIKE
+      !IV_FIELDNAME type CLIKE
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
+  methods _VALUE_IS_PARAMETER
+    importing
+      !IS_SET_FIELD type TY_SET_FIELD
+    returning
+      value(RV_IS_PARAMETER) type ABAP_BOOL .
   methods _INITIALIZE_BY_PARSED_SQL
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC .
@@ -42,6 +77,7 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
     super->constructor( ).
     mo_parameters = io_parameters.
     _initialize_by_parsed_sql( io_sql_parser ).
+    _check_for_correctness( io_sql_parser ).
   endmethod.
 
 
@@ -68,10 +104,77 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
         ASSIGN ld_ref_to_parameter_value->* TO <lv_parameter_value>.
         <lv_field> = <lv_parameter_value>.
       ELSE.
-        <lv_field> = <ls_set_field>-value_part.
+        <lv_field> = zcl_zosql_utils=>clear_quotes_from_value( <ls_set_field>-value_part ).
       ENDIF.
     ENDLOOP.
   endmethod.
+
+
+  method _CHECK_FIELD_NAME.
+    DATA: lo_parser_helper      TYPE REF TO zcl_zosql_parser_helper,
+          lv_update_table_name  TYPE tabname.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    lv_update_table_name = lo_parser_helper->get_update_table_name( ).
+
+    IF _if_field_exists_in_table( iv_table_name = lv_update_table_name
+                                  iv_fieldname  = is_set_field-fieldname ) <> abap_true.
+      MESSAGE e097 WITH is_set_field-fieldname INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
+
+
+  method _CHECK_FOR_CORRECTNESS.
+
+    FIELD-SYMBOLS: <ls_set_field> LIKE LINE OF mt_set_fields.
+
+    LOOP AT mt_set_fields ASSIGNING <ls_set_field>.
+      _check_set_field_correct( io_sql_parser = io_sql_parser
+                                is_set_field  = <ls_set_field> ).
+    ENDLOOP.
+  endmethod.
+
+
+  method _CHECK_SET_FIELD_CORRECT.
+
+    _check_field_name( io_sql_parser = io_sql_parser
+                       is_set_field  = is_set_field ).
+
+    _check_set_field_value( is_set_field ).
+  endmethod.
+
+
+  method _CHECK_SET_FIELD_VALUE.
+    IF _value_is_parameter( is_set_field ) <> abap_true.
+      zcl_zosql_utils=>raise_if_constant_incorrect( is_set_field-value_part ).
+    ENDIF.
+  endmethod.
+
+
+  METHOD _if_field_exists_in_table.
+
+    DATA: lv_table_name TYPE tabname,
+          lv_fieldname  TYPE fieldname.
+
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
+    lv_fieldname  = zcl_zosql_utils=>to_upper_case( iv_fieldname ).
+
+    SELECT SINGLE fieldname
+      INTO zcl_zosql_utils=>dummy
+      FROM dd03l
+      WHERE tabname   = lv_table_name
+        AND fieldname = lv_fieldname
+        AND as4local  = 'A'
+        AND as4vers   = '0000'.
+
+    IF sy-subrc = 0.
+      rv_exists = abap_true.
+    ENDIF.
+  ENDMETHOD.
 
 
   METHOD _initialize_by_parsed_sql.
@@ -104,7 +207,7 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
 
       CHECK lo_node_new_value IS BOUND.
 
-      ls_set_field-value_part = zcl_zosql_utils=>clear_quotes_from_value( lo_node_new_value->token ).
+      ls_set_field-value_part = lo_node_new_value->token.
       APPEND ls_set_field TO mt_set_fields.
     ENDLOOP.
 
@@ -127,4 +230,11 @@ CLASS ZCL_ZOSQL_SET_PROCESSOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
+
+
+  method _VALUE_IS_PARAMETER.
+    IF is_set_field-parameter_data IS NOT INITIAL.
+      rv_is_parameter = abap_true.
+    ENDIF.
+  endmethod.
 ENDCLASS.

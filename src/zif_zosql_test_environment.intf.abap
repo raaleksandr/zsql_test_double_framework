@@ -19,6 +19,12 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
       value(IV_TABLE_NAME) type CLIKE optional
     raising
       ZCX_ZOSQL_ERROR .
+  methods INSERT_TEST_DATA_LINE
+    importing
+      !IS_LINE_AS_STRUCT type ANY
+      value(IV_TABLE_NAME) type CLIKE optional
+    raising
+      ZCX_ZOSQL_ERROR .
   methods CLEAR_ALL .
   methods CLEAR_DOUBLES .
   methods GET_DATA_OF_TABLE

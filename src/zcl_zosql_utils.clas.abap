@@ -7,38 +7,6 @@ public section.
 
   class-data DUMMY type TEXT255 .
 
-  class-methods SPLIT_CONDITION_INTO_TOKENS
-    importing
-      !IV_SQL_CONDITION type CLIKE
-    returning
-      value(RT_TOKENS) type STRING_TABLE .
-  class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
-    importing
-      !IO_SALV type ref to CL_SALV_TABLE
-      !IT_TABLE type ANY TABLE .
-  class-methods RAISE_FROM_ANY_EXCEPTION
-    importing
-      !IX_ROOT type ref to CX_ROOT
-    raising
-      ZCX_ZOSQL_ERROR .
-  class-methods RAISE_EXCEPTION_WITH_TEXT
-    importing
-      !IV_TEXT type CLIKE
-    raising
-      ZCX_ZOSQL_ERROR .
-  class-methods IS_VERSION_740_AND_ABOVE
-    returning
-      value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
-  class-methods IS_CHAR_IN_QUOTES
-    importing
-      !IV_CHARACTER_STRING type CLIKE
-    returning
-      value(RV_IS_IN_QUOTES) type ABAP_BOOL .
-  class-methods DELETE_N_END_TOKENS
-    importing
-      value(IV_N) type I
-    changing
-      !CV_SQL type CLIKE .
   class-methods CHAR_CAN_CONVERT_TO_NUMBER
     importing
       !IV_STRING type CLIKE
@@ -50,6 +18,43 @@ public section.
       !IT_KEY_FIELDS type FIELDNAME_TABLE
     returning
       value(RD_HASHED_TABLE) type ref to DATA .
+  class-methods RAISE_IF_CONSTANT_INCORRECT
+    importing
+      !IV_CONSTANT_VALUE type CLIKE
+    raising
+      ZCX_ZOSQL_ERROR .
+  class-methods DELETE_N_END_TOKENS
+    importing
+      value(IV_N) type I
+    changing
+      !CV_SQL type CLIKE .
+  class-methods RAISE_FROM_ANY_EXCEPTION
+    importing
+      !IX_ROOT type ref to CX_ROOT
+    raising
+      ZCX_ZOSQL_ERROR .
+  class-methods SPLIT_CONDITION_INTO_TOKENS
+    importing
+      !IV_SQL_CONDITION type CLIKE
+    returning
+      value(RT_TOKENS) type STRING_TABLE .
+  class-methods RAISE_EXCEPTION_WITH_TEXT
+    importing
+      !IV_TEXT type CLIKE
+    raising
+      ZCX_ZOSQL_ERROR .
+  class-methods IS_VERSION_740_AND_ABOVE
+    returning
+      value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
+  class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
+    importing
+      !IO_SALV type ref to CL_SALV_TABLE
+      !IT_TABLE type ANY TABLE .
+  class-methods IS_CHAR_IN_QUOTES
+    importing
+      !IV_CHARACTER_STRING type CLIKE
+    returning
+      value(RV_IS_IN_QUOTES) type ABAP_BOOL .
   class-methods BOOLEAN_NOT
     importing
       !IV_BOOLEAN type ABAP_BOOL
@@ -70,18 +75,18 @@ public section.
       !IV_VALUE type ANY
     returning
       value(RD_REF_TO_COPY_OF_DATA) type ref to DATA .
-  class-methods GET_FIRST_N_CHARS
-    importing
-      !IV_STRING type CLIKE
-      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
-    returning
-      value(RV_FIRST_N_CHARACTERS) type STRING .
   class-methods GET_LAST_N_CHARS
     importing
       !IV_STRING type CLIKE
       value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
     returning
       value(RV_LAST_N_CHARACTERS) type STRING .
+  class-methods GET_FIRST_N_CHARS
+    importing
+      !IV_STRING type CLIKE
+      value(IV_HOW_MANY_CHARACTERS) type INT4 default 1
+    returning
+      value(RV_FIRST_N_CHARACTERS) type STRING .
   class-methods GET_START_TOKEN
     importing
       !IV_SQL type CLIKE
@@ -116,16 +121,16 @@ public section.
       !IV_TABLE_NAME type CLIKE
     returning
       value(RV_TRANSPARENT_TABLE_EXISTS) type ABAP_BOOL .
-  class-methods IS_NUMBER
-    importing
-      !I_VARIABLE type ANY
-    returning
-      value(RV_IS_NUMBER) type ABAP_BOOL .
   class-methods IS_CHAR
     importing
       !I_VARIABLE type ANY
     returning
       value(RV_IS_CHAR) type ABAP_BOOL .
+  class-methods IS_NUMBER
+    importing
+      !I_VARIABLE type ANY
+    returning
+      value(RV_IS_NUMBER) type ABAP_BOOL .
   class-methods IS_STRUCTURE
     importing
       !I_VARIABLE type ANY
@@ -579,6 +584,17 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
+  method RAISE_IF_CONSTANT_INCORRECT.
+
+    IF zcl_zosql_utils=>char_can_convert_to_number( iv_constant_value ) <> abap_true
+      AND zcl_zosql_utils=>is_char_in_quotes( iv_constant_value ) <> abap_true.
+
+      MESSAGE e092 WITH iv_constant_value INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
+
+
   method RAISE_IF_TRANSP_TAB_NOT_EXIST.
 
     DATA: lv_tabclass TYPE dd02l-tabclass.
@@ -668,11 +684,15 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method TRANSPARENT_TABLE_EXISTS.
+  METHOD transparent_table_exists.
+
+    DATA: lv_table_name TYPE tabname.
+
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
     SELECT SINGLE tabclass
       INTO zcl_zosql_utils=>dummy
       FROM dd02l
-      WHERE tabname = iv_table_name
+      WHERE tabname  = lv_table_name
         AND as4local = 'A'
         AND as4vers  = '0000'
         AND tabclass = 'TRANSP'.
@@ -680,7 +700,7 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     IF sy-subrc = 0.
       rv_transparent_table_exists = abap_true.
     ENDIF.
-  endmethod.
+  ENDMETHOD.
 
 
   method TRY_TO_GUESS_TABNAME_BY_DATA.

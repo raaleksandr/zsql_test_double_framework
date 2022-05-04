@@ -178,6 +178,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>RAISE_IF_CONSTANT_INCORRECT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception if constant value has not correct format</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>RAISE_IF_TRANSP_TAB_NOT_EXIST</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Check if there exists transparent table with such name</DESCRIPT>
