@@ -731,6 +731,13 @@ Lets to insert data in virtual database.
 Inserted data can be selected with ZIF_ZOSQL_DB_LAYER in form of Open SQL dynamic statements.
 
 Parameters:
-* IT_TABLE – data to be inserted
-* IV_TABLE_NAME – name of database (transparent) table. Parameter is not mandatory. If parameter is omitted than method tries to get data type from internal table passed as IT_TABLE parameter. If it is a table type of database (transparent) table than the data will be inserted in virtual database table with the same name.
-If IT_TABLE contains any other type than the parameter IV_TABLE_NAME is mandatory.
+* IT_TABLE – data to be inserted as internal table
+* IV_TABLE_NAME – name of database (transparent) table. Parameter is not mandatory. If parameter is omitted then method tries to get data type from internal table passed as IT_TABLE parameter. If it is a table type of database (transparent) table than the data will be inserted in virtual database table with the same name.
+If IT_TABLE contains any other type then the parameter IV_TABLE_NAME is mandatory.
+
+### Method INSERT_TEST_DATA_LINE
+Same as INSERT_TEST_DATA but inserts one line from structure instead of internal table.
+Parameters:
+* IS_LINE_AS_STRUCT – data to be inserted as structure
+* IV_TABLE_NAME – name of database (transparent) table. Parameter is not mandatory. If parameter is omitted then method tries to get data type from the structure passed to IS_LINE_AS_STRUCT parameter. If it is a table type of database (transparent) table than the data will be inserted in virtual database table with the same name.
+If IT_TABLE contains any other type then the parameter IV_TABLE_NAME is mandatory.
