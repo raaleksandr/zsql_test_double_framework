@@ -11,7 +11,7 @@ public section.
     importing
       !IO_HAVING_PROCESSOR type ref to ZIF_ZOSQL_EXPRESSION_PROCESSOR optional
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods APPLY_GROUP_BY
@@ -35,7 +35,7 @@ private section.
   methods _INITIALIZE_BY_PARSED_SQL
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
 ENDCLASS.
@@ -94,8 +94,8 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
   method CONSTRUCTOR.
     super->constructor( ).
     mo_having_processor = io_having_processor.
-    _initialize_by_parsed_sql( io_sql_parser    = io_sql_parser
-                               io_from_iterator = io_from_iterator ).
+    _initialize_by_parsed_sql( io_sql_parser = io_sql_parser
+                               io_iterator   = io_iterator ).
   endmethod.
 
 
@@ -134,7 +134,7 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+    fill_dataset_where_empty( EXPORTING io_iterator            = io_iterator
                               CHANGING  ct_table_where_to_fill = mt_group_by_key_fields ).
   ENDMETHOD.
 ENDCLASS.

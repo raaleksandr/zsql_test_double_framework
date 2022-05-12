@@ -175,8 +175,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_select
       EXPORTING
-        io_sql_parser    = lo_sql_parser
-        io_from_iterator = lo_from_iterator.
+        io_sql_parser = lo_sql_parser
+        io_iterator   = lo_from_iterator.
 
     rd_data_set_for_select = lo_select->get_result_as_ref_to_data( ).
   ENDMETHOD.
@@ -688,8 +688,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     CREATE OBJECT lo_select
       EXPORTING
-        io_sql_parser    = io_sql_parser
-        io_from_iterator = lo_from_iterator.
+        io_sql_parser = io_sql_parser
+        io_iterator   = lo_from_iterator.
 
     CREATE OBJECT lo_sql_executor_for_line TYPE zcl_zosql_sql_exec_select
       EXPORTING
@@ -728,7 +728,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         EXPORTING
           io_having_processor = lo_having
           io_sql_parser       = io_sql_parser
-          io_from_iterator    = lo_from_iterator.
+          io_iterator         = lo_from_iterator.
 
       lo_select->apply_group_by( lo_group_by ).
     ELSEIF lo_select->has_aggregation_functions( ) = abap_true.
@@ -739,7 +739,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       CREATE OBJECT lo_order_by
         EXPORTING
           io_sql_parser    = io_sql_parser
-          io_from_iterator = lo_from_iterator.
+          io_iterator      = lo_from_iterator.
 
       lo_select->apply_order_by( lo_order_by ).
     ENDIF.

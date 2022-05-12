@@ -1,10 +1,9 @@
 class ZCL_ZOSQL_TABLE_ITERATOR definition
   public
+  inheriting from ZCL_ZOSQL_ITERATOR_BASE
   create public .
 
 public section.
-
-  interfaces ZIF_ZOSQL_ITERATOR .
 
   data CURRENT_RECORD type I read-only .
 
@@ -12,6 +11,37 @@ public section.
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT
       !IV_TABLE_NAME type CLIKE .
+
+  methods ZIF_ZOSQL_ITERATOR~ADD_ADDITIONAL_DATASET
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CHECK_DATA_SET_EXISTS
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CLONE
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CREATE_EMPTY_RECORD_AS_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_UNIQUE_ID
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_DATA_SET_LIST
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_KEY_FIELDS_OF_DATA_SET
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_LINE_FOR_DATA_SET_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~IS_EMPTY
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~MOVE_TO_FIRST
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~MOVE_TO_NEXT
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~RECORD_IS_LAST
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID
+    redefinition .
 protected section.
 private section.
 
@@ -29,11 +59,39 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
+
+    super->constructor( ).
+
     mo_zosql_test_environment = io_zosql_test_environment.
-    mv_table_name             = iv_table_name.
+    mv_table_name             = zcl_zosql_utils=>to_upper_case( iv_table_name ).
 
     mr_table_data_ref = mo_zosql_test_environment->get_data_of_table_as_ref( mv_table_name ).
     _count_num_lines( ).
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~ADD_ADDITIONAL_DATASET.
+**TRY.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~ADD_ADDITIONAL_DATASET
+*  EXPORTING
+*    IV_DATASET_NAME  =
+**    iv_dataset_alias =
+*    .
+** CATCH zcx_zosql_error .
+**ENDTRY.
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~CHECK_DATA_SET_EXISTS.
+**TRY.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~CHECK_DATA_SET_EXISTS
+*  EXPORTING
+*    IV_DATASET_NAME_OR_ALIAS =
+*  RECEIVING
+*    RV_EXISTS                =
+*    .
+** CATCH zcx_zosql_error .
+**ENDTRY.
   endmethod.
 
 
@@ -121,9 +179,34 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_ITERATOR~GET_DATA_SET_LIST.
+
+    FIELD-SYMBOLS: <ls_data_set> LIKE LINE OF rt_data_set_list.
+
+    APPEND INITIAL LINE TO rt_data_set_list ASSIGNING <ls_data_set>.
+    <ls_data_set>-dataset_name = mv_table_name.
+  endmethod.
+
+
   method ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT.
     CREATE OBJECT ro_iterator_pos.
-    ro_iterator_pos->add_data_set_data( id_ref_to_current_line = zif_zosql_iterator~get_current_record_ref( ) ).
+    ro_iterator_pos->add_data_set_data( iv_dataset_name        = mv_table_name
+                                        id_ref_to_current_line = zif_zosql_iterator~get_current_record_ref( ) ).
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_KEY_FIELDS_OF_DATA_SET.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~GET_KEY_FIELDS_OF_DATA_SET
+*  EXPORTING
+*    IV_DATASET_NAME_OR_ALIAS =
+*  RECEIVING
+*    RT_KEY_FIELDS            =
+*    .
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_LINE_FOR_DATA_SET_REF.
+    rd_ref_to_line = zif_zosql_iterator~create_empty_record_as_ref( ).
   endmethod.
 
 

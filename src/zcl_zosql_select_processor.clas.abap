@@ -1,12 +1,12 @@
-CLASS zcl_zosql_select_processor DEFINITION
-  PUBLIC
-  INHERITING FROM zcl_zosql_processor_base
-  CREATE PUBLIC .
+class ZCL_ZOSQL_SELECT_PROCESSOR definition
+  public
+  inheriting from ZCL_ZOSQL_PROCESSOR_BASE
+  create public .
 
-  PUBLIC SECTION.
+public section.
 
-    TYPES:
-      BEGIN OF ty_select_parameter,
+  types:
+    BEGIN OF ty_select_parameter,
         parameter_type        TYPE char20,
         dataset_name_or_alias TYPE string,
         fieldname             TYPE string,
@@ -15,50 +15,50 @@ CLASS zcl_zosql_select_processor DEFINITION
         distinct_flag         TYPE abap_bool,
         field_name_in_result  TYPE string,
       END OF ty_select_parameter .
-    TYPES:
-      ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
+  types:
+    ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
                                      WITH KEY dataset_name_or_alias fieldname .
-    TYPES:
-      ty_iterator_positions  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
+  types:
+    ty_iterator_positions  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
 
-    METHODS apply_order_by
-      IMPORTING
-        !io_order_by TYPE REF TO zcl_zosql_orderby_processor .
-    METHODS constructor
-      IMPORTING
-        !io_sql_parser    TYPE REF TO zcl_zosql_parser_recurs_desc
-        !io_from_iterator TYPE REF TO zcl_zosql_from_iterator
-      RAISING
-        zcx_zosql_error .
-    METHODS get_select_parameters
-      RETURNING
-        VALUE(rt_select_parameters) TYPE ty_select_parameters .
-    METHODS get_iter_positions_of_lines
-      RETURNING
-        VALUE(rt_iterator_positions) TYPE ty_iterator_positions .
-    METHODS apply_aggr_func_no_group_by
-      RAISING
-        zcx_zosql_error .
-    METHODS has_aggregation_functions
-      RETURNING
-        VALUE(rv_has_aggregation_functions) TYPE abap_bool .
-    METHODS apply_distinct .
-    METHODS apply_group_by
-      IMPORTING
-        !io_group_by TYPE REF TO zcl_zosql_groupby_processor
-      RAISING
-        zcx_zosql_error .
-    METHODS get_result_as_ref_to_data
-      RETURNING
-        VALUE(rd_ref_to_result_set) TYPE REF TO data .
-    METHODS get_result_move_corresponding
-      CHANGING
-        !ct_result_table TYPE ANY TABLE .
-    METHODS add_line_to_result
-      IMPORTING
-        !io_iteration_position TYPE REF TO zcl_zosql_iterator_position
-      RAISING
-        zcx_zosql_error .
+  methods APPLY_ORDER_BY
+    importing
+      !IO_ORDER_BY type ref to ZCL_ZOSQL_ORDERBY_PROCESSOR .
+  methods CONSTRUCTOR
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods GET_SELECT_PARAMETERS
+    returning
+      value(RT_SELECT_PARAMETERS) type TY_SELECT_PARAMETERS .
+  methods GET_ITER_POSITIONS_OF_LINES
+    returning
+      value(RT_ITERATOR_POSITIONS) type TY_ITERATOR_POSITIONS .
+  methods APPLY_AGGR_FUNC_NO_GROUP_BY
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods HAS_AGGREGATION_FUNCTIONS
+    returning
+      value(RV_HAS_AGGREGATION_FUNCTIONS) type ABAP_BOOL .
+  methods APPLY_DISTINCT .
+  methods APPLY_GROUP_BY
+    importing
+      !IO_GROUP_BY type ref to ZCL_ZOSQL_GROUPBY_PROCESSOR
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods GET_RESULT_AS_REF_TO_DATA
+    returning
+      value(RD_REF_TO_RESULT_SET) type ref to DATA .
+  methods GET_RESULT_MOVE_CORRESPONDING
+    changing
+      !CT_RESULT_TABLE type ANY TABLE .
+  methods ADD_LINE_TO_RESULT
+    importing
+      !IO_ITERATION_POSITION type ref to ZCL_ZOSQL_ITERATOR_POSITION
+    raising
+      ZCX_ZOSQL_ERROR .
 protected section.
 private section.
 
@@ -112,7 +112,7 @@ private section.
   methods _GET_COMPONENT_FOR_FIELD
     importing
       !IS_SELECT_PARAMETER type TY_SELECT_PARAMETER
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     returning
       value(RS_COMPONENT) type ABAP_COMPONENTDESCR
     raising
@@ -127,17 +127,17 @@ private section.
       value(RT_ALL_FIELDS_OF_DATASET) type FIELDNAME_TABLE .
   methods _FILL_DATASET_WHERE_EMPTY
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods _STAR_TO_FIELD_LIST
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods _CREATE_DATA_SET_FOR_SELECT
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
 ENDCLASS.
@@ -255,9 +255,9 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     _raise_if_not_select( io_sql_parser ).
     _fill_select_fields( io_sql_parser ).
-    _star_to_field_list( io_from_iterator ).
-    _fill_dataset_where_empty( io_from_iterator ).
-    _create_data_set_for_select( io_from_iterator ).
+    _star_to_field_list( io_iterator ).
+    _fill_dataset_where_empty( io_iterator ).
+    _create_data_set_for_select( io_iterator ).
   endmethod.
 
 
@@ -318,7 +318,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
       ELSE.
 
         ls_new_component = _get_component_for_field( is_select_parameter = <ls_select_parameter>
-                                                     io_from_iterator    = io_from_iterator ).
+                                                     io_iterator         = io_iterator ).
       ENDIF.
 
       <ls_select_parameter>-field_name_in_result = zcl_zosql_utils=>to_upper_case( ls_new_component-name ).
@@ -337,7 +337,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_select_parameter> LIKE LINE OF mt_select_parameters.
 
-    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+    fill_dataset_where_empty( EXPORTING io_iterator            = io_iterator
                                         iv_error_if_not_found  = abap_false
                               CHANGING  ct_table_where_to_fill = mt_select_parameters ).
 
@@ -479,7 +479,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_component> LIKE LINE OF lt_dataset_components.
 
-    ld_ref_to_dataset_data = io_from_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name_or_alias ).
+    ld_ref_to_dataset_data = io_iterator->get_line_for_data_set_ref( is_select_parameter-dataset_name_or_alias ).
 
     lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
     lt_dataset_components = lo_struct->get_included_view( ).
@@ -566,7 +566,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
                    <ls_component>        LIKE LINE OF lt_components,
                    <ls_new_select_parameter> LIKE LINE OF mt_select_parameters.
 
-    lt_data_set_list = io_from_iterator->get_data_set_list( ).
+    lt_data_set_list = io_iterator->get_data_set_list( ).
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
 
@@ -583,7 +583,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
             CONTINUE.
           ENDIF.
 
-          lt_components = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
+          lt_components = io_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
 
           LOOP AT lt_components ASSIGNING <ls_component>.
             ls_field-fieldname = <ls_component>-name.

@@ -8,7 +8,7 @@ public section.
   methods CONSTRUCTOR
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods APPLY_ORDER_BY
@@ -42,7 +42,7 @@ private section.
       value(RD_REF_TO_TABLE) type ref to DATA .
   methods _INIT_ORDER_BY_PRIMARY_KEY
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR .
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR .
 ENDCLASS.
 
 
@@ -104,7 +104,7 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
     IF lo_order_by_node->exists_child_node_with_type(
         zcl_zosql_parser_recurs_desc=>node_type-order_by_primary_key ) = abap_true.
 
-      _init_order_by_primary_key( io_from_iterator ).
+      _init_order_by_primary_key( io_iterator ).
       RETURN.
     ENDIF.
 
@@ -128,7 +128,7 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    fill_dataset_where_empty( EXPORTING io_from_iterator       = io_from_iterator
+    fill_dataset_where_empty( EXPORTING io_iterator            = io_iterator
                               CHANGING  ct_table_where_to_fill = mt_order_by_fields ).
   ENDMETHOD.
 
@@ -225,20 +225,20 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
 
   METHOD _init_order_by_primary_key.
 
-    DATA: lt_data_sets                   TYPE zcl_zosql_from_iterator=>ty_data_sets,
-          ls_first_data_set              TYPE zcl_zosql_from_iterator=>ty_data_set,
+    DATA: lt_data_sets                   TYPE zif_zosql_iterator=>ty_data_sets,
+          ls_first_data_set              TYPE zif_zosql_iterator=>ty_data_set,
           lt_key_fields_of_first_dataset TYPE fieldname_table.
 
     FIELD-SYMBOLS: <ls_key_field>      LIKE LINE OF lt_key_fields_of_first_dataset,
                    <ls_order_by_field> LIKE LINE OF mt_order_by_fields.
 
-    lt_data_sets = io_from_iterator->get_data_set_list( ).
+    lt_data_sets = io_iterator->get_data_set_list( ).
     READ TABLE lt_data_sets INDEX 1 INTO ls_first_data_set.
     IF sy-subrc <> 0.
       RETURN.
     ENDIF.
 
-    lt_key_fields_of_first_dataset = io_from_iterator->get_key_fields_of_data_set( ls_first_data_set-dataset_name ).
+    lt_key_fields_of_first_dataset = io_iterator->get_key_fields_of_data_set( ls_first_data_set-dataset_name ).
 
     LOOP AT lt_key_fields_of_first_dataset ASSIGNING <ls_key_field>.
       APPEND INITIAL LINE TO mt_order_by_fields ASSIGNING <ls_order_by_field>.
