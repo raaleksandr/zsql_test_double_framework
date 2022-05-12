@@ -73,14 +73,19 @@ private section.
   constants C_FUNCTION_AVG type STRING value 'AVG' ##NO_TEXT.
   data MT_ITER_POSITIONS_OF_DATA_SET type TY_ITERATOR_POSITIONS .
 
+  methods _IS_DATASET_EMPTY
+    returning
+      value(RV_IS_EMPTY) type ABAP_BOOL .
   methods _RAISE_IF_NOT_SELECT
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _IS_DATASET_EMPTY
-    returning
-      value(RV_IS_EMPTY) type ABAP_BOOL .
+  methods _CHECK_ON_DUPLICATES
+    importing
+      !IT_COMPONENTS type CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _FILL_SELECT_FIELD
     importing
       !IO_SQL_PARSER_NODE type ref to ZCL_ZOSQL_PARSER_NODE
@@ -300,6 +305,33 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  method _CHECK_ON_DUPLICATES.
+
+    TYPES: BEGIN OF ty_name,
+             name  TYPE fieldname,
+             count TYPE i,
+           END OF ty_name.
+
+    DATA: ls_name  TYPE ty_name,
+          lt_names TYPE TABLE OF ty_name.
+
+    FIELD-SYMBOLS: <Ls_comp> LIKE LINE OF it_components.
+
+    LOOP AT it_components ASSIGNING <ls_comp>.
+      ls_name-name  = <ls_comp>-name.
+      ls_name-count = 1.
+      COLLECT ls_name INTO lt_names.
+    ENDLOOP.
+
+    LOOP AT lt_names INTO ls_name
+      WHERE count > 1.
+
+      MESSAGE e098 WITH ls_name-name INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDLOOP.
+  endmethod.
+
+
   METHOD _create_data_set_for_select.
 
     DATA: lo_struct                TYPE REF TO cl_abap_structdescr,
@@ -325,6 +357,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
       APPEND ls_new_component TO lt_target_set_components.
     ENDLOOP.
+
+    _check_on_duplicates( lt_target_set_components ).
 
     lo_struct = cl_abap_structdescr=>create( lt_target_set_components ).
     lo_table = cl_abap_tabledescr=>create( lo_struct ).
