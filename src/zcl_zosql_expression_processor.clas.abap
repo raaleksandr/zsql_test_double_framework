@@ -139,9 +139,6 @@ private section.
   constants C_BETWEEN type STRING value 'BETWEEN' ##NO_TEXT.
   constants C_LIKE type STRING value 'LIKE' ##NO_TEXT.
 
-  methods _ITER_SUPPORTS_MULTI_DATASETS
-    returning
-      value(RV_SUPPORTS_MULTI_DATASETS) type ABAP_BOOL .
   methods _INIT_LIKE
     importing
       !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
@@ -395,20 +392,12 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
 
   method TRY_FILL_ONE_OPERAND_DATASET.
 
-    DATA: lo_from_iterator TYPE REF TO zcl_zosql_from_iterator.
-
     IF cs_operand-dataset_name_or_alias IS NOT INITIAL.
       RETURN.
     ENDIF.
 
-    IF _iter_supports_multi_datasets( ) <> abap_true.
-      RETURN.
-    ENDIF.
-
-    lo_from_iterator ?= mo_iterator.
-
     cs_operand-dataset_name_or_alias =
-      get_dataset_where_empty_single( io_from_iterator      = lo_from_iterator
+      get_dataset_where_empty_single( io_iterator           = mo_iterator
                                       iv_fieldname          = cs_operand-fieldname_or_value
                                       iv_error_if_not_found = abap_false ).
   endmethod.
@@ -588,24 +577,14 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
     DATA: ld_ref_to_dataset_record TYPE REF TO data,
           lo_struct                TYPE REF TO cl_abap_structdescr,
           lv_fieldname             TYPE fieldname,
-          lo_from_iterator         TYPE REF TO zcl_zosql_from_iterator,
           lt_components            TYPE cl_abap_structdescr=>included_view.
 
     IF is_operand-dataset_name_or_alias IS INITIAL.
-      IF _iter_supports_multi_datasets( ) = abap_true.
-        rv_fieldname_exists = abap_false.
-        RETURN.
-      ENDIF.
+      rv_fieldname_exists = abap_false.
+      RETURN.
     ENDIF.
 
-    IF _iter_supports_multi_datasets( ) = abap_true.
-      lo_from_iterator ?= mo_iterator.
-      lt_components = lo_from_iterator->get_components_of_data_set( is_operand-dataset_name_or_alias ).
-    ELSE.
-      ld_ref_to_dataset_record = mo_iterator->create_empty_record_as_ref( ).
-      lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_record ).
-      lt_components = lo_struct->get_included_view( ).
-    ENDIF.
+    lt_components = mo_iterator->get_components_of_data_set( is_operand-dataset_name_or_alias ).
 
     lv_fieldname = zcl_zosql_utils=>to_upper_case( is_operand-fieldname_or_value ).
     READ TABLE lt_components WITH KEY name = lv_fieldname TRANSPORTING NO FIELDS.
@@ -1126,19 +1105,6 @@ CLASS ZCL_ZOSQL_EXPRESSION_PROCESSOR IMPLEMENTATION.
       <ls_condition>-processor = zif_zosql_expression_processor~create_new_instance( ).
       <ls_condition>-processor->initialize_by_parsed_sql( lo_node_operand ).
     ENDLOOP.
-  ENDMETHOD.
-
-
-  METHOD _iter_supports_multi_datasets.
-
-    DATA: lo_from_iterator TYPE REF TO zcl_zosql_from_iterator.
-
-    TRY.
-        lo_from_iterator ?= mo_iterator.
-        rv_supports_multi_datasets = abap_true.
-      CATCH cx_root.
-        rv_supports_multi_datasets = abap_false.
-    ENDTRY.
   ENDMETHOD.
 
 

@@ -136,8 +136,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     CREATE OBJECT lo_select
       EXPORTING
-        io_sql_parser    = io_sql_parser
-        io_from_iterator = lo_from_iter.
+        io_sql_parser = io_sql_parser
+        io_iterator   = lo_from_iter.
 
     rd_dynamic_table_select_result = lo_select->get_result_as_ref_to_data( ).
 

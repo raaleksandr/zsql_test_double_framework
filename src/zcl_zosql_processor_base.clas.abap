@@ -18,7 +18,7 @@ protected section.
       value(RV_VARIABLE_IN_SQL) type STRING .
   methods FILL_DATASET_WHERE_EMPTY
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       value(IV_ERROR_IF_NOT_FOUND) type ABAP_BOOL default ABAP_TRUE
     changing
       !CT_TABLE_WHERE_TO_FILL type STANDARD TABLE
@@ -26,7 +26,7 @@ protected section.
       ZCX_ZOSQL_ERROR .
   methods GET_DATASET_WHERE_EMPTY_SINGLE
     importing
-      !IO_FROM_ITERATOR type ref to ZCL_ZOSQL_FROM_ITERATOR
+      !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
       !IV_FIELDNAME type CLIKE
       value(IV_ERROR_IF_NOT_FOUND) type ABAP_BOOL default ABAP_TRUE
     returning
@@ -72,7 +72,7 @@ CLASS ZCL_ZOSQL_PROCESSOR_BASE IMPLEMENTATION.
       ASSIGN COMPONENT 'DATASET_NAME_OR_ALIAS' OF STRUCTURE <ls_table_line> TO <lv_dataset_name_or_alias>.
 
       <lv_dataset_name_or_alias> =
-        get_dataset_where_empty_single( io_from_iterator      = io_from_iterator
+        get_dataset_where_empty_single( io_iterator           = io_iterator
                                         iv_fieldname          = <lv_fieldname>
                                         iv_error_if_not_found = iv_error_if_not_found ).
     ENDLOOP.
@@ -88,10 +88,10 @@ CLASS ZCL_ZOSQL_PROCESSOR_BASE IMPLEMENTATION.
 
     lv_fieldname = zcl_zosql_utils=>to_upper_case( iv_fieldname ).
 
-    lt_data_set_list = io_from_iterator->get_data_set_list( ).
+    lt_data_set_list = io_iterator->get_data_set_list( ).
 
     LOOP AT lt_data_set_list INTO ls_data_set.
-      lt_components_of_data_set = io_from_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
+      lt_components_of_data_set = io_iterator->get_components_of_data_set( ls_data_set-dataset_name ).
       READ TABLE lt_components_of_data_set WITH KEY name = lv_fieldname TRANSPORTING NO FIELDS.
       IF sy-subrc = 0.
         rv_dataset_name_or_alias = ls_data_set-dataset_name.

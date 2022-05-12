@@ -1,30 +1,10 @@
 class ZCL_ZOSQL_FROM_ITERATOR definition
   public
+  inheriting from ZCL_ZOSQL_ITERATOR_BASE
   create public .
 
 public section.
 
-  interfaces ZIF_ZOSQL_ITERATOR .
-
-  types:
-    BEGIN OF TY_DATA_SET,
-           dataset_name TYPE string,
-           dataset_alias TYPE string,
-         END OF ty_data_set .
-  types:
-    ty_data_sets TYPE STANDARD TABLE OF ty_data_set WITH DEFAULT KEY .
-
-  methods ADD_ADDITIONAL_DATASET
-    importing
-      !IV_DATASET_NAME type CLIKE
-      !IV_DATASET_ALIAS type CLIKE optional
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods GET_KEY_FIELDS_OF_DATA_SET
-    importing
-      !IV_DATASET_NAME_OR_ALIAS type CLIKE
-    returning
-      value(RT_KEY_FIELDS) type FIELDNAME_TABLE .
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
@@ -32,30 +12,37 @@ public section.
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
     raising
       ZCX_ZOSQL_ERROR .
-  methods GET_DATA_SET_LIST
-    returning
-      value(RT_DATA_SET_LIST) type TY_DATA_SETS .
-  methods GET_LINE_FOR_DATA_SET_REF
-    importing
-      !IV_DATASET_NAME_OR_ALIAS type CLIKE
-    returning
-      value(RD_REF_TO_LINE) type ref to DATA
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods GET_COMPONENTS_OF_DATA_SET
-    importing
-      !IV_DATASET_NAME_OR_ALIAS type CLIKE
-    returning
-      value(RT_DATA_SET_COMPONENTS) type CL_ABAP_STRUCTDESCR=>INCLUDED_VIEW
-    raising
-      ZCX_ZOSQL_ERROR .
-  methods CHECK_DATA_SET_EXISTS
-    importing
-      !IV_DATASET_NAME_OR_ALIAS type CLIKE
-    returning
-      value(RV_EXISTS) type ABAP_BOOL
-    raising
-      ZCX_ZOSQL_ERROR .
+
+  methods ZIF_ZOSQL_ITERATOR~ADD_ADDITIONAL_DATASET
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CHECK_DATA_SET_EXISTS
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CLONE
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~CREATE_EMPTY_RECORD_AS_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_UNIQUE_ID
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_DATA_SET_LIST
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_ITERATOR_POSITION_OBJECT
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_KEY_FIELDS_OF_DATA_SET
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~GET_LINE_FOR_DATA_SET_REF
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~IS_EMPTY
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~MOVE_TO_FIRST
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~MOVE_TO_NEXT
+    redefinition .
+  methods ZIF_ZOSQL_ITERATOR~RECORD_IS_LAST
+    redefinition .
 protected section.
 private section.
 
@@ -210,42 +197,12 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
 
-  method ADD_ADDITIONAL_DATASET.
-    DATA: ls_dataset_with_position  LIKE LINE OF mt_datasets_with_position.
-
-    ls_dataset_with_position-dataset_name  = zcl_zosql_utils=>to_upper_case( iv_dataset_name ).
-    ls_dataset_with_position-dataset_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_alias ).
-    ls_dataset_with_position-iterator = _create_dataset_iterator( ls_dataset_with_position-dataset_name ).
-
-    IF iv_dataset_alias IS NOT INITIAL.
-      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = ls_dataset_with_position-dataset_alias
-        TRANSPORTING NO FIELDS.
-      IF sy-subrc = 0.
-        MESSAGE e093 WITH iv_dataset_alias INTO zcl_zosql_utils=>dummy.
-        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-      ENDIF.
-    ENDIF.
-
-    APPEND ls_dataset_with_position TO mt_datasets_with_position.
-  endmethod.
-
-
-  METHOD check_data_set_exists.
-
-    DATA: ld_ref_to_dataset_line TYPE REF TO data.
-
-    ld_ref_to_dataset_line = get_line_for_data_set_ref( iv_dataset_name_or_alias ).
-
-    IF ld_ref_to_dataset_line IS BOUND.
-      rv_exists = abap_true.
-    ENDIF.
-  ENDMETHOD.
-
-
   METHOD constructor.
 
     DATA: lo_factory          TYPE REF TO zif_zosql_factory,
           lt_parameters_empty TYPE zosql_db_layer_params.
+
+    super->constructor( ).
 
     IF io_parameters IS BOUND.
       mo_parameters = io_parameters.
@@ -268,73 +225,74 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method GET_COMPONENTS_OF_DATA_SET.
+  method ZIF_ZOSQL_ITERATOR~ADD_ADDITIONAL_DATASET.
+    DATA: ls_dataset_with_position  LIKE LINE OF mt_datasets_with_position.
 
-    DATA: ld_ref_to_dataset_data TYPE REF TO data,
-          lo_struct              TYPE REF TO cl_abap_structdescr.
+    ls_dataset_with_position-dataset_name  = zcl_zosql_utils=>to_upper_case( iv_dataset_name ).
+    ls_dataset_with_position-dataset_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_alias ).
+    ls_dataset_with_position-iterator = _create_dataset_iterator( ls_dataset_with_position-dataset_name ).
 
-    ld_ref_to_dataset_data = get_line_for_data_set_ref( iv_dataset_name_or_alias ).
-    lo_struct ?= cl_abap_structdescr=>describe_by_data_ref( ld_ref_to_dataset_data ).
-    rt_data_set_components = lo_struct->get_included_view( ).
+    IF iv_dataset_alias IS NOT INITIAL.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = ls_dataset_with_position-dataset_alias
+        TRANSPORTING NO FIELDS.
+      IF sy-subrc = 0.
+        MESSAGE e093 WITH iv_dataset_alias INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
+    ENDIF.
+
+    APPEND ls_dataset_with_position TO mt_datasets_with_position.
   endmethod.
 
 
-  method GET_DATA_SET_LIST.
+  method ZIF_ZOSQL_ITERATOR~CHECK_DATA_SET_EXISTS.
+    DATA: ld_ref_to_dataset_line TYPE REF TO data.
 
-    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = mt_datasets_with_position
-                                               IMPORTING et_table_dest = rt_data_set_list ).
+    ld_ref_to_dataset_line = zif_zosql_iterator~get_line_for_data_set_ref( iv_dataset_name_or_alias ).
 
+    IF ld_ref_to_dataset_line IS BOUND.
+      rv_exists = abap_true.
+    ENDIF.
   endmethod.
 
 
-  method GET_KEY_FIELDS_OF_DATA_SET.
-
-    DATA: lo_virt_table            TYPE REF TO zcl_zosql_one_virt_table,
-          lv_dataset_name_or_alias TYPE string.
-
-    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position.
-
-    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
-    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
-    IF sy-subrc <> 0.
-      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
-    ENDIF.
-
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
-
-    IF _if_dataset_is_table( <ls_data_set_data>-iterator ) <> abap_true.
-      RETURN.
-    ENDIF.
-
-    CREATE OBJECT lo_virt_table
-      EXPORTING
-        iv_table_name = <ls_data_set_data>-dataset_name.
-
-    rt_key_fields = lo_virt_table->get_key_fields( ).
+  method ZIF_ZOSQL_ITERATOR~CLONE.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~CLONE
+**  EXPORTING
+**    it_records_to_delete =
+*  RECEIVING
+*    RO_COPY_OF_OBJECT    =
+*    .
   endmethod.
 
 
-  method GET_LINE_FOR_DATA_SET_REF.
+  method ZIF_ZOSQL_ITERATOR~CREATE_EMPTY_RECORD_AS_REF.
+**TRY.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~CREATE_EMPTY_RECORD_AS_REF
+*  RECEIVING
+*    RD_REF_TO_EMPTY_RECORD =
+*    .
+** CATCH zcx_zosql_error .
+**ENDTRY.
+  endmethod.
 
-    DATA: lv_dataset_name_or_alias TYPE string.
 
-    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position,
-                   <ls_data_set_line> TYPE any.
+  method ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID
+*  EXPORTING
+*    IV_RECORD_UNIQUE_ID =
+*    .
+  endmethod.
 
-    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
-    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
-    IF sy-subrc <> 0.
-      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
-    ENDIF.
 
-    IF <ls_data_set_data> IS ASSIGNED.
-      rd_ref_to_line = <ls_data_set_data>-iterator->create_empty_record_as_ref( ).
-    ELSE.
-      MESSAGE e075 WITH iv_dataset_name_or_alias INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
+  method ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_REF.
+**TRY.
+*CALL METHOD SUPER->ZIF_ZOSQL_ITERATOR~GET_CURRENT_RECORD_REF
+*  RECEIVING
+*    RD_REF_TO_DATA_OF_CURRENT_REC =
+*    .
+** CATCH zcx_zosql_error .
+**ENDTRY.
   endmethod.
 
 
@@ -370,6 +328,12 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     ELSE.
       rv_unique_id = lv_unique_ids_concatenated.
     ENDIF.
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_DATA_SET_LIST.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = mt_datasets_with_position
+                                               IMPORTING et_table_dest = rt_data_set_list ).
   endmethod.
 
 
@@ -411,6 +375,55 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
                                             iv_dataset_alias       = <ls_dataset_with_position>-dataset_alias
                                             id_ref_to_current_line = ld_ref_to_line ).
       ENDLOOP.
+    ENDIF.
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_KEY_FIELDS_OF_DATA_SET.
+    DATA: lo_virt_table            TYPE REF TO zcl_zosql_one_virt_table,
+          lv_dataset_name_or_alias TYPE string.
+
+    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position.
+
+    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    IF sy-subrc <> 0.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    ENDIF.
+
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    IF _if_dataset_is_table( <ls_data_set_data>-iterator ) <> abap_true.
+      RETURN.
+    ENDIF.
+
+    CREATE OBJECT lo_virt_table
+      EXPORTING
+        iv_table_name = <ls_data_set_data>-dataset_name.
+
+    rt_key_fields = lo_virt_table->get_key_fields( ).
+  endmethod.
+
+
+  method ZIF_ZOSQL_ITERATOR~GET_LINE_FOR_DATA_SET_REF.
+    DATA: lv_dataset_name_or_alias TYPE string.
+
+    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_datasets_with_position,
+                   <ls_data_set_line> TYPE any.
+
+    lv_dataset_name_or_alias = zcl_zosql_utils=>to_upper_case( iv_dataset_name_or_alias ).
+    READ TABLE mt_datasets_with_position WITH KEY dataset_name = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    IF sy-subrc <> 0.
+      READ TABLE mt_datasets_with_position WITH KEY dataset_alias = lv_dataset_name_or_alias ASSIGNING <ls_data_set_data>.
+    ENDIF.
+
+    IF <ls_data_set_data> IS ASSIGNED.
+      rd_ref_to_line = <ls_data_set_data>-iterator->create_empty_record_as_ref( ).
+    ELSE.
+      MESSAGE e075 WITH iv_dataset_name_or_alias INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
   endmethod.
 
