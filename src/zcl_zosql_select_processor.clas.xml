@@ -99,6 +99,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
+     <CMPNAME>_CHECK_ON_DUPLICATES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if component table has duplicated fields</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_SELECT_PROCESSOR</CLSNAME>
      <CMPNAME>_CREATE_DATA_SET_FOR_SELECT</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Creates internal data set to store select result</DESCRIPT>

@@ -125,7 +125,12 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       error_between_not_finished FOR TESTING RAISING zcx_zosql_error,
       error_join_not_finished FOR TESTING RAISING zcx_zosql_error,
       error_join_cond_not_finished FOR TESTING RAISING zcx_zosql_error,
-      error_join_cond_bad_bracket FOR TESTING RAISING zcx_zosql_error.
+      error_join_cond_bad_bracket FOR TESTING RAISING zcx_zosql_error,
+      error_duplicate_column_alias FOR TESTING RAISING zcx_zosql_error,
+      error_no_distinct_in_count FOR TESTING RAISING zcx_zosql_error,
+      error_not_before_comparison FOR TESTING RAISING zcx_zosql_error,
+      error_for_all_ent_not_in_where FOR TESTING RAISING zcx_zosql_error,
+      error_for_all_ent_and_group_by FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -135,6 +140,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       success_if_no_dump,
       assert_exception_raised IMPORTING iv_select                  TYPE clike
                                         iv_expected_exception_text TYPE clike OPTIONAL
+                                        it_for_all_entries_table   TYPE ANY TABLE OPTIONAL
                               RAISING   zcx_zosql_error.
 ENDCLASS.       "ltc_cases_for_select
 
@@ -5184,6 +5190,64 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     assert_exception_raised( iv_select = lv_select ).
   ENDMETHOD.
 
+  METHOD error_duplicate_column_alias.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT key_field as duplicate_column text_field1 as duplicate_column'
+      '  FROM zosql_for_tst'
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_no_distinct_in_count.
+    assert_exception_raised( iv_select = 'SELECT count( key_field ) FROM zosql_for_tst' ).
+  ENDMETHOD.
+
+  METHOD error_not_before_comparison.
+    DATA: lv_select TYPE string.
+
+    CONCATENATE
+      'SELECT *'
+      '  FROM zosql_for_tst'
+      '  WHERE key_field NOT = ''TEST_VALUE'''
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_for_all_ent_not_in_where.
+    DATA: lv_select TYPE string.
+
+    " Reference to FOR ALL ENTRIES table is missing in where
+    CONCATENATE
+      'SELECT *'
+      '  FROM zosql_for_tst'
+      '  FOR ALL ENTRIES IN itab'
+      '  WHERE key_field = 1'
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select = lv_select ).
+  ENDMETHOD.
+
+  METHOD error_for_all_ent_and_group_by.
+
+    DATA: lv_select           TYPE string,
+          lt_for_all_ent_itab TYPE TABLE OF zosql_for_tst.
+
+    CONCATENATE
+      'SELECT COUNT( * )'
+      '  FROM zosql_for_tst'
+      '  FOR ALL ENTRIES IN itab'
+      '  WHERE key_field = itab-key_field'
+      '  GROUP BY key_field'
+      INTO lv_select SEPARATED BY space.
+
+    assert_exception_raised( iv_select                = lv_select
+                             it_for_all_entries_table = lt_for_all_ent_itab ).
+  ENDMETHOD.
+
   METHOD given_no_data.
   ENDMETHOD.
 
@@ -5196,7 +5260,8 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
           lv_text_of_exception TYPE string.
 
     TRY.
-        f_cut->select( iv_select ).
+        f_cut->select( iv_select                = iv_select
+                       it_for_all_entries_table = it_for_all_entries_table ).
         cl_aunit_assert=>fail( 'Exception expected' ).
       CATCH zcx_zosql_error INTO lo_exception.
         lv_text_of_exception = lo_exception->get_text( ).

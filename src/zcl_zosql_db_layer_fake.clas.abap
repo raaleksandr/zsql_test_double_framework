@@ -53,6 +53,21 @@ private section.
     mt_cursors TYPE STANDARD TABLE OF ty_cursor WITH KEY cursor_number .
   data MO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
 
+  methods _ADDITIONAL_CHECKS_FOR_ALL_ENT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _CHECK_NO_GROUP_BY
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_NO_GROUP_BY) type ABAP_BOOL .
+  methods _CHECK_REF_TO_FAE_IN_WHERE
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    returning
+      value(RV_REFERENCE_EXISTS) type ABAP_BOOL .
   methods _GET_COUNT_INSERTED
     returning
       value(RV_COUNT_INSERTED) type I .
@@ -491,6 +506,19 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
+  method _ADDITIONAL_CHECKS_FOR_ALL_ENT.
+    IF _check_ref_to_fae_in_where( io_sql_parser ) <> abap_true.
+      MESSAGE e099 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+
+    IF _check_no_group_by( io_sql_parser ) <> abap_true.
+      MESSAGE e052 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDIF.
+  endmethod.
+
+
   method _ADD_FOR_ALL_ENTRIES_TO_PARAMS.
 
     DATA: lv_for_all_entries_tabname TYPE string,
@@ -509,6 +537,64 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       IF ls_param IS NOT INITIAL.
         APPEND ls_param TO ct_parameters.
       ENDIF.
+    ENDLOOP.
+  endmethod.
+
+
+  method _CHECK_NO_GROUP_BY.
+
+    DATA: lo_parser_helper TYPE REF TO zcl_zosql_parser_helper,
+          lo_node_group_by TYPE REF TO zcl_zosql_parser_node.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_group_by = lo_node_group_by ).
+    IF lo_node_group_by IS NOT BOUND.
+      rv_no_group_by = abap_true.
+    ENDIF.
+  endmethod.
+
+
+  method _CHECK_REF_TO_FAE_IN_WHERE.
+
+    DATA: lo_parser_helper           TYPE REF TO zcl_zosql_parser_helper,
+          lv_for_all_entries_tabname TYPE string,
+          lo_node_where              TYPE REF TO zcl_zosql_parser_node,
+          lt_child_nodes_of_where    TYPE zcl_zosql_parser_recurs_desc=>ty_tree,
+          lv_search_old_syntax       TYPE string,
+          lv_search_new_syntax       TYPE string.
+
+    FIELD-SYMBOLS: <ls_child_node> LIKE LINE OF lt_child_nodes_of_where.
+
+    CREATE OBJECT lo_parser_helper
+      EXPORTING
+        io_sql_parser = io_sql_parser.
+
+    lv_for_all_entries_tabname = lo_parser_helper->get_for_all_entries_tabname( ).
+    IF lv_for_all_entries_tabname IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    lo_parser_helper->get_key_nodes_of_sql_select( IMPORTING eo_node_where = lo_node_where ).
+    IF lo_node_where IS NOT BOUND.
+      RETURN.
+    ENDIF.
+
+    lt_child_nodes_of_where = io_sql_parser->get_child_nodes_recursive( lo_node_where->get_node_info( )-id ).
+
+    lv_for_all_entries_tabname = zcl_zosql_utils=>to_upper_case( lv_for_all_entries_tabname ).
+    CONCATENATE lv_for_all_entries_tabname '-*' INTO lv_search_old_syntax.
+    CONCATENATE '@' lv_for_all_entries_tabname '-*' INTO lv_search_new_syntax.
+
+    LOOP AT lt_child_nodes_of_where ASSIGNING <ls_child_node>
+      WHERE node_type = zcl_zosql_parser_recurs_desc=>node_type-expression_right_part
+        AND ( token_ucase CP lv_search_old_syntax
+             OR token_ucase CP lv_search_new_syntax ).
+
+      rv_reference_exists = abap_true.
+      EXIT.
     ENDLOOP.
   endmethod.
 
@@ -753,6 +839,9 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   METHOD _select_for_all_entries.
+
+    _additional_checks_for_all_ent( io_sql_parser ).
+
     IF it_for_all_entries_table IS NOT INITIAL.
       _select_for_all_ent_not_empty( EXPORTING io_parameters            = io_parameters
                                                it_for_all_entries_table = it_for_all_entries_table
