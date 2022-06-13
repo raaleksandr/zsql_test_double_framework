@@ -273,6 +273,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
     zif_zosql_db_layer~select_to_itab( EXPORTING iv_select                = iv_select
                                                  it_parameters            = it_parameters
                                                  it_for_all_entries_table = it_for_all_entries_table
+                                                 iv_do_into_corresponding = abap_false
                                        IMPORTING et_result_table          = <lt_select_result>
                                                  ev_subrc                 = ev_subrc ).
   ENDMETHOD.

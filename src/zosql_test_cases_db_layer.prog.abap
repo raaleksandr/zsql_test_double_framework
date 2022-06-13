@@ -71,6 +71,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       select_param_in_join FOR TESTING RAISING zcx_zosql_error,
       select_from_table_with_include FOR TESTING RAISING zcx_zosql_error,
       select_order_by FOR TESTING RAISING zcx_zosql_error,
+      count_star_no_alias FOR TESTING RAISING zcx_zosql_error,
       param_lower_case_in_select FOR TESTING RAISING zcx_zosql_error,
       sql_separated_by_line_breaks FOR TESTING RAISING zcx_zosql_error,
       open_cursor_fetch_itab FOR TESTING RAISING zcx_zosql_error,
@@ -4744,6 +4745,35 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     APPEND ls_expected_line TO lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD count_star_no_alias.
+    DATA: lt_initial_table TYPE TABLE OF zosql_for_tst,
+          ls_line          TYPE zosql_for_tst,
+          ld_result        TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_table> TYPE STANDARD TABLE,
+                   <ls_line>  TYPE any,
+                   <lv_value> TYPE any.
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'TEXT1'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( lt_initial_table ).
+
+    " WHEN
+    f_cut->select( EXPORTING iv_select          = 'SELECT count(*) FROM zosql_for_tst'
+                   IMPORTING ed_result_as_table = ld_result ).
+
+    " THEN
+    ASSIGN ld_result->* TO <lt_table>.
+    READ TABLE <lt_table> INDEX 1 ASSIGNING <ls_line>.
+    ASSIGN COMPONENT 1 OF STRUCTURE <ls_line> TO <lv_value>.
+
+    cl_aunit_assert=>assert_equals( act = <lv_value> exp = 1 ).
   ENDMETHOD.
 
   METHOD param_lower_case_in_select.
