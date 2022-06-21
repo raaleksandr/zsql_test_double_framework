@@ -6,6 +6,7 @@ class ZCL_ZOSQL_GROUPBY_PROCESSOR definition
 public section.
 
   data MT_GROUP_BY_KEY_FIELDS type TY_GROUP_BY_KEY_FIELDS read-only .
+  data MT_ITER_POSITIONS_OF_DATA_SET type ZCL_ZOSQL_SELECT_PROCESSOR=>TY_ITERATOR_POSITIONS read-only .
 
   methods CONSTRUCTOR
     importing
@@ -54,7 +55,8 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
           lv_add_record              TYPE abap_bool,
           ld_grouped_table           TYPE REF TO data.
 
-    FIELD-SYMBOLS: <lt_grouped_table> TYPE STANDARD TABLE.
+    FIELD-SYMBOLS: <lt_grouped_table>        TYPE STANDARD TABLE,
+                   <ls_iter_pos_of_data_set> LIKE LINE OF mt_iter_positions_of_data_set.
 
     CREATE DATA ld_grouped_table LIKE ct_data_set.
     ASSIGN ld_grouped_table->* TO <lt_grouped_table>.
@@ -82,13 +84,17 @@ CLASS ZCL_ZOSQL_GROUPBY_PROCESSOR IMPLEMENTATION.
         add_record_to_grouped_table( EXPORTING io_iteration_position = lo_iter_pos
                                                io_select             = io_select
                                      CHANGING  ct_grouped_table      = <lt_grouped_table> ).
+
+        APPEND INITIAL LINE TO mt_iter_positions_of_data_set ASSIGNING <ls_iter_pos_of_data_set>.
+        <ls_iter_pos_of_data_set>-line_index        = LINES( <lt_grouped_table> ).
+        <ls_iter_pos_of_data_set>-iterator_position = lo_iter_pos.
       ENDIF.
 
-      lv_not_end_of_data = lo_groupby_iterator->zif_zosql_iterator~move_to_next( ).
-    ENDWHILE.
+        lv_not_end_of_data = lo_groupby_iterator->zif_zosql_iterator~move_to_next( ).
+      ENDWHILE.
 
-    ct_data_set = <lt_grouped_table>.
-  ENDMETHOD.
+      ct_data_set = <lt_grouped_table>.
+    ENDMETHOD.
 
 
   method CONSTRUCTOR.

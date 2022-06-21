@@ -157,13 +157,13 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
 
   METHOD _add_record_num_to_cur_groupby.
 
-    DATA: lo_iter_position_of_dataset TYPE REF TO zcl_zosql_iterator_position,
+    DATA: ls_iter_position_of_dataset TYPE zcl_zosql_select_processor=>ty_iterator_position,
           lt_data_sets                TYPE zcl_zosql_iterator_position=>ty_data_sets,
           ld_line_of_dataset          TYPE REF TO data.
 
     FIELD-SYMBOLS: <ls_data_set>            LIKE LINE OF lt_data_sets.
 
-    READ TABLE mt_iter_positions_of_lines INDEX iv_record_num_in_not_grouped INTO lo_iter_position_of_dataset.
+    READ TABLE mt_iter_positions_of_lines INDEX iv_record_num_in_not_grouped INTO ls_iter_position_of_dataset.
     IF sy-subrc <> 0.
       MESSAGE e079 WITH 'ZCL_ZOSQL_GROUPBY_ITERATOR'
                         '_ADD_RECORD_NUM_TO_CUR_GROUPBY'
@@ -171,10 +171,10 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
-    lt_data_sets = lo_iter_position_of_dataset->get_data_set_list( ).
+    lt_data_sets = ls_iter_position_of_dataset-iterator_position->get_data_set_list( ).
 
     LOOP AT lt_data_sets ASSIGNING <ls_data_set>.
-      ld_line_of_dataset = lo_iter_position_of_dataset->get_line_for_data_set_ref( <ls_data_set>-dataset_name ).
+      ld_line_of_dataset = ls_iter_position_of_dataset-iterator_position->get_line_for_data_set_ref( <ls_data_set>-dataset_name ).
       io_iterator_pos_groupby->add_data_set_data( iv_dataset_name        = <ls_data_set>-dataset_name
                                                   iv_dataset_alias       = <ls_data_set>-dataset_alias
                                                   id_ref_to_current_line = ld_line_of_dataset ).
@@ -184,20 +184,20 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
 
   METHOD _create_dynamic_table_for_keys.
 
-    DATA: lo_iter_pos               TYPE REF TO zcl_zosql_iterator_position,
-          lt_components_of_keys     TYPE cl_abap_structdescr=>component_table,
-          lo_struct_of_keys         TYPE REF TO cl_abap_structdescr,
-          lo_table_of_keys          TYPE REF TO cl_abap_tabledescr,
-          ld_value                  TYPE REF TO data.
+    DATA: ls_iter_pos           TYPE zcl_zosql_select_processor=>ty_iterator_position,
+          lt_components_of_keys TYPE cl_abap_structdescr=>component_table,
+          lo_struct_of_keys     TYPE REF TO cl_abap_structdescr,
+          lo_table_of_keys      TYPE REF TO cl_abap_tabledescr,
+          ld_value              TYPE REF TO data.
 
     FIELD-SYMBOLS: <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields,
                    <ls_component>          LIKE LINE OF lt_components_of_keys.
 
-    READ TABLE mt_iter_positions_of_lines INDEX 1 INTO lo_iter_pos.
+    READ TABLE mt_iter_positions_of_lines INDEX 1 INTO ls_iter_pos.
 
     LOOP AT mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>.
       ld_value =
-        lo_iter_pos->get_field_ref_of_data_set(
+        ls_iter_pos-iterator_position->get_field_ref_of_data_set(
           iv_dataset_name_or_alias = <ls_group_by_key_field>-dataset_name_or_alias
           iv_fieldname             = <ls_group_by_key_field>-fieldname ).
 
@@ -221,8 +221,8 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
   method _FILL_DYNAMIC_TABLE_WITH_KEYS.
 
     DATA: ld_key                    TYPE REF TO data,
-          lo_iter_pos               TYPE REF TO zcl_zosql_iterator_position,
-          ld_value                  TYPE REF TO data.
+          ld_value                  TYPE REF TO data,
+          ls_iter_pos               TYPE zcl_zosql_select_processor=>ty_iterator_position.
 
     FIELD-SYMBOLS: <ls_group_by_key_field> LIKE LINE OF mt_group_by_key_fields,
                    <lt_key_values>         TYPE STANDARD TABLE,
@@ -239,13 +239,13 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
     ASSIGN ld_key->* TO <ls_key>.
 
     LOOP AT <lt_table_not_grouped> ASSIGNING <ls_table_line>.
-      READ TABLE mt_iter_positions_of_lines INDEX sy-tabix INTO lo_iter_pos.
+      READ TABLE mt_iter_positions_of_lines INDEX sy-tabix INTO ls_iter_pos.
 
       CLEAR <ls_key>.
 
       LOOP AT mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>.
         ld_value =
-          lo_iter_pos->get_field_ref_of_data_set(
+          ls_iter_pos-iterator_position->get_field_ref_of_data_set(
             iv_dataset_name_or_alias = <ls_group_by_key_field>-dataset_name_or_alias
             iv_fieldname             = <ls_group_by_key_field>-fieldname ).
 
@@ -282,7 +282,7 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
 
   METHOD _record_equals_to_current_key.
 
-    DATA: lo_iter_position_of_dataset TYPE REF TO zcl_zosql_iterator_position,
+    DATA: ls_iter_position_of_dataset TYPE zcl_zosql_select_processor=>ty_iterator_position,
           ld_ref_to_groupby_key_field TYPE REF TO data.
 
     FIELD-SYMBOLS: <lt_group_by_key_values>     TYPE STANDARD TABLE,
@@ -302,7 +302,7 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    READ TABLE mt_iter_positions_of_lines INDEX iv_record_num_in_not_grouped INTO lo_iter_position_of_dataset.
+    READ TABLE mt_iter_positions_of_lines INDEX iv_record_num_in_not_grouped INTO ls_iter_position_of_dataset.
     IF sy-subrc <> 0.
       MESSAGE e079 WITH 'ZCL_ZOSQL_GROUPBY_ITERATOR'
                         '_RECORD_EQUALS_TO_CURRENT_KEY'
@@ -314,7 +314,7 @@ CLASS ZCL_ZOSQL_GROUPBY_ITERATOR IMPLEMENTATION.
     LOOP AT mt_group_by_key_fields ASSIGNING <ls_group_by_key_field>.
 
       ld_ref_to_groupby_key_field =
-        lo_iter_position_of_dataset->get_field_ref_of_data_set(
+        ls_iter_position_of_dataset-iterator_position->get_field_ref_of_data_set(
           iv_dataset_name_or_alias = <ls_group_by_key_field>-dataset_name_or_alias
           iv_fieldname             = <ls_group_by_key_field>-fieldname ).
 
