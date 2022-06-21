@@ -146,14 +146,14 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
           lo_struct                  TYPE REF TO cl_abap_structdescr,
           lt_comp_simple             TYPE cl_abap_structdescr=>included_view,
           lv_order_by_field_index    TYPE i,
-          lo_first_iter_pos          TYPE REF TO zcl_zosql_iterator_position,
+          ls_first_iter_pos          TYPE zcl_zosql_select_processor=>ty_iterator_position,
           ld_ref_to_field            TYPE REF TO data,
           lo_struct_added            TYPE REF TO cl_abap_structdescr,
           lo_table_added             TYPE REF TO cl_abap_tabledescr,
           lt_comp                    TYPE cl_abap_structdescr=>component_table,
           lv_line_index              TYPE i,
           lv_orderby_fieldname       TYPE fieldname,
-          lo_iter_pos                TYPE REF TO zcl_zosql_iterator_position.
+          ls_iter_pos                TYPE zcl_zosql_select_processor=>ty_iterator_position.
 
     FIELD-SYMBOLS: <ls_comp_simple>              LIKE LINE OF lt_comp_simple,
                    <ls_order_by_field>           LIKE LINE OF mt_order_by_fields,
@@ -170,7 +170,7 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
     lo_struct ?= lo_table->get_table_line_type( ).
     lt_comp_simple = lo_struct->get_included_view( ).
 
-    READ TABLE lt_iter_positions_of_lines INDEX 1 INTO lo_first_iter_pos.
+    READ TABLE lt_iter_positions_of_lines INDEX 1 INTO ls_first_iter_pos.
     IF sy-subrc <> 0.
       RETURN.
     ENDIF.
@@ -182,7 +182,7 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
       <ls_comp_simple>-name = _get_order_by_fieldname( lv_order_by_field_index ).
 
       ld_ref_to_field =
-        lo_first_iter_pos->get_field_ref_of_data_set(
+        ls_first_iter_pos-iterator_position->get_field_ref_of_data_set(
           iv_dataset_name_or_alias = <ls_order_by_field>-dataset_name_or_alias
           iv_fieldname             = <ls_order_by_field>-fieldname ).
 
@@ -205,14 +205,14 @@ CLASS ZCL_ZOSQL_ORDERBY_PROCESSOR IMPLEMENTATION.
     LOOP AT <lt_result_with_added_fields> ASSIGNING <ls_table_line>.
       lv_line_index = sy-tabix.
 
-      READ TABLE lt_iter_positions_of_lines INDEX lv_line_index INTO lo_iter_pos.
+      READ TABLE lt_iter_positions_of_lines INDEX lv_line_index INTO ls_iter_pos.
 
       LOOP AT mt_order_by_fields ASSIGNING <ls_order_by_field>.
         lv_orderby_fieldname = _get_order_by_fieldname( sy-tabix ).
         ASSIGN COMPONENT lv_orderby_fieldname OF STRUCTURE <ls_table_line> TO <lv_orderby_field>.
 
         ld_ref_to_field =
-          lo_iter_pos->get_field_ref_of_data_set(
+          ls_iter_pos-iterator_position->get_field_ref_of_data_set(
             iv_dataset_name_or_alias = <ls_order_by_field>-dataset_name_or_alias
             iv_fieldname             = <ls_order_by_field>-fieldname ).
 

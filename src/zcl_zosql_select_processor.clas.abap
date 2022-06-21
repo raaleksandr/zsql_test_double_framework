@@ -18,8 +18,14 @@ public section.
   types:
     ty_select_parameters TYPE STANDARD TABLE OF ty_select_parameter
                                      WITH KEY dataset_name_or_alias fieldname .
+
   types:
-    ty_iterator_positions  TYPE STANDARD TABLE OF REF TO zcl_zosql_iterator_position WITH DEFAULT KEY .
+    BEGIN OF ty_iterator_position,
+      line_index TYPE i,
+      iterator_position TYPE REF TO zcl_zosql_iterator_position,
+    END OF ty_iterator_position.
+  types:
+    ty_iterator_positions  TYPE STANDARD TABLE OF ty_iterator_position WITH KEY line_index .
 
   methods APPLY_ORDER_BY
     importing
@@ -152,9 +158,11 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
 
-  METHOD ADD_LINE_TO_RESULT.
+  METHOD add_line_to_result.
 
-    DATA: ld_ref_to_dataset_data TYPE REF TO data.
+    DATA: ld_ref_to_dataset_data    TYPE REF TO data,
+          lv_index_of_inserted_line TYPE i,
+          ls_iterator_position      TYPE ty_iterator_position.
 
     FIELD-SYMBOLS: <ls_select_parameter>    LIKE LINE OF mt_select_parameters,
                    <ls_ref_to_dataset_data> TYPE any,
@@ -165,6 +173,7 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     ASSIGN md_data_set->* TO <lt_result>.
     APPEND INITIAL LINE TO <lt_result> ASSIGNING <ls_result>.
+    lv_index_of_inserted_line = sy-tabix.
 
     LOOP AT mt_select_parameters ASSIGNING <ls_select_parameter>.
       ld_ref_to_dataset_data =
@@ -183,7 +192,9 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
       <lv_result_field_value> = <lv_dataset_field_value>.
     ENDLOOP.
 
-    APPEND io_iteration_position TO mt_iter_positions_of_data_set.
+    ls_iterator_position-line_index = lv_index_of_inserted_line.
+    ls_iterator_position-iterator_position = io_iteration_position.
+    APPEND ls_iterator_position TO mt_iter_positions_of_data_set.
   ENDMETHOD.
 
 
@@ -241,6 +252,8 @@ CLASS ZCL_ZOSQL_SELECT_PROCESSOR IMPLEMENTATION.
 
     io_group_by->apply_group_by( EXPORTING io_select   = me
                                  CHANGING  ct_data_set = <lt_data_set> ).
+
+    mt_iter_positions_of_data_set = io_group_by->mt_iter_positions_of_data_set.
   ENDMETHOD.
 
 
