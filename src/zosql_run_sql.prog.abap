@@ -239,10 +239,15 @@ CLASS lcl_controller IMPLEMENTATION.
         no_linedependent_authority     = 5
         OTHERS                         = 6.
 
-    IF sy-subrc <> 0.
-      MESSAGE e080 WITH lv_view_name INTO zcl_zosql_utils=>dummy.
-      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
-    ENDIF.
+    CASE sy-subrc.
+      WHEN 0.
+      WHEN 4.
+        MESSAGE e100 WITH lv_view_name INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      WHEN OTHERS.
+        MESSAGE e080 WITH lv_view_name INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+    ENDCASE.
   ENDMETHOD.
 ENDCLASS.
 

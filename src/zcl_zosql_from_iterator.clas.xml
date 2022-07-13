@@ -99,6 +99,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_DATASET_IS_EMPTY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if data set is empty</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>_FILL_RECORD_STATISTIC</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Adds dataset records join info necessary for outer joins</DESCRIPT>
@@ -168,6 +174,12 @@
      <CMPNAME>_RESET_POSITION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Resets iterator position to first element</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
+     <CMPNAME>_SKIP_JOIN_CONDITION_CHECK</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Check if we need to skip join condition check</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
