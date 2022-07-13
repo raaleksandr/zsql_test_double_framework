@@ -311,6 +311,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>100</MSGNR>
+     <TEXT>Table or view &amp; doesn&apos;t exist</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>

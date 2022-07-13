@@ -5,6 +5,9 @@ class ZCL_ZOSQL_WHERE_PROCESSOR definition
 
 public section.
 
+  methods SET_FOR_ALL_ENTRIES_TABNAME
+    importing
+      !IV_FOR_ALL_ENTRIES_TABNAME type CLIKE .
   methods CONSTRUCTOR
     importing
       !IO_ZOSQL_TEST_ENVIRONMENT type ref to ZIF_ZOSQL_TEST_ENVIRONMENT optional
@@ -30,6 +33,8 @@ protected section.
     redefinition .
   methods _INIT_ELEMENTARY
     redefinition .
+  methods NEED_TO_CHECK_FIELD_IN_DATASET
+    redefinition .
 private section.
 
   types:
@@ -44,6 +49,7 @@ private section.
   data MV_RIGHT_PART_SUBQUERY_SQL type STRING .
   data MV_SUBQUERY_SPECIFICATOR type STRING .
   constants C_EXISTS type STRING value 'EXISTS' ##NO_TEXT.
+  data GV_FOR_ALL_ENTRIES_TABNAME type STRING .
 
   methods _CHECK_FOR_IN_WHEN_SUBQUERY
     importing
@@ -55,6 +61,11 @@ private section.
   methods _CHECK_SUBQUERY_CORRECT
     raising
       ZCX_ZOSQL_ERROR .
+  methods _FIELD_OF_FOR_ALL_ENTRIES_TAB
+    importing
+      !IV_FIELDNAME_OR_VALUE type CLIKE
+    returning
+      value(RV_IS_FOR_ALL_ENTRIES_FIELD) type ABAP_BOOL .
   methods _GET_SUBQUERY_SPECIFICATOR
     importing
       !IO_NODE_ELEMENTARY_CONDITION type ref to ZCL_ZOSQL_PARSER_NODE
@@ -148,13 +159,37 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
   endmethod.
 
 
+  method NEED_TO_CHECK_FIELD_IN_DATASET.
+    rv_need_to_check_field_in_ds = super->need_to_check_field_in_dataset( is_operand ).
+    IF rv_need_to_check_field_in_ds = abap_true.
+      IF _field_of_for_all_entries_tab( is_operand-fieldname_or_value ) = abap_true.
+        rv_need_to_check_field_in_ds = abap_false.
+      ENDIF.
+    ENDIF.
+  endmethod.
+
+
+  method SET_FOR_ALL_ENTRIES_TABNAME.
+    gv_for_all_entries_tabname = iv_for_all_entries_tabname.
+  endmethod.
+
+
   method ZIF_ZOSQL_EXPRESSION_PROCESSOR~CREATE_NEW_INSTANCE.
-    CREATE OBJECT ro_processor TYPE zcl_zosql_where_processor
+
+    DATA: lo_where_processor TYPE REF TO zcl_zosql_where_processor.
+
+    CREATE OBJECT lo_where_processor
       EXPORTING
         io_zosql_test_environment = mo_zosql_test_environment
         io_parameters             = mo_parameters
         io_iterator               = mo_iterator
         iv_new_syntax             = mv_new_syntax.
+
+    IF gv_for_all_entries_tabname IS NOT INITIAL.
+      lo_where_processor->set_for_all_entries_tabname( gv_for_all_entries_tabname ).
+    ENDIF.
+
+    ro_processor = lo_where_processor.
   endmethod.
 
 
@@ -303,6 +338,30 @@ CLASS ZCL_ZOSQL_WHERE_PROCESSOR IMPLEMENTATION.
       ENDIF.
     ELSE.
       rv_conditions_true = super->_check_with_compare_operator( io_iteration_position ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD _field_of_for_all_entries_tab.
+
+    " Scan for syntax like itab-some_fae_itab_field, see SELECT template example below
+    " SELECT
+    " ...
+    " FOR ALL ENTRIES IN itab
+    " WHERE some_field = itab-some_fae_itab_field
+    " ...
+
+    DATA: lv_for_all_entries_tabname TYPE string.
+
+    FIND FIRST OCCURRENCE OF '-' IN iv_fieldname_or_value.
+    IF sy-subrc = 0.
+
+      SPLIT iv_fieldname_or_value AT '-' INTO lv_for_all_entries_tabname zcl_zosql_utils=>dummy.
+      IF zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( lv_for_all_entries_tabname ) ) =
+        zcl_zosql_utils=>condense( zcl_zosql_utils=>to_upper_case( gv_for_all_entries_tabname ) ).
+
+        rv_is_for_all_entries_field = abap_true.
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 

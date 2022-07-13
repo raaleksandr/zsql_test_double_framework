@@ -59,7 +59,7 @@ private section.
     BEGIN OF ty_dataset_with_position,
       dataset_name      TYPE string,
       dataset_alias     TYPE string,
-      type_of_join      TYPE i,
+      type_of_join      TYPE string,
       iterator          TYPE REF TO zif_zosql_iterator,
       records_statistic TYPE ty_records_statistic,
     END OF ty_dataset_with_position .
@@ -72,7 +72,7 @@ private section.
       left_dataset_alias   TYPE string,
       right_dataset_name   TYPE string,
       right_dataset_alias  TYPE string,
-      type_of_join         TYPE i,
+      type_of_join         TYPE string,
       expression_processor TYPE REF TO zif_zosql_expression_processor,
     END OF ty_join_condition .
   types:
@@ -86,22 +86,29 @@ private section.
   data MT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION .
   data MT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   constants C_INNER_JOIN type I value 0 ##NO_TEXT.
-  constants C_LEFT_JOIN type I value 1 ##NO_TEXT.
-  constants C_RIGHT_JOIN type I value 2 ##NO_TEXT.
+  constants C_LEFT_JOIN type STRING value 'LEFT' ##NO_TEXT.
+  constants C_RIGHT_JOIN type STRING value 'RIGHT' ##NO_TEXT.
   data MV_OUTER_JOIN_ADD_MODE type ABAP_BOOL .
   data:
     mt_outer_join_add_chain TYPE STANDARD TABLE OF ty_outer_join_add_iter WITH DEFAULT KEY .
   data MV_OUTER_JOIN_ADD_MODE_INDEX type I .
   data MO_PARAMETERS type ref to ZCL_ZOSQL_PARAMETERS .
 
-  methods _RAISE_IF_NOT_SELECT
+  methods _SKIP_JOIN_CONDITION_CHECK
     importing
-      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+      !IS_JOIN_CONDITION type TY_JOIN_CONDITION
+    returning
+      value(RV_DONT_CHECK_IT) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
-  methods _POSITIONS_AS_STRING
+  methods _DATASET_IS_EMPTY
+    importing
+      !IV_DATASET_NAME type CLIKE
+      !IV_DATASET_ALIAS type CLIKE
     returning
-      value(RV_POSITIONS_AS_STRING) type STRING .
+      value(RV_IS_EMPTY) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _CREATE_DATASET_ITERATOR
     importing
       !IV_DATASET_NAME type CLIKE
@@ -120,6 +127,14 @@ private section.
       !IO_ITERATOR_OF_DATASET type ref to ZIF_ZOSQL_ITERATOR
     returning
       value(RV_IS_TABLE) type ABAP_BOOL .
+  methods _POSITIONS_AS_STRING
+    returning
+      value(RV_POSITIONS_AS_STRING) type STRING .
+  methods _RAISE_IF_NOT_SELECT
+    importing
+      !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _ADD_ANOTHER_JOIN
     importing
       !IO_PARENT_NODE_OF_JOIN type ref to ZCL_ZOSQL_PARSER_NODE
@@ -135,15 +150,15 @@ private section.
       value(RV_CONDITIONS_ARE_TRUE) type ABAP_BOOL
     raising
       ZCX_ZOSQL_ERROR .
+  methods _INIT_BY_ATTRIBUTES
+    importing
+      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
+      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_BY_SQL_PARSER
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
-  methods _INIT_BY_ATTRIBUTES
-    importing
-      !IT_DATASETS_WITH_POSITION type TY_DATASETS_WITH_POSITION
-      !IT_JOIN_CONDITIONS type TY_JOIN_CONDITIONS .
   methods _INIT_OUTER_JOIN_ADD_MODE
     returning
       value(RV_OUTER_JOIN_FOUND) type ABAP_BOOL
@@ -577,25 +592,29 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _CHECK_CONDITIONS_CURRENT_POS.
+  METHOD _check_conditions_current_pos.
 
     DATA: lo_current_iterator_pos TYPE REF TO zcl_zosql_iterator_position,
           lv_all_conditions_true  TYPE abap_bool.
 
-    FIELD-SYMBOLS: <ls_join_condition> LIKE LINE OF mt_join_conditions.
+    FIELD-SYMBOLS: <ls_join_condition> LIKE LINE OF mt_join_conditions,
+                   <ls_dataset>        LIKE LINE OF mt_datasets_with_position.
 
     lo_current_iterator_pos = zif_zosql_iterator~get_iterator_position_object( ).
 
     lv_all_conditions_true = abap_true.
     LOOP AT mt_join_conditions ASSIGNING <ls_join_condition>.
-      IF <ls_join_condition>-expression_processor->check_condition_for_cur_rec( lo_current_iterator_pos ) <> abap_true.
-        lv_all_conditions_true = abap_false.
-        EXIT.
+
+      IF _skip_join_condition_check( <ls_join_condition> ) <> abap_true.
+        IF <ls_join_condition>-expression_processor->check_condition_for_cur_rec( lo_current_iterator_pos ) <> abap_true.
+          lv_all_conditions_true = abap_false.
+          EXIT.
+        ENDIF.
       ENDIF.
     ENDLOOP.
 
     rv_conditions_are_true = lv_all_conditions_true.
-  endmethod.
+  ENDMETHOD.
 
 
   method _CONDITIONS_FAIL_FOR_ALL_LINES.
@@ -623,7 +642,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
           lv_pre_last_dataset TYPE i,
           lt_nodes_of_join    TYPE zcl_zosql_parser_node=>ty_parser_nodes,
           lo_node             TYPE REF TO zcl_zosql_parser_node,
-          lv_type_of_join     TYPE i.
+          lv_type_of_join     TYPE string.
 
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position.
 
@@ -670,6 +689,23 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
           iv_table_name             = iv_dataset_name.
     ENDIF.
   endmethod.
+
+
+  METHOD _dataset_is_empty.
+
+    FIELD-SYMBOLS: <ls_dataset> LIKE LINE OF mt_datasets_with_position.
+
+    LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset>
+       WHERE dataset_name = iv_dataset_name
+          OR dataset_alias = iv_dataset_alias.
+
+      EXIT.
+    ENDLOOP.
+
+    IF sy-subrc = 0.
+      rv_is_empty = <ls_dataset>-iterator->is_empty( ).
+    ENDIF.
+  ENDMETHOD.
 
 
   method _FILL_RECORD_STATISTIC.
@@ -832,24 +868,30 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
   ENDMETHOD.
 
 
-  method _MOVE_TO_NEXT_POSITION.
+  METHOD _move_to_next_position.
 
     DATA: lv_current_dataset  TYPE i.
 
     FIELD-SYMBOLS: <ls_current_dataset> LIKE LINE OF mt_datasets_with_position.
 
-    lv_current_dataset = LINES( mt_datasets_with_position ).
+    lv_current_dataset = lines( mt_datasets_with_position ).
 
     WHILE lv_current_dataset > 0.
 
       READ TABLE mt_datasets_with_position INDEX lv_current_dataset ASSIGNING <ls_current_dataset>.
       IF sy-subrc = 0.
-        IF <ls_current_dataset>-iterator->move_to_next( ) = abap_true.
-          rv_move_successful = abap_true.
-          EXIT.
-        ELSE.
-          IF <ls_current_dataset>-iterator->move_to_first( ) <> abap_true.
+
+        IF <ls_current_dataset>-iterator->is_empty( ) = abap_true.
+          IF <ls_current_dataset>-type_of_join <> c_left_join.
             EXIT.
+          ENDIF.
+        ELSE.
+
+          IF <ls_current_dataset>-iterator->move_to_next( ) = abap_true.
+            rv_move_successful = abap_true.
+            EXIT.
+          ELSE.
+            <ls_current_dataset>-iterator->move_to_first( ).
           ENDIF.
         ENDIF.
       ENDIF.
@@ -860,7 +902,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
     DATA: lv_datasets_positions TYPE string.
 
     lv_datasets_positions = _positions_as_string( ).
-  endmethod.
+  ENDMETHOD.
 
 
   METHOD _NEXT_POS_OUTER_JOIN_ADD_MODE.
@@ -931,8 +973,21 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
     LOOP AT mt_datasets_with_position ASSIGNING <ls_dataset_with_position>.
       IF <ls_dataset_with_position>-iterator->move_to_first( ) <> abap_true.
-        rv_first_record_select_success = abap_false.
+        IF <ls_dataset_with_position>-type_of_join <> c_left_join.
+          rv_first_record_select_success = abap_false.
+        ENDIF.
       ENDIF.
     ENDLOOP.
   endmethod.
+
+
+  METHOD _skip_join_condition_check.
+    IF is_join_condition-type_of_join = c_left_join.
+      IF _dataset_is_empty( iv_dataset_name  = is_join_condition-right_dataset_name
+                            iv_dataset_alias = is_join_condition-right_dataset_alias ) = abap_true.
+
+        rv_dont_check_it = abap_true.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
 ENDCLASS.

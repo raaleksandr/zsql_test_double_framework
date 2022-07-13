@@ -386,6 +386,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     CLEAR: et_result_table, es_result_line, ev_subrc.
 
     lo_sql_parser = parse_sql( iv_select ).
+
     ld_result_table = create_dynamic_tab_for_result( io_sql_parser = lo_sql_parser
                                                      it_parameters = it_parameters ).
 
@@ -751,7 +752,7 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   METHOD _select.
 
-    DATA: lo_from_iterator         TYPE REF TO zcl_zosql_from_iterator,
+    DATA: lo_from_iterator         TYPE REF TO zif_zosql_iterator,
           lo_select                TYPE REF TO zcl_zosql_select_processor,
           lo_group_by              TYPE REF TO zcl_zosql_groupby_processor,
           lo_order_by              TYPE REF TO zcl_zosql_orderby_processor,
@@ -766,11 +767,11 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
     REFRESH et_result_table.
 
-    CREATE OBJECT lo_from_iterator
+    CREATE OBJECT lo_from_iterator TYPE zcl_zosql_from_iterator
       EXPORTING
-        io_zosql_test_environment = mo_zosql_test_environment
+        io_sql_parser             = io_sql_parser
         io_parameters             = io_parameters
-        io_sql_parser             = io_sql_parser.
+        io_zosql_test_environment = mo_zosql_test_environment.
 
     CREATE OBJECT lo_select
       EXPORTING
@@ -824,8 +825,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     IF lo_node_order_by IS BOUND.
       CREATE OBJECT lo_order_by
         EXPORTING
-          io_sql_parser    = io_sql_parser
-          io_iterator      = lo_from_iterator.
+          io_sql_parser = io_sql_parser
+          io_iterator   = lo_from_iterator.
 
       lo_select->apply_order_by( lo_order_by ).
     ENDIF.

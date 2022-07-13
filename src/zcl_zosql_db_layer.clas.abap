@@ -229,6 +229,7 @@ private section.
       !IT_PARAMETERS_WITH_NAME type TY_PARAMETERS_WITH_NAME
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC optional
       !IO_ITERATOR type ref to ZIF_ZOSQL_ITERATOR
+      !IV_NAME_OF_FOR_ALL_ENT_IN_SEL type CLIKE optional
     returning
       value(RD_DYNAMIC_STRUCT_WITH_PARAMS) type ref to DATA
     raising
@@ -764,6 +765,10 @@ endmethod.
         io_parameters = lo_parameters
         io_iterator   = io_iterator.
 
+    IF iv_name_of_for_all_ent_in_sel IS NOT INITIAL.
+      lo_where_processor->set_for_all_entries_tabname( iv_name_of_for_all_ent_in_sel ).
+    ENDIF.
+
     lo_where_processor->zif_zosql_expression_processor~initialize_by_parsed_sql( lo_node_where ).
 
     LOOP AT it_parameters_with_name ASSIGNING <ls_parameter_with_name>.
@@ -800,7 +805,6 @@ endmethod.
 
 
   method _CREATE_ITERATOR_FOR_SELECT.
-
     DATA: lo_parameters TYPE REF TO zcl_zosql_parameters.
 
     CREATE OBJECT lo_parameters
@@ -1234,9 +1238,11 @@ METHOD _PREPARE_FOR_SELECT.
   lo_iterator = _create_iterator_for_select( io_sql_parser = io_sql_parser
                                              it_parameters = it_parameters ).
 
-  ed_dynamic_struct_with_params = _create_dynamic_struct_forpars( it_parameters_with_name = lt_parameters_with_name
-                                                                  io_sql_parser           = io_sql_parser
-                                                                  io_iterator             = lo_iterator ).
+  ed_dynamic_struct_with_params =
+    _create_dynamic_struct_forpars( it_parameters_with_name       = lt_parameters_with_name
+                                    io_sql_parser                 = io_sql_parser
+                                    io_iterator                   = lo_iterator
+                                    iv_name_of_for_all_ent_in_sel = iv_name_of_for_all_ent_in_sel ).
 
   _replace_param_names_in_sql( EXPORTING it_parameters_with_name       = lt_parameters_with_name
                                          iv_name_of_struct_with_params = iv_name_of_struct_with_params
