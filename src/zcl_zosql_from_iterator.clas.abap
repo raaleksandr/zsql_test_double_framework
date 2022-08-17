@@ -418,7 +418,7 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
       EXPORTING
         iv_table_name = <ls_data_set_data>-dataset_name.
 
-    rt_key_fields = lo_virt_table->get_key_fields( ).
+    rt_key_fields = lo_virt_table->zif_zosql_stub~get_key_fields( ).
   endmethod.
 
 
@@ -843,17 +843,25 @@ CLASS ZCL_ZOSQL_FROM_ITERATOR IMPLEMENTATION.
 
   METHOD _INIT_OUTER_JOIN_ADD_MODE.
 
+    DATA: lv_index_of_join TYPE i.
+
     FIELD-SYMBOLS: <ls_dataset_with_position> LIKE LINE OF mt_datasets_with_position,
                    <ls_join_condition>        LIKE LINE OF mt_join_conditions,
                    <ls_outer_join_add_elem>   LIKE LINE OF mt_outer_join_add_chain.
 
     mv_outer_join_add_mode = abap_true.
 
-    LOOP AT mt_join_conditions ASSIGNING <ls_join_condition>
-      WHERE type_of_join = c_left_join.
+    lv_index_of_join = LINES( mt_join_conditions ).
 
-      _add_left_join_iter( <ls_join_condition> ).
-    ENDLOOP.
+    WHILE lv_index_of_join >= 1.
+
+      READ TABLE mt_join_conditions INDEX lv_index_of_join ASSIGNING <ls_join_condition>.
+      IF <ls_join_condition>-type_of_join = c_left_join.
+        _add_left_join_iter( <ls_join_condition> ).
+      ENDIF.
+
+      lv_index_of_join = lv_index_of_join - 1.
+    ENDWHILE.
 
     LOOP AT mt_outer_join_add_chain ASSIGNING <ls_outer_join_add_elem>.
       IF <ls_outer_join_add_elem>-from_iterator->move_to_first( ) <> abap_true.

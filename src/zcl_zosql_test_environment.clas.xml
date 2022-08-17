@@ -11,6 +11,7 @@
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
     <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
+    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
@@ -78,6 +79,18 @@
      <CMPNAME>_RAISE_CANNOT_DETECT_TABNAME</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Raises exception that table name could not be detected</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>_RAISE_IF_SOME_RECS_EXIST</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception if some of itab records already added</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>_RECORD_EXISTS_IN_STUB</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if record already exists in stub</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

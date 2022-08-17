@@ -4,53 +4,69 @@ class ZCL_ZOSQL_ONE_VIRT_TABLE definition
 
 public section.
 
+  interfaces ZIF_ZOSQL_STUB .
+
   data M_TABLE_NAME type TABNAME16 read-only .
   data COUNT_INSERTED type I .
   data COUNT_UPDATED type I .
   data COUNT_DELETED type I .
 
-  methods GET_KEY_FIELDS
-    returning
-      value(RT_KEY_FIELDS) type FIELDNAME_TABLE .
-  methods DELETE_TEST_DATA_FROM_ITAB
-    importing
-      !IT_LINES_FOR_DELETE type ANY TABLE
-    returning
-      value(RV_SUBRC) type SYSUBRC .
-  methods GET_DATA
-    exporting
-      !ET_TABLE type ANY TABLE .
-  methods GET_DATA_AS_REF
-    returning
-      value(RD_REF_TO_DATA) type ref to DATA .
   methods CONSTRUCTOR
     importing
       !IV_TABLE_NAME type CLIKE .
-  methods INSERT_TEST_DATA_FROM_ITAB
-    importing
-      !IT_TABLE type ANY TABLE .
-  methods CLEAR .
 protected section.
 private section.
 
+  types TY_OPERATION type CHAR1 .
+
   data M_MANDANT_FIELD_NAME type FIELDNAME .
   data M_VIRTUAL_TABLE_BUFFER_REF type ref to DATA .
+  constants:
+    BEGIN OF OPERATION,
+               insert TYPE ty_operation VALUE 'I',
+               update TYPE ty_operation VALUE 'U',
+               delete TYPE ty_operation VALUE 'D',
+             END OF operation .
 
-  methods _MODIFY_BUFFERLINE_FROM_STRUCT
+  methods _DELETE_ONE_REC
     importing
       !IS_RECORD type ANY
-      !IV_DELETE type ABAP_BOOL
     returning
       value(RV_SUBRC) type SYSUBRC .
+  methods _GET_RECORD_PREPARED_FOR_BUF
+    importing
+      !IS_RECORD type ANY
+    returning
+      value(RD_RECORD_PREPARED) type ref to DATA .
+  methods _INSERT_ONE_REC
+    importing
+      !IS_RECORD type ANY
+    returning
+      value(RV_SUBRC) type SYSUBRC .
+  methods _UPDATE_ONE_REC
+    importing
+      !IS_RECORD type ANY
+    returning
+      value(RV_SUBRC) type SYSUBRC .
+  methods _PERFORM_INS_UPD_DEL_OPERATION
+    importing
+      !IS_RECORD type ANY
+      !IV_OPERATION type TY_OPERATION
+    returning
+      value(RV_SUBRC) type SYSUBRC .
+  methods _RAISE_IF_ITAB_HAS_DUPL_KEYS
+    importing
+      !IT_TABLE type ANY TABLE
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _RECORD_ALREADY_EXISTS
+    importing
+      !IS_RECORD type ANY
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
   methods _FILL_MANDANT_FIELD
     changing
       !CS_STRUCT type ANY .
-  methods _PERFORM_UPD_DEL_OPERATION
-    importing
-      !IT_TABLE type ANY TABLE
-      !IV_DELETE type ABAP_BOOL
-    returning
-      value(RV_SUBRC) type SYSUBRC .
   methods _FIND_MANDANT_FIELD .
   methods _GET_FIELD_LIST
     returning
@@ -63,15 +79,6 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
 
 
-  method CLEAR.
-
-    FIELD-SYMBOLS: <lt_table_buffer> TYPE HASHED TABLE.
-
-    ASSIGN m_virtual_table_buffer_ref->* TO <lt_table_buffer>.
-    CLEAR <lt_table_buffer>.
-  endmethod.
-
-
   method CONSTRUCTOR.
     m_table_name = iv_table_name.
 
@@ -80,15 +87,31 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
   endmethod.
 
 
-  method DELETE_TEST_DATA_FROM_ITAB.
+  method ZIF_ZOSQL_STUB~CLEAR.
+    FIELD-SYMBOLS: <lt_table_buffer> TYPE HASHED TABLE.
 
-    rv_subrc = _perform_upd_del_operation( it_table  = it_lines_for_delete
-                                           iv_delete = abap_true ).
+    ASSIGN m_virtual_table_buffer_ref->* TO <lt_table_buffer>.
+    CLEAR <lt_table_buffer>.
   endmethod.
 
 
-  method GET_DATA.
+  method ZIF_ZOSQL_STUB~DELETE.
 
+    FIELD-SYMBOLS: <ls_line> TYPE any.
+
+    rv_subrc = 4.
+
+    LOOP AT it_lines_for_delete ASSIGNING <ls_line>.
+      IF _record_already_exists( <ls_line> ) = abap_true.
+        IF _delete_one_rec( <ls_line> ) = 0.
+          rv_subrc = 0.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+  endmethod.
+
+
+  method ZIF_ZOSQL_STUB~GET_DATA.
     FIELD-SYMBOLS: <lt_table_buffer> TYPE HASHED TABLE.
 
     REFRESH et_table.
@@ -99,8 +122,7 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
   endmethod.
 
 
-  method GET_DATA_AS_REF.
-
+  method ZIF_ZOSQL_STUB~GET_DATA_AS_REF.
     FIELD-SYMBOLS: <lt_table_buffer> TYPE HASHED TABLE,
                    <lt_table_copy>   TYPE STANDARD TABLE.
 
@@ -113,8 +135,7 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
   endmethod.
 
 
-  METHOD get_key_fields.
-
+  method ZIF_ZOSQL_STUB~GET_KEY_FIELDS.
     DATA: lt_all_fields TYPE ddfields.
 
     FIELD-SYMBOLS: <ls_field> LIKE LINE OF lt_all_fields.
@@ -126,14 +147,80 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
 
       APPEND <ls_field>-fieldname TO rt_key_fields.
     ENDLOOP.
+  endmethod.
+
+
+  METHOD zif_zosql_stub~get_record_by_key.
+
+    DATA: ld_record_prepared TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_buffer>            TYPE HASHED TABLE,
+                   <ls_record_prepared>   TYPE any,
+                   <ls_found_record>      TYPE any,
+                   <ls_record_for_return> TYPE any.
+
+    ld_record_prepared = _get_record_prepared_for_buf( is_record ).
+    ASSIGN ld_record_prepared->* TO <ls_record_prepared>.
+    ASSIGN m_virtual_table_buffer_ref->* TO <lt_buffer>.
+
+    READ TABLE <lt_buffer> FROM <ls_record_prepared> ASSIGNING <ls_found_record>.
+    IF sy-subrc = 0.
+      CREATE DATA rd_record LIKE <ls_found_record>.
+      ASSIGN rd_record->* TO <ls_record_for_return>.
+      <ls_record_for_return> = <ls_found_record>.
+    ENDIF.
   ENDMETHOD.
 
 
-  METHOD INSERT_TEST_DATA_FROM_ITAB.
+  method ZIF_ZOSQL_STUB~INSERT.
 
-    _perform_upd_del_operation( it_table  = it_table
-                                iv_delete = abap_false ).
-  ENDMETHOD.
+    FIELD-SYMBOLS: <ls_line> TYPE any.
+
+    IF iv_accepting_duplicate_keys <> abap_true.
+      _raise_if_itab_has_dupl_keys( it_table ).
+    ENDIF.
+
+    rv_subrc = 4.
+
+    LOOP AT it_table ASSIGNING <ls_line>.
+
+      IF _record_already_exists( <ls_line> ) <> abap_true.
+        IF _insert_one_rec( <ls_line> ) = 0.
+          rv_subrc = 0.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+  endmethod.
+
+
+  method ZIF_ZOSQL_STUB~MODIFY.
+    FIELD-SYMBOLS: <ls_line> TYPE any.
+
+    LOOP AT it_table ASSIGNING <ls_line>.
+
+      IF _record_already_exists( <ls_line> ) = abap_true.
+        _update_one_rec( <ls_line> ).
+      ELSE.
+        _insert_one_rec( <ls_line> ).
+      ENDIF.
+    ENDLOOP.
+  endmethod.
+
+
+  method ZIF_ZOSQL_STUB~UPDATE.
+    FIELD-SYMBOLS: <ls_line> TYPE any.
+
+    rv_subrc = 4.
+
+    LOOP AT it_table ASSIGNING <ls_line>.
+
+      IF _record_already_exists( <ls_line> ) = abap_true.
+        IF _update_one_rec( <ls_line> ) = 0.
+          rv_subrc = 0.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+  endmethod.
 
 
   method _CREATE_INTERNAL_HASH_TABLE.
@@ -161,6 +248,12 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
                                                   p_key        = lt_key ).
 
     CREATE DATA m_virtual_table_buffer_ref TYPE HANDLE lo_hashed_table.
+  endmethod.
+
+
+  method _DELETE_ONE_REC.
+    rv_subrc = _perform_ins_upd_del_operation( is_record    = is_record
+                                               iv_operation = operation-delete ).
   endmethod.
 
 
@@ -203,52 +296,101 @@ CLASS ZCL_ZOSQL_ONE_VIRT_TABLE IMPLEMENTATION.
   endmethod.
 
 
-  METHOD _MODIFY_BUFFERLINE_FROM_STRUCT.
+  method _GET_RECORD_PREPARED_FOR_BUF.
 
-    FIELD-SYMBOLS: <lt_table_buffer> TYPE HASHED TABLE.
+    FIELD-SYMBOLS: <ls_record_prepared> TYPE any.
 
-    ASSIGN m_virtual_table_buffer_ref->* TO <lt_table_buffer>.
+    CREATE DATA rd_record_prepared TYPE (m_table_name).
+    ASSIGN rd_record_prepared->* TO <ls_record_prepared>.
+    MOVE-CORRESPONDING is_record TO <ls_record_prepared>.
 
-    IF iv_delete = abap_true.
-      DELETE TABLE <lt_table_buffer> FROM is_record.
-      count_deleted = count_deleted + 1.
-    ELSE.
-      READ TABLE <lt_table_buffer> FROM is_record TRANSPORTING NO FIELDS.
+    _fill_mandant_field( CHANGING cs_struct = <ls_record_prepared> ).
+  endmethod.
+
+
+  method _INSERT_ONE_REC.
+    rv_subrc = _perform_ins_upd_del_operation( is_record    = is_record
+                                               iv_operation = operation-insert ).
+  endmethod.
+
+
+  method _PERFORM_INS_UPD_DEL_OPERATION.
+
+    DATA: ld_record_prepared TYPE REF TO data.
+
+    FIELD-SYMBOLS: <lt_buffer>          TYPE HASHED TABLE,
+                   <ls_record_prepared> TYPE any.
+
+    ld_record_prepared = _get_record_prepared_for_buf( is_record ).
+    ASSIGN ld_record_prepared->* TO <ls_record_prepared>.
+
+    ASSIGN m_virtual_table_buffer_ref->* TO <lt_buffer>.
+
+    CASE iv_operation.
+      WHEN operation-insert.
+        INSERT <ls_record_prepared> INTO TABLE <lt_buffer>.
+      WHEN operation-update.
+        MODIFY TABLE <lt_buffer> FROM <ls_record_prepared>.
+      WHEN operation-delete.
+        DELETE TABLE <lt_buffer> FROM <ls_record_prepared>.
+    ENDCASE.
+  endmethod.
+
+
+  method _RAISE_IF_ITAB_HAS_DUPL_KEYS.
+    DATA: ld_duplicate_keys_buffer TYPE REF TO data,
+          ld_line                  TYPE REF TO data.
+
+    FIELD-SYMBOLS: <ls_line>                  TYPE any,
+                   <lt_buffer>                TYPE HASHED TABLE,
+                   <lt_duplicate_keys_buffer> TYPE HASHED TABLE,
+                   <ls_new_line>              TYPE any.
+
+    ASSIGN m_virtual_table_buffer_ref->* TO <lt_buffer>.
+    CREATE DATA ld_duplicate_keys_buffer LIKE <lt_buffer>.
+    ASSIGN ld_duplicate_keys_buffer->* TO <lt_duplicate_keys_buffer>.
+
+    CREATE DATA ld_line LIKE LINE OF <lt_duplicate_keys_buffer>.
+    ASSIGN ld_line->* TO <ls_new_line>.
+
+    LOOP AT it_table ASSIGNING <ls_line>.
+
+      CLEAR <ls_new_line>.
+      MOVE-CORRESPONDING <ls_line> TO <ls_new_line>.
+
+      _fill_mandant_field( CHANGING cs_struct =  <ls_new_line> ).
+
+      READ TABLE <lt_duplicate_keys_buffer> FROM <ls_new_line> TRANSPORTING NO FIELDS.
       IF sy-subrc = 0.
-        MODIFY TABLE <lt_table_buffer> FROM is_record.
-        count_updated = count_updated + 1.
-      ELSE.
-        INSERT is_record INTO TABLE <lt_table_buffer>.
-        count_inserted = count_inserted + 1.
+        MESSAGE e101 INTO zcl_zosqL_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
       ENDIF.
-    ENDIF.
 
-    rv_subrc = sy-subrc.
-  ENDMETHOD.
-
-
-  METHOD _PERFORM_UPD_DEL_OPERATION.
-    DATA: ld_table_line TYPE REF TO data.
-
-    FIELD-SYMBOLS: <ls_table_line> TYPE any,
-                   <ls_param_line> TYPE any.
-
-    CREATE DATA ld_table_line TYPE (m_table_name).
-    ASSIGN ld_table_line->* TO <ls_table_line>.
-
-    rv_subrc = 4.
-
-    LOOP AT it_table ASSIGNING <ls_param_line>.
-      CLEAR <ls_table_line>.
-      MOVE-CORRESPONDING <ls_param_line> TO <ls_table_line>.
-
-      _fill_mandant_field( CHANGING cs_struct = <ls_table_line> ).
-
-      IF _modify_bufferline_from_struct( is_record = <ls_table_line>
-                                         iv_delete = iv_delete ) = 0.
-
-        rv_subrc = 0.
-      ENDIF.
+      INSERT <Ls_new_line> INTO TABLE <lt_duplicate_keys_buffer>.
     ENDLOOP.
-  ENDMETHOD.
+  endmethod.
+
+
+  method _RECORD_ALREADY_EXISTS.
+
+    DATA: ld_record_prepared TYPE REF TO data.
+
+    FIELD-SYMBOLS: <ls_record_prepared> TYPE any,
+                   <lt_buffer>          TYPE HASHED TABLE.
+
+    ld_record_prepared = _get_record_prepared_for_buf( is_record ).
+    ASSIGN ld_record_prepared->* TO <ls_record_prepared>.
+
+    ASSIGN m_virtual_table_buffer_ref->* TO <lt_buffer>.
+    READ TABLE <lt_buffer> FROM <ls_record_prepared> TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      rv_exists = abap_true.
+    ENDIF.
+  endmethod.
+
+
+  method _UPDATE_ONE_REC.
+    rv_subrc = _perform_ins_upd_del_operation( is_record    = is_record
+                                               iv_operation = operation-update ).
+  endmethod.
 ENDCLASS.

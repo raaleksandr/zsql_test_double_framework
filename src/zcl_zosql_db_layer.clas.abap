@@ -80,6 +80,9 @@ private section.
       !EO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _CREATE_DUMMY_RESULT_TABLE
+    returning
+      value(RD_DUMMY_RESULT_TABLE) type ref to DATA .
   methods _RAISE_NEW_SYNTAX_IMPOSSIBLE
     raising
       ZCX_ZOSQL_ERROR .
@@ -444,9 +447,10 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
   endmethod.
 
 
-  method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
+  METHOD zif_zosql_db_layer~insert_by_itab.
     DATA: ld_itab_for_db_operation TYPE REF TO data,
-          lv_table_name            TYPE tabname.
+          lv_table_name            TYPE tabname,
+          lo_exception             TYPE REF TO cx_root.
 
     FIELD-SYMBOLS: <lt_itab_for_db_operation> TYPE STANDARD TABLE.
 
@@ -461,10 +465,18 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
     ASSIGN ld_itab_for_db_operation->* TO <lt_itab_for_db_operation>.
 
-    INSERT (lv_table_name) FROM TABLE <lt_itab_for_db_operation> ACCEPTING DUPLICATE KEYS.
+    IF iv_accepting_duplicate_keys = abap_true.
+      INSERT (lv_table_name) FROM TABLE <lt_itab_for_db_operation> ACCEPTING DUPLICATE KEYS.
+    ELSE.
+      TRY.
+          INSERT (lv_table_name) FROM TABLE <lt_itab_for_db_operation>.
+        CATCH cx_root INTO lo_exception.
+          zcl_zosql_utils=>raise_from_any_exception( lo_exception ).
+      ENDTRY.
+    ENDIF.
 
     rv_subrc = sy-subrc.
-  endmethod.
+  ENDMETHOD.
 
 
   method ZIF_ZOSQL_DB_LAYER~MODIFY_BY_ITAB.
@@ -720,6 +732,16 @@ endmethod.
     zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = it_input_itab
                                                IMPORTING et_table_dest = <lt_table_of_database_struct> ).
   endmethod.
+
+
+  METHOD _create_dummy_result_table.
+
+    TYPES: BEGIN OF ty_dummy_line,
+             dummy_field TYPE string,
+           END OF ty_dummy_line.
+
+    CREATE DATA rd_dummy_result_table TYPE TABLE OF ty_dummy_line.
+  ENDMETHOD.
 
 
   METHOD _CREATE_DUMMY_STRUCTURE.
@@ -1292,6 +1314,9 @@ ENDMETHOD.
       AND zcl_zosql_utils=>is_structure( is_result_line ) = abap_true.
 
       CREATE DATA rd_result_table LIKE TABLE OF is_result_line.
+    ELSEIF if_table_consists_of_structs( it_result_table ) <> abap_true.
+
+      rd_result_table = _create_dummy_result_table( ).
     ELSE.
 
       rd_result_table = _create_standard_like_any_tab( it_result_table ).

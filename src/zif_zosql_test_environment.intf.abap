@@ -2,6 +2,11 @@ interface ZIF_ZOSQL_TEST_ENVIRONMENT
   public .
 
 
+  methods GET_DOUBLE
+    importing
+      !IV_DATABASE_NAME type CLIKE
+    returning
+      value(RO_DOUBLE) type ref to ZIF_ZOSQL_STUB .
   methods CLEAR_ONE_TABLE
     importing
       !IV_TABLE_NAME type CLIKE .

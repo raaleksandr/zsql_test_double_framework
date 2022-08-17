@@ -56,6 +56,7 @@ interface ZIF_ZOSQL_DB_LAYER
     importing
       !IV_TABLE_NAME type CLIKE optional
       !IT_NEW_LINES type ANY TABLE
+      value(IV_ACCEPTING_DUPLICATE_KEYS) type ABAP_BOOL default ABAP_TRUE
     returning
       value(RV_SUBRC) type SYSUBRC
     raising
