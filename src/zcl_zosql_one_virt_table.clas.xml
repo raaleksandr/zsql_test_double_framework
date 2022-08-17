@@ -10,14 +10,9 @@
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
+    <MSG_ID>ZOSQL_DB_LAYER</MSG_ID>
    </VSEOCLASS>
    <DESCRIPTIONS>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>CLEAR</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Clears all data in buffer for virtual table</DESCRIPT>
-    </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
      <CMPNAME>CONSTRUCTOR</CMPNAME>
@@ -44,36 +39,6 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>DELETE_TEST_DATA_FROM_ITAB</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Deletes certain table records in test data by keys in itab</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>GET_DATA</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns data in virtual table buffer into internal tab</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>GET_DATA_AS_REF</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns data as reference to standard table</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>GET_KEY_FIELDS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Returns list of key fields of virtual table</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>INSERT_TEST_DATA_FROM_ITAB</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Insert test data from internal table</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
      <CMPNAME>M_MANDANT_FIELD_NAME</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Fieldname of mandant</DESCRIPT>
@@ -92,9 +57,21 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>TY_OPERATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Type of update operation (insert, update, delete)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
      <CMPNAME>_CREATE_INTERNAL_HASH_TABLE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Create internal hash table with key like in transparent tab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_DELETE_ONE_REC</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Deletes one record in buffer</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
@@ -116,15 +93,39 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>_MODIFY_BUFFERLINE_FROM_STRUCT</CMPNAME>
+     <CMPNAME>_GET_RECORD_PREPARED_FOR_BUF</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Performs modification of line of buf (insert/update/delete)</DESCRIPT>
+     <DESCRIPT>Returns record enriched with some fields for internal format</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
-     <CMPNAME>_PERFORM_UPD_DEL_OPERATION</CMPNAME>
+     <CMPNAME>_INSERT_ONE_REC</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Performs update/delete operation on buffer data</DESCRIPT>
+     <DESCRIPT>Inserts one record in buffer</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_PERFORM_INS_UPD_DEL_OPERATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Performs insert, update or delete of one record in buffer</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_RAISE_IF_ITAB_HAS_DUPL_KEYS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Raises exception if internal table has duplicate keys</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_RECORD_ALREADY_EXISTS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if record with the same key already exists in buffer</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_ONE_VIRT_TABLE</CLSNAME>
+     <CMPNAME>_UPDATE_ONE_REC</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Updates one record in buffer</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

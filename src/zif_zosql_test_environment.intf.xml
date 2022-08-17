@@ -55,6 +55,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZIF_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
+     <CMPNAME>GET_DOUBLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns instance of zosql test double (virt database table)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_TEST_ENVIRONMENT</CLSNAME>
      <CMPNAME>INSERT_TEST_DATA</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Insert test data to fake store of table from internal table</DESCRIPT>

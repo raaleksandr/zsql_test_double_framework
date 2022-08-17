@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_INTF" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOINTERF>
+    <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>One test double containing data</DESCRIPT>
+    <EXPOSURE>2</EXPOSURE>
+    <STATE>1</STATE>
+    <UNICODE>X</UNICODE>
+   </VSEOINTERF>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>CLEAR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Clears all data in buffer for virtual table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>DELETE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Deletes certain table records in test data by keys in itab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>GET_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data in virtual table buffer into internal tab</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>GET_DATA_AS_REF</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns data as reference to standard table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>GET_KEY_FIELDS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns list of key fields of virtual table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>GET_RECORD_BY_KEY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Returns record from stub buffer for certain key</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>INSERT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Insert test data from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>MODIFY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Modify test data from internal table (updates or inserts)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_ZOSQL_STUB</CLSNAME>
+     <CMPNAME>UPDATE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Update test data from internal table</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

@@ -68,6 +68,12 @@ private section.
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     returning
       value(RV_REFERENCE_EXISTS) type ABAP_BOOL .
+  methods _FILL_TABLE_NAME_IF_EMPTY
+    importing
+      !IT_TABLE_DATA_AS_ITAB type ANY TABLE
+      !IV_TABLE_NAME type CLIKE
+    returning
+      value(RV_TABLE_NAME) type STRING .
   methods _GET_COUNT_INSERTED
     returning
       value(RV_COUNT_INSERTED) type I .
@@ -79,7 +85,6 @@ private section.
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
     returning
       value(RV_IS_SELECT_FOR_ALL_ENTRIES) type ABAP_BOOL .
-  methods _CLEAR_UPDATE_COUNTERS .
   methods _IS_FAE_ITAB_WITHOUT_STRUCT
     importing
       !IA_FOR_ALL_ENTRIES_TAB_LINE type ANY
@@ -330,22 +335,27 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
 
-    _clear_update_counters( ).
+    DATA: lo_stub       TYPE REF TO zif_zosql_stub,
+          lv_table_name TYPE string.
 
-    mo_zosql_test_environment->insert_test_data( it_table      = it_new_lines
-                                                 iv_table_name = iv_table_name ).
+    lv_table_name = _fill_table_name_if_empty( it_table_data_as_itab = it_new_lines
+                                               iv_table_name         = iv_table_name ).
 
-    IF _get_count_inserted( ) > 0.
-      rv_subrc = 0.
-    ELSE.
-      rv_subrc = 4.
-    ENDIF.
+    lo_stub = mo_zosql_test_environment->get_double( lv_table_name ).
+    rv_subrc = lo_stub->insert( it_table                    = it_new_lines
+                                iv_accepting_duplicate_keys = iv_accepting_duplicate_keys ).
   endmethod.
 
 
   method ZIF_ZOSQL_DB_LAYER~MODIFY_BY_ITAB.
-    zif_zosql_db_layer~insert_by_itab( iv_table_name = iv_table_name
-                                       it_new_lines  = it_lines_for_modify ).
+    DATA: lo_stub       TYPE REF TO zif_zosql_stub,
+          lv_table_name TYPE string.
+
+    lv_table_name = _fill_table_name_if_empty( it_table_data_as_itab = it_lines_for_modify
+                                               iv_table_name         = iv_table_name ).
+
+    lo_stub = mo_zosql_test_environment->get_double( lv_table_name ).
+    lo_stub->modify( it_lines_for_modify ).
   endmethod.
 
 
@@ -494,16 +504,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
-    _clear_update_counters( ).
 
-    mo_zosql_test_environment->insert_test_data( it_table      = it_lines_for_update
-                                                 iv_table_name = iv_table_name ).
+    DATA: lo_stub       TYPE REF TO zif_zosql_stub,
+          lv_table_name TYPE string.
 
-    IF _get_count_updated( ) > 0.
-      rv_subrc = 0.
-    ELSE.
-      rv_subrc = 4.
-    ENDIF.
+    lv_table_name = _fill_table_name_if_empty( it_table_data_as_itab = it_lines_for_update
+                                               iv_table_name         = iv_table_name ).
+
+    lo_stub = mo_zosql_test_environment->get_double( lv_table_name ).
+    rv_subrc = lo_stub->update( it_lines_for_update ).
   endmethod.
 
 
@@ -600,15 +609,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
   endmethod.
 
 
-  method _CLEAR_UPDATE_COUNTERS.
-
-    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
-
-    lo_test_environment ?= mo_zosql_test_environment.
-    lo_test_environment->clear_update_counters( ).
-  endmethod.
-
-
   METHOD _execute_sql.
 
     DATA: lo_iter_pos            TYPE REF TO zcl_zosql_iterator_position,
@@ -644,6 +644,15 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
       lv_not_end_of_data = io_iterator->move_to_next( ).
     ENDWHILE.
   ENDMETHOD.
+
+
+  method _FILL_TABLE_NAME_IF_EMPTY.
+    IF iv_table_name IS NOT INITIAL.
+      rv_table_name = iv_table_name.
+    ELSE.
+      rv_table_name = zcl_zosql_utils=>try_to_guess_tabname_by_data( it_table_data_as_itab ).
+    ENDIF.
+  endmethod.
 
 
   method _FIND_FOR_ALL_ENTRIES_CONDS.

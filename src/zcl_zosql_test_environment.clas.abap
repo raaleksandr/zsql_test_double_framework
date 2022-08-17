@@ -31,13 +31,25 @@ private section.
   types:
     BEGIN OF TY_VIRTUAL_TABLE,
            table_name TYPE tabname16,
-           virt_table TYPE REF TO zcl_zosql_one_virt_table,
+           virt_table TYPE REF TO zif_zosql_stub,
          END OF ty_virtual_table .
 
   data MO_FACTORY type ref to ZIF_ZOSQL_FACTORY .
   data:
     MT_VIRTUAL_TABLES  TYPE HASHED TABLE OF ty_virtual_table WITH UNIQUE KEY table_name .
 
+  methods _RAISE_IF_SOME_RECS_EXIST
+    importing
+      !IT_TABLE type ANY TABLE
+      !IO_STUB type ref to ZIF_ZOSQL_STUB
+    raising
+      ZCX_ZOSQL_ERROR .
+  methods _RECORD_EXISTS_IN_STUB
+    importing
+      !IS_RECORD type ANY
+      !IO_STUB type ref to ZIF_ZOSQL_STUB
+    returning
+      value(RV_EXISTS) type ABAP_BOOL .
   methods _CREATE_TABLE_RECORD
     importing
       !IV_TABLE_NAME type CLIKE .
@@ -57,12 +69,16 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method CLEAR_UPDATE_COUNTERS.
+
+    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
     LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      CLEAR: <ls_virtual_table>-virt_table->count_inserted,
-             <ls_virtual_table>-virt_table->count_updated,
-             <ls_virtual_table>-virt_table->count_deleted.
+      lo_virt_table ?= <ls_virtual_table>-virt_table.
+      CLEAR: lo_virt_table->count_inserted,
+             lo_virt_table->count_updated,
+             lo_virt_table->count_deleted.
     ENDLOOP.
   endmethod.
 
@@ -84,30 +100,39 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
   method GET_COUNT_DELETED.
 
+    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
     LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      rv_count_deleted = rv_count_deleted + <ls_virtual_table>-virt_table->count_deleted.
+      lo_virt_table ?= <ls_virtual_table>-virt_table.
+      rv_count_deleted = rv_count_deleted + lo_virt_table->count_deleted.
     ENDLOOP.
   endmethod.
 
 
   method GET_COUNT_INSERTED.
 
+    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
     LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      rv_count_inserted = rv_count_inserted + <ls_virtual_table>-virt_table->count_inserted.
+      lo_virt_table ?= <ls_virtual_table>-virt_table.
+      rv_count_inserted = rv_count_inserted + lo_virt_table->count_inserted.
     ENDLOOP.
   endmethod.
 
 
   method GET_COUNT_UPDATED.
 
+    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
+
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
     LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      rv_count_updated = rv_count_updated + <ls_virtual_table>-virt_table->count_updated.
+      lo_virt_table ?= <ls_virtual_table>-virt_table.
+      rv_count_updated = rv_count_updated + lo_virt_table->count_updated.
     ENDLOOP.
   endmethod.
 
@@ -136,7 +161,8 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~DELETE_TEST_DATA_FROM_ITAB.
-    DATA: lv_table_name    TYPE tabname16.
+    DATA: lv_table_name    TYPE tabname16,
+          lo_stub          TYPE REF TO zif_zosql_stub.
 
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
 
@@ -152,11 +178,9 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
     rv_subrc = 4.
 
-    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
-    IF sy-subrc = 0.
-      IF <ls_virtual_table>-virt_table->delete_test_data_from_itab( it_lines_for_delete ) = 0.
-        rv_subrc = 0.
-      ENDIF.
+    lo_stub = zif_zosql_test_environment~get_double( iv_table_name ).
+    IF lo_stub IS BOUND.
+      rv_subrc = lo_stub->delete( it_lines_for_delete ).
     ENDIF.
   endmethod.
 
@@ -201,6 +225,23 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
   endmethod.
 
 
+  method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DOUBLE.
+
+    DATA: lv_table_name  TYPE string.
+
+    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
+
+    lv_table_name = zcl_zosql_utils=>to_upper_case( iv_database_name ).
+
+    READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
+    IF sy-subrc <> 0.
+      _create_table_record( lv_table_name ).
+      READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
+    ENDIF.
+    ro_double = <ls_virtual_table>-virt_table.
+  endmethod.
+
+
   method ZIF_ZOSQL_TEST_ENVIRONMENT~INSERT_TEST_DATA.
     DATA: lv_table_name    TYPE tabname16.
 
@@ -221,7 +262,12 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
       _create_table_record( lv_table_name ).
       READ TABLE mt_virtual_tables WITH TABLE KEY table_name = lv_table_name ASSIGNING <ls_virtual_table>.
     ENDIF.
-    <ls_virtual_table>-virt_table->insert_test_data_from_itab( it_table ).
+
+    _raise_if_some_recs_exist( it_table = it_table
+                               io_stub  = <ls_virtual_table>-virt_table ).
+
+    <ls_virtual_table>-virt_table->insert( it_table                    = it_table
+                                           iv_accepting_duplicate_keys = abap_false ).
   endmethod.
 
 
@@ -260,4 +306,30 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
     MESSAGE e053 INTO zcl_zosql_utils=>dummy.
     zcl_zosql_utils=>raise_exception_from_sy_msg( ).
   ENDMETHOD.
+
+
+  method _RAISE_IF_SOME_RECS_EXIST.
+
+    FIELD-SYMBOLS: <ls_line> TYPE any.
+
+    LOOP AT it_table ASSIGNING <ls_line>.
+      IF _record_exists_in_stub( is_record = <ls_line>
+                                 io_stub   = io_stub ) = abap_true.
+
+        MESSAGE e102 INTO zcl_zosql_utils=>dummy.
+        zcl_zosql_utils=>raise_exception_from_sy_msg( ).
+      ENDIF.
+    ENDLOOP.
+  endmethod.
+
+
+  method _RECORD_EXISTS_IN_STUB.
+
+    DATA: ld_found_record TYPE REF TO data.
+
+    ld_found_record = io_stub->get_record_by_key( is_record ).
+    IF ld_found_record IS BOUND.
+      rv_exists = abap_true.
+    ENDIF.
+  endmethod.
 ENDCLASS.

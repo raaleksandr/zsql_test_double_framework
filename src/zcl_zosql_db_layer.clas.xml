@@ -46,6 +46,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_CREATE_DUMMY_RESULT_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates dummy result table with one field</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
      <CMPNAME>_CREATE_DUMMY_STRUCTURE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Create dummy structure just to make field symbol assigned</DESCRIPT>
