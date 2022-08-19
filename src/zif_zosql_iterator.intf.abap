@@ -84,11 +84,6 @@ interface ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
   methods CLONE
-    importing
-      !IT_RECORDS_TO_DELETE type ZOSQL_DB_REC_UNIQUE_ID_TAB optional
     returning
       value(RO_COPY_OF_OBJECT) type ref to ZIF_ZOSQL_ITERATOR .
-  methods DELETE_RECORD_BY_UNIQUE_ID
-    importing
-      value(IV_RECORD_UNIQUE_ID) type ZOSQL_HASH .
 endinterface.

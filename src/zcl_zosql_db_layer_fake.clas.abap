@@ -74,12 +74,6 @@ private section.
       !IV_TABLE_NAME type CLIKE
     returning
       value(RV_TABLE_NAME) type STRING .
-  methods _GET_COUNT_INSERTED
-    returning
-      value(RV_COUNT_INSERTED) type I .
-  methods _GET_COUNT_UPDATED
-    returning
-      value(RV_COUNT_UPDATED) type I .
   methods _IF_SELECT_FOR_ALL_ENTRIES
     importing
       !IO_SQL_PARSER type ref to ZCL_ZOSQL_PARSER_RECURS_DESC
@@ -693,22 +687,6 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
         COLLECT lo_child_node_of_where->token_ucase INTO et_found_parameters.
       ENDIF.
     ENDLOOP.
-  endmethod.
-
-
-  method _GET_COUNT_INSERTED.
-    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
-
-    lo_test_environment ?= mo_zosql_test_environment.
-    rv_count_inserted = lo_test_environment->get_count_inserted( ).
-  endmethod.
-
-
-  method _GET_COUNT_UPDATED.
-    DATA: lo_test_environment TYPE REF TO zcl_zosql_test_environment.
-
-    lo_test_environment ?= mo_zosql_test_environment.
-    rv_count_updated = lo_test_environment->get_count_updated( ).
   endmethod.
 
 

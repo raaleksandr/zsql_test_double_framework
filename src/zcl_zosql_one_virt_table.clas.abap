@@ -7,9 +7,6 @@ public section.
   interfaces ZIF_ZOSQL_STUB .
 
   data M_TABLE_NAME type TABNAME16 read-only .
-  data COUNT_INSERTED type I .
-  data COUNT_UPDATED type I .
-  data COUNT_DELETED type I .
 
   methods CONSTRUCTOR
     importing
