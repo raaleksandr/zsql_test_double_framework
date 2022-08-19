@@ -6,15 +6,6 @@ public section.
 
   interfaces ZIF_ZOSQL_TEST_ENVIRONMENT .
 
-  methods GET_COUNT_DELETED
-    returning
-      value(RV_COUNT_DELETED) type I .
-  methods GET_COUNT_INSERTED
-    returning
-      value(RV_COUNT_INSERTED) type I .
-  methods GET_COUNT_UPDATED
-    returning
-      value(RV_COUNT_UPDATED) type I .
   class-methods CREATE
     returning
       value(RO_RESULT) type ref to ZIF_ZOSQL_TEST_ENVIRONMENT .
@@ -24,7 +15,6 @@ public section.
   methods CONSTRUCTOR
     importing
       !IO_FACTORY type ref to ZIF_ZOSQL_FACTORY optional .
-  methods CLEAR_UPDATE_COUNTERS .
 protected section.
 private section.
 
@@ -68,21 +58,6 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
-  method CLEAR_UPDATE_COUNTERS.
-
-    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
-
-    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
-
-    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      lo_virt_table ?= <ls_virtual_table>-virt_table.
-      CLEAR: lo_virt_table->count_inserted,
-             lo_virt_table->count_updated,
-             lo_virt_table->count_deleted.
-    ENDLOOP.
-  endmethod.
-
-
   method CONSTRUCTOR.
 
     IF io_factory IS BOUND.
@@ -95,45 +70,6 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
   method CREATE.
     CREATE OBJECT ro_result TYPE zcl_zosql_test_environment.
-  endmethod.
-
-
-  method GET_COUNT_DELETED.
-
-    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
-
-    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
-
-    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      lo_virt_table ?= <ls_virtual_table>-virt_table.
-      rv_count_deleted = rv_count_deleted + lo_virt_table->count_deleted.
-    ENDLOOP.
-  endmethod.
-
-
-  method GET_COUNT_INSERTED.
-
-    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
-
-    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
-
-    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      lo_virt_table ?= <ls_virtual_table>-virt_table.
-      rv_count_inserted = rv_count_inserted + lo_virt_table->count_inserted.
-    ENDLOOP.
-  endmethod.
-
-
-  method GET_COUNT_UPDATED.
-
-    DATA: lo_virt_table TYPE REF TO zcl_zosql_one_virt_table.
-
-    FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
-
-    LOOP AT mt_virtual_tables ASSIGNING <ls_virtual_table>.
-      lo_virt_table ?= <ls_virtual_table>-virt_table.
-      rv_count_updated = rv_count_updated + lo_virt_table->count_updated.
-    ENDLOOP.
   endmethod.
 
 
@@ -178,7 +114,7 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
     rv_subrc = 4.
 
-    lo_stub = zif_zosql_test_environment~get_double( iv_table_name ).
+    lo_stub = zif_zosql_test_environment~get_double( lv_table_name ).
     IF lo_stub IS BOUND.
       rv_subrc = lo_stub->delete( it_lines_for_delete ).
     ENDIF.

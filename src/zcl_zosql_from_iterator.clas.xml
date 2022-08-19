@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Iterator for virtual DB according to from clause (JOIN)</DESCRIPT>
+    <DESCRIPT>Iterator of FROM clause in SQL Select</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -45,33 +45,21 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>MO_ZOSQL_TEST_ENVIRONMENT</CMPNAME>
+     <CMPNAME>_ADD_JOIN</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Test data environment for use in fake database operations</DESCRIPT>
+     <DESCRIPT>Adds joined dataset in &apos;FROM&apos; with it&apos;s conditions</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_ADD_ANOTHER_JOIN</CMPNAME>
+     <CMPNAME>_ADD_JOIN_AND_FILL_DATASET</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Adds one more joined dataset in &apos;FROM&apos;</DESCRIPT>
+     <DESCRIPT>Add new join record and parse&amp;fill dataset params</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_ADD_DATASET</CMPNAME>
+     <CMPNAME>_ANY_REC_CONDIT_TRUE_DATASET</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Adds dataset for table</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_ADD_JOIN_CONDITION</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Adds join condition object by join condition string</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_ADD_LEFT_JOIN_ITER</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Adds left join iterator to get records with empty right part</DESCRIPT>
+     <DESCRIPT>Checks if there is record in dataset that fits join conditio</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
@@ -99,15 +87,9 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_DATASET_IS_EMPTY</CMPNAME>
+     <CMPNAME>_FILL_JOIN_CONDITION</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Checks if data set is empty</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_FILL_RECORD_STATISTIC</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Adds dataset records join info necessary for outer joins</DESCRIPT>
+     <DESCRIPT>Parse&amp;fill join condition parameters of current join record</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
@@ -123,15 +105,15 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_IF_DATASET_IS_TABLE</CMPNAME>
+     <CMPNAME>_GET_ITERATOR_POSITION_OBJECT</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Checks if dataset is transparent table</DESCRIPT>
+     <DESCRIPT>Returns data at current iterator position</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_INIT_BY_ATTRIBUTES</CMPNAME>
+     <CMPNAME>_IF_DATASET_IS_TABLE</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Private initialization that lets to pass attributes directly</DESCRIPT>
+     <DESCRIPT>Checks if dataset is transparent table</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
@@ -141,21 +123,15 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_INIT_OUTER_JOIN_ADD_MODE</CMPNAME>
+     <CMPNAME>_IS_DATASET_OUTER_JOINED</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Initialization of mode adding not full recs for outer join</DESCRIPT>
+     <DESCRIPT>Checks if dataset is joined using outer join (LEFT etc)</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
      <CMPNAME>_MOVE_TO_NEXT_POSITION</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Moves iterator position to next</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_NEXT_POS_OUTER_JOIN_ADD_MODE</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Moves position forward in outer join add mode</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
@@ -177,9 +153,9 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_FROM_ITERATOR</CLSNAME>
-     <CMPNAME>_SKIP_JOIN_CONDITION_CHECK</CMPNAME>
+     <CMPNAME>_UPDATE_OUTER_JOIN_FLAG</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Check if we need to skip join condition check</DESCRIPT>
+     <DESCRIPT>Updates outer_join_empty_flag field of datasets table</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

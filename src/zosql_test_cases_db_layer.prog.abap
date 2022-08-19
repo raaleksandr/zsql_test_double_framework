@@ -46,7 +46,9 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       left_join FOR TESTING RAISING zcx_zosql_error,
       left_join_right_tab_empty FOR TESTING RAISING zcx_zosql_error,
       left_join_3rd_tab_empty FOR TESTING RAISING zcx_zosql_error,
+      left_join_2_of_3_tab_empty FOR TESTING RAISING zcx_zosql_error,
       left_join_right_tab_no_sel FOR TESTING RAISING zcx_zosql_error,
+      left_join_2_of_3_tab_no_sel FOR TESTING RAISING zcx_zosql_error,
       join_3_tabs FOR TESTING RAISING zcx_zosql_error,
       join_and_field_without_dataset FOR TESTING RAISING zcx_zosql_error,
       view_no_conditions FOR TESTING RAISING zcx_zosql_error,
@@ -202,7 +204,8 @@ CLASS ltc_cases_for_insert DEFINITION ABSTRACT FOR TESTING
       insert_by_itab_subrc_0 FOR TESTING RAISING zcx_zosql_error,
       insert_by_itab_subrc_4 FOR TESTING RAISING zcx_zosql_error,
       insert_by_itab_dupl FOR TESTING RAISING zcx_zosql_error,
-      insert_by_itab_dupl_err FOR TESTING RAISING zcx_zosql_error.
+      insert_by_itab_dupl_err FOR TESTING RAISING zcx_zosql_error,
+      insert_by_itab_rec_exists_db FOR TESTING RAISING zcx_zosql_error.
 
   PROTECTED SECTION.
     DATA: f_cut  TYPE REF TO zif_zosql_db_layer.
@@ -1573,6 +1576,69 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
   ENDMETHOD.
 
+  METHOD left_join_2_of_3_tab_empty.
+    DATA: lt_table1 TYPE TABLE OF zosql_for_tst,
+          ls_table1 TYPE zosql_for_tst,
+          lt_table2 TYPE TABLE OF zosql_for_tst2,
+          ls_table2 TYPE zosql_for_tst2,
+          lt_table3 TYPE TABLE OF zosql_for_tst3,
+          ls_table3 TYPE zosql_for_tst3.
+
+    " Given 3 tables selected with left join
+    " Left table is not empty, first right table is empty
+    " and second right table has records
+    " Both of right tables depend on left table
+    " Expected result is that fields from left table
+    " and second right table must be selected although
+    " first right table is empty
+
+    " GIVEN
+    ls_table1-mandt     = sy-mandt.
+    ls_table1-key_field = 'KEY_TAB1'.
+    APPEND ls_table1 TO lt_table1.
+
+    ls_table3-mandt      = sy-mandt.
+    ls_table3-key_field3 = 'KEY_TAB1'.
+    ls_table3-some_text  = 'VAL FROM TAB3'.
+    APPEND ls_table3 TO lt_table3.
+
+    insert_test_data( lt_table1 ).
+    insert_test_data( lt_table3 ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             field_from_table1 TYPE zosql_for_tst-key_field,
+             field_from_table2 TYPE zosql_for_tst2-some_other_field,
+             field_from_table3 TYPE zosql_for_tst3-some_text,
+           END OF ty_result.
+
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT zosql_for_tst~key_field as field_from_table1'
+      '                 zosql_for_tst2~some_other_field as field_from_table2'
+      '                 zosql_for_tst3~some_text as field_from_table3'
+      'FROM zosql_for_tst'
+      'LEFT JOIN zosql_for_tst2 ON zosql_for_tst2~key_field = zosql_for_tst~key_field'
+      'LEFT JOIN zosql_for_tst3 ON zosql_for_tst3~key_field3 = zosql_for_tst~key_field'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                           IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_result TYPE TABLE OF ty_result,
+          ls_expected        TYPE ty_result.
+
+    ls_expected-field_from_table1 = 'KEY_TAB1'.
+    ls_expected-field_from_table3 = 'VAL FROM TAB3'.
+    CLEAR ls_expected-field_from_table2.
+
+    APPEND ls_expected TO lt_expected_result.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
+  ENDMETHOD.
+
   METHOD left_join_right_tab_no_sel.
     DATA: lt_table1 TYPE TABLE OF zosql_for_tst,
           ls_table1 TYPE zosql_for_tst,
@@ -1615,6 +1681,66 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
           ls_expected        TYPE ty_result.
 
     ls_expected-field_from_table1 = 'KEY_TAB1'.
+    CLEAR ls_expected-field_from_table2.
+
+    APPEND ls_expected TO lt_expected_result.
+
+    cl_aunit_assert=>assert_equals( act = lt_result exp = lt_expected_result ).
+  ENDMETHOD.
+
+  METHOD left_join_2_of_3_tab_no_sel.
+    DATA: lt_table1 TYPE TABLE OF zosql_for_tst,
+          ls_table1 TYPE zosql_for_tst,
+          lt_table2 TYPE TABLE OF zosql_for_tst2,
+          ls_table2 TYPE zosql_for_tst2,
+          lt_table3 TYPE TABLE OF zosql_for_tst3,
+          ls_table3 TYPE zosql_for_tst3.
+
+    " GIVEN
+    ls_table1-mandt     = sy-mandt.
+    ls_table1-key_field = 'KEY_TAB1'.
+    APPEND ls_table1 TO lt_table1.
+
+    ls_table2-mandt     = sy-mandt.
+    ls_table2-key_field = 'WRONG_VAL'.
+    APPEND ls_table2 TO lt_table2.
+
+    ls_table3-mandt      = sy-mandt.
+    ls_table3-key_field3 = 'KEY_TAB1'.
+    ls_table3-some_text  = 'VAL FROM TAB3'.
+    APPEND ls_table3 TO lt_table3.
+
+    insert_test_data( lt_table1 ).
+    insert_test_data( lt_table2 ).
+    insert_test_data( lt_table3 ).
+
+    " WHEN
+    TYPES: BEGIN OF ty_result,
+             field_from_table1 TYPE zosql_for_tst-key_field,
+             field_from_table2 TYPE zosql_for_tst2-some_other_field,
+             field_from_table3 TYPE zosql_for_tst3-some_text,
+           END OF ty_result.
+
+    DATA: lv_select TYPE string,
+          lt_result TYPE TABLE OF ty_result.
+
+    CONCATENATE 'SELECT zosql_for_tst~key_field as field_from_table1'
+      '                 zosql_for_tst2~some_other_field as field_from_table2'
+      '                 zosql_for_tst3~some_text as field_from_table3'
+      'FROM zosql_for_tst'
+      'LEFT JOIN zosql_for_tst2 ON zosql_for_tst2~key_field = zosql_for_tst~key_field'
+      'LEFT JOIN zosql_for_tst3 ON zosql_for_tst3~key_field3 = zosql_for_tst~key_field'
+      INTO lv_select SEPARATED BY space.
+
+    f_cut->select_to_itab( EXPORTING iv_select       = lv_select
+                           IMPORTING et_result_table = lt_result ).
+
+    " THEN
+    DATA: lt_expected_result TYPE TABLE OF ty_result,
+          ls_expected        TYPE ty_result.
+
+    ls_expected-field_from_table1 = 'KEY_TAB1'.
+    ls_expected-field_from_table3 = 'VAL FROM TAB3'.
     CLEAR ls_expected-field_from_table2.
 
     APPEND ls_expected TO lt_expected_result.
@@ -6577,6 +6703,41 @@ CLASS ltc_cases_for_insert IMPLEMENTATION.
         cl_aunit_assert=>fail( 'Exception should be raised because of duplicate keys' ).
       CATCH cx_root.
     ENDTRY.
+  ENDMETHOD.
+
+  METHOD insert_by_itab_rec_exists_db.
+    DATA: ls_line         TYPE zosql_for_tst,
+          lt_data_before  TYPE TABLE OF zosql_for_tst,
+          lt_insert_table TYPE TABLE OF zosql_for_tst,
+          lt_data_after   TYPE TABLE OF zosql_for_tst,
+          lv_subrc        TYPE sysubrc.
+
+    " GIVEN
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE_OLD'.
+    APPEND ls_line TO lt_data_before.
+
+    insert_test_data( lt_data_before ).
+
+    " WHEN
+    CLEAR ls_line.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE_NEW'.
+    APPEND ls_line TO lt_insert_table.
+
+    lv_subrc = f_cut->insert_by_itab( iv_table_name = 'ZOSQL_FOR_TST'
+                                      it_new_lines  = lt_insert_table ).
+
+    " THEN
+    f_cut->select_to_itab( EXPORTING iv_select       = 'SELECT * FROM zosql_for_tst'
+                           IMPORTING et_result_table = lt_data_after ).
+
+    READ TABLE lt_data_after INDEX 1 INTO ls_line.
+    IF sy-subrc <> 0.
+      CLEAR ls_line.
+    ENDIF.
+
+    cl_aunit_assert=>assert_equals( act = ls_line-text_field1 exp = 'VALUE_OLD' ).
   ENDMETHOD.
 ENDCLASS.
 

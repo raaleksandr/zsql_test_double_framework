@@ -12,6 +12,10 @@ public section.
   types:
     ty_data_sets TYPE STANDARD TABLE OF ty_data_set WITH DEFAULT KEY .
 
+  methods ADD_DATASET_AS_EMPTY_OUTERJOIN
+    importing
+      !IV_DATASET_NAME type CLIKE
+      !IV_DATASET_ALIAS type CLIKE .
   methods GET_DATA_SET_LIST
     returning
       value(RT_DATA_SET_LIST) type TY_DATA_SETS .
@@ -48,6 +52,7 @@ protected section.
     BEGIN OF ty_data_set_data .
            INCLUDE TYPE ty_data_set.
            TYPES: ref_to_data TYPE REF TO data,
+           outer_join_empty_flag TYPE abap_bool,
          END OF ty_data_set_data .
 
   data:
@@ -66,6 +71,28 @@ ENDCLASS.
 CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
 
 
+  method ADD_DATASET_AS_EMPTY_OUTERJOIN.
+
+    TYPES: BEGIN OF ty_dummy,
+             dummy TYPE char1,
+           END OF ty_dummy.
+
+    FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_data_sets_data.
+
+    READ TABLE mt_data_sets_data WITH KEY dataset_name  = iv_dataset_name
+                                          dataset_alias = iv_dataset_alias
+                                          ASSIGNING <ls_data_set_data>.
+    IF sy-subrc <> 0.
+      APPEND INITIAL LINE TO mt_data_sets_data ASSIGNING <ls_data_set_data>.
+      <ls_data_set_data>-dataset_name  = iv_dataset_name.
+      <ls_data_set_data>-dataset_alias = iv_dataset_alias.
+    ENDIF.
+
+    CREATE DATA <ls_data_set_data>-ref_to_data TYPE ty_dummy.
+    <ls_data_set_data>-outer_join_empty_flag = abap_true.
+  endmethod.
+
+
   method ADD_DATA_SET_DATA.
 
     FIELD-SYMBOLS: <ls_data_set_data> LIKE LINE OF mt_data_sets_data.
@@ -79,7 +106,8 @@ CLASS ZCL_ZOSQL_ITERATOR_POSITION IMPLEMENTATION.
       <ls_data_set_data>-dataset_alias = iv_dataset_alias.
     ENDIF.
 
-    <ls_data_set_data>-ref_to_data = id_ref_to_current_line.
+    <ls_data_set_data>-ref_to_data           = id_ref_to_current_line.
+    <ls_data_set_data>-outer_join_empty_flag = abap_false.
   endmethod.
 
 

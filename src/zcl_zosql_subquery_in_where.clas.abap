@@ -53,7 +53,9 @@ private section.
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE
     returning
-      value(RV_EXISTS) type ABAP_BOOL .
+      value(RV_EXISTS) type ABAP_BOOL
+    raising
+      ZCX_ZOSQL_ERROR .
   methods _DATA_SET_EXISTS_IN_SUBQUERY
     importing
       !IV_DATASET_NAME_OR_ALIAS type CLIKE

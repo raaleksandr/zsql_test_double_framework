@@ -40,8 +40,6 @@ public section.
     redefinition .
   methods ZIF_ZOSQL_ITERATOR~RECORD_IS_LAST
     redefinition .
-  methods ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID
-    redefinition .
 protected section.
 private section.
 
@@ -96,12 +94,10 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_ITERATOR~CLONE.
-    DATA: lo_clone_table_iterator TYPE REF TO zcl_zosql_table_iterator,
-          lt_records_to_delete    LIKE it_records_to_delete.
+    DATA: lo_clone_table_iterator TYPE REF TO zcl_zosql_table_iterator.
 
     FIELD-SYMBOLS: <lt_table_this>  TYPE STANDARD TABLE,
-                   <lt_table_clone> TYPE STANDARD TABLE,
-                   <ls_record_to_delete> LIKE LINE OF lt_records_to_delete.
+                   <lt_table_clone> TYPE STANDARD TABLE.
 
     CREATE OBJECT lo_clone_table_iterator
       EXPORTING
@@ -113,13 +109,6 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
     <lt_table_clone> = <lt_table_this>.
 
     ro_copy_of_object = lo_clone_table_iterator.
-
-    lt_records_to_delete = it_records_to_delete.
-    SORT lt_records_to_delete DESCENDING.
-
-    LOOP AT lt_records_to_delete ASSIGNING <ls_record_to_delete>.
-      ro_copy_of_object->delete_record_by_unique_id( <ls_record_to_delete>-record_unique_id ).
-    ENDLOOP.
   endmethod.
 
 
@@ -133,27 +122,6 @@ CLASS ZCL_ZOSQL_TABLE_ITERATOR IMPLEMENTATION.
       MESSAGE e074 WITH mv_table_name INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
-  endmethod.
-
-
-  method ZIF_ZOSQL_ITERATOR~DELETE_RECORD_BY_UNIQUE_ID.
-    DATA: lv_record_index  TYPE i.
-
-    FIELD-SYMBOLS: <lt_table_data> TYPE STANDARD TABLE.
-
-    lv_record_index = iv_record_unique_id.
-
-    ASSIGN mr_table_data_ref->* TO <lt_table_data>.
-
-    IF mv_num_lines >= lv_record_index.
-      DELETE <lt_table_data> INDEX lv_record_index.
-    ENDIF.
-
-    IF current_record > lv_record_index.
-      current_record = current_record - 1.
-    ENDIF.
-
-    mv_num_lines = mv_num_lines - 1.
   endmethod.
 
 
