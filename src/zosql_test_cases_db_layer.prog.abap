@@ -7324,6 +7324,8 @@ CLASS ltc_cases_for_modify IMPLEMENTATION.
     ls_line-text_field1 = 'VALUE_3_1_MOD'.
     APPEND ls_line TO lt_expected_table.
 
+    SORT: lt_result_table, lt_expected_table.
+
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
   ENDMETHOD.
 ENDCLASS.
