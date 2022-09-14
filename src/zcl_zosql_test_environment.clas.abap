@@ -79,16 +79,49 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~CLEAR_ALL.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     REFRESH mt_virtual_tables.
   endmethod.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~CLEAR_DOUBLES.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     zif_zosql_test_environment~clear_all( ).
   endmethod.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~CLEAR_ONE_TABLE.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name TYPE tabname16.
 
     lv_table_name = zcl_zosql_utils=>to_upper_case( iv_table_name ).
@@ -97,6 +130,17 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~DELETE_TEST_DATA_FROM_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name    TYPE tabname16,
           lo_stub          TYPE REF TO zif_zosql_stub.
 
@@ -123,6 +167,16 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DATA_OF_TABLE.
 
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name TYPE string.
 
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
@@ -138,6 +192,16 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DATA_OF_TABLE_AS_REF.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
 
     DATA: lv_table_name  TYPE string.
 
@@ -155,6 +219,17 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DB_LAYER_FOR_UNIT_TESTS.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     CREATE OBJECT ro_db_layer_for_unit_tests TYPE zcl_zosql_db_layer_fake
       EXPORTING
         io_zosql_test_environment = me.
@@ -162,6 +237,16 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~GET_DOUBLE.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
 
     DATA: lv_table_name  TYPE string.
 
@@ -179,6 +264,17 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~INSERT_TEST_DATA.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name    TYPE tabname16.
 
     FIELD-SYMBOLS: <ls_virtual_table> LIKE LINE OF mt_virtual_tables.
@@ -208,6 +304,16 @@ CLASS ZCL_ZOSQL_TEST_ENVIRONMENT IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_TEST_ENVIRONMENT~INSERT_TEST_DATA_LINE.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
 
     DATA: ld_dynamic_table TYPE REF TO data.
 

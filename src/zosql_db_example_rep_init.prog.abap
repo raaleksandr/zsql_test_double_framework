@@ -2,6 +2,14 @@
 *& Report ZOSQL_DB_EXAMPLE_REP_INIT
 *&---------------------------------------------------------------------*
 *& Example program with regular report with some SQL queries
+*&
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
 *&---------------------------------------------------------------------*
 REPORT zosql_db_example_rep_init.
 

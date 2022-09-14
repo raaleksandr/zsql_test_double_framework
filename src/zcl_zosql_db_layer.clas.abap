@@ -83,6 +83,9 @@ private section.
   methods _CREATE_DUMMY_RESULT_TABLE
     returning
       value(RD_DUMMY_RESULT_TABLE) type ref to DATA .
+  methods _REORDER_PARAMS_IF_NECESSARY
+    changing
+      !CT_PARAMETERS type TY_PARAMETERS_WITH_NAME .
   methods _RAISE_NEW_SYNTAX_IMPOSSIBLE
     raising
       ZCX_ZOSQL_ERROR .
@@ -101,11 +104,6 @@ private section.
       value(RO_ITERATOR) type ref to ZIF_ZOSQL_ITERATOR
     raising
       ZCX_ZOSQL_ERROR .
-  methods _IF_ORDER_BY_PRIMARY_KEY
-    importing
-      !IV_ORDER_BY type CLIKE
-    returning
-      value(RV_IS_ORDER_BY_PRIMARY_KEY) type ABAP_BOOL .
   methods _DELETE_BY_SQL_PARTS
     importing
       !IV_TABLE_NAME type CLIKE
@@ -117,6 +115,11 @@ private section.
       value(RV_SUBRC) type SYSUBRC
     raising
       ZCX_ZOSQL_ERROR .
+  methods _IF_ORDER_BY_PRIMARY_KEY
+    importing
+      !IV_ORDER_BY type CLIKE
+    returning
+      value(RV_IS_ORDER_BY_PRIMARY_KEY) type ABAP_BOOL .
   methods _SPLIT_SELECT_INTO_PARTS
     importing
       !IV_SELECT type CLIKE
@@ -355,11 +358,22 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
   endmethod.
 
 
-  method ZIF_ZOSQL_DB_LAYER~DELETE.
-    DATA: lv_table_name    TYPE string,
-          lv_where         TYPE string,
-          lv_new_syntax    TYPE abap_bool,
-          lo_sql_parser    TYPE REF TO zcl_zosql_parser_recurs_desc.
+  METHOD zif_zosql_db_layer~delete.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
+    DATA: lv_table_name TYPE string,
+          lv_where      TYPE string,
+          lv_new_syntax TYPE abap_bool,
+          lo_sql_parser TYPE REF TO zcl_zosql_parser_recurs_desc.
 
     _split_delete_into_parts( EXPORTING iv_delete_statement = iv_delete_statement
                               IMPORTING ev_table_name       = lv_table_name
@@ -372,10 +386,21 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
                                      iv_new_syntax = lv_new_syntax
                                      it_parameters = it_parameters
                                      io_sql_parser = lo_sql_parser ).
-  endmethod.
+  ENDMETHOD.
 
 
   method ZIF_ZOSQL_DB_LAYER~DELETE_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: ld_itab_for_db_operation TYPE REF TO data,
           lv_table_name            TYPE tabname.
 
@@ -448,6 +473,17 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
 
   METHOD zif_zosql_db_layer~insert_by_itab.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: ld_itab_for_db_operation TYPE REF TO data,
           lv_table_name            TYPE tabname,
           lo_exception             TYPE REF TO cx_root.
@@ -480,6 +516,17 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~MODIFY_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: ld_itab_for_db_operation TYPE REF TO data,
           lv_table_name            TYPE tabname.
 
@@ -582,6 +629,16 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~SELECT_TO_ITAB.
 
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_select_field_list       TYPE string,
           lv_from                    TYPE string,
           lv_for_all_entries_tabname TYPE string,
@@ -628,6 +685,17 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
 
   METHOD zif_zosql_db_layer~update.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name    TYPE string,
           lv_set_statement TYPE string,
           lv_where         TYPE string,
@@ -651,6 +719,17 @@ CLASS ZCL_ZOSQL_DB_LAYER IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: ld_itab_for_db_operation TYPE REF TO data,
           lv_table_name            TYPE tabname.
 
@@ -1256,6 +1335,7 @@ METHOD _PREPARE_FOR_SELECT.
         lo_iterator             TYPE REF TO zif_zosql_iterator.
 
   lt_parameters_with_name = _compute_comp_names_for_params( it_parameters ).
+  _reorder_params_if_necessary( CHANGING ct_parameters = lt_parameters_with_name ).
 
   lo_iterator = _create_iterator_for_select( io_sql_parser = io_sql_parser
                                              it_parameters = it_parameters ).
@@ -1358,6 +1438,45 @@ ENDMETHOD.
       MESSAGE e082 WITH lv_version INTO zcl_zosql_utils=>dummy.
       zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
+  endmethod.
+
+
+  method _REORDER_PARAMS_IF_NECESSARY.
+
+    TYPES: BEGIN OF ty_parameter.
+      INCLUDE TYPE ty_parameter_with_name.
+             TYPES: contains_name_of TYPE i,
+           END OF ty_parameter.
+
+    DATA: lt_parameters    TYPE TABLE OF ty_parameter,
+          ls_parameter     TYPE ty_parameter,
+          lv_index_where_find         TYPE i.
+
+    FIELD-SYMBOLS: <ls_parameter> TYPE ty_parameter.
+
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = ct_parameters
+                                               IMPORTING et_table_dest = lt_parameters ).
+
+    LOOP AT lt_parameters ASSIGNING <ls_parameter>.
+      LOOP AT lt_parameters INTO ls_parameter
+        WHERE param_name <> <ls_parameter>-param_name.
+
+        lv_index_where_find = sy-tabix.
+
+        FIND FIRST OCCURRENCE OF <ls_parameter>-param_name_in_select
+          IN ls_parameter-param_name_in_select IGNORING CASE.
+        IF sy-subrc = 0.
+          <ls_parameter>-contains_name_of = lv_index_where_find.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+    ENDLOOP.
+
+    SORT lt_parameters BY contains_name_of.
+
+    REFRESH ct_parameters.
+    zcl_zosql_utils=>move_corresponding_table( EXPORTING it_table_src  = lt_parameters
+                                               IMPORTING et_table_dest = ct_parameters ).
   endmethod.
 
 
