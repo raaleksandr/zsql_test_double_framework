@@ -166,6 +166,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
+     <CMPNAME>_REORDER_PARAMS_IF_NECESSARY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Меняем порядок следования параметров чтобы избежать ошибок</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_DB_LAYER</CLSNAME>
      <CMPNAME>_REPLACE_FOR_ALL_ENTRIES_TAB</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Replaces for all entries table name in where clause</DESCRIPT>

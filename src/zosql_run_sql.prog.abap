@@ -2,6 +2,14 @@
 *& Report ZOSQL_QUERY_RUNNER
 *&---------------------------------------------------------------------*
 *& A tool that can run any Open SQL query and output results
+*&
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
 *&---------------------------------------------------------------------*
 REPORT zosql_query_runner MESSAGE-ID zosql_db_layer.
 

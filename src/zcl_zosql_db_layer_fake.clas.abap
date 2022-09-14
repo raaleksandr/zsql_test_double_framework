@@ -203,6 +203,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~DELETE.
 
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lo_table_iterator           TYPE REF TO zcl_zosql_table_iterator,
           ld_ref_to_buffer_for_delete TYPE REF TO data,
           lo_sql_executor_for_line    TYPE REF TO zcl_zosql_sql_exec_delete,
@@ -257,6 +267,17 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~DELETE_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lv_table_name TYPE tabname16.
 
     lv_table_name = iv_table_name.
@@ -329,6 +350,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~INSERT_BY_ITAB.
 
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lo_stub       TYPE REF TO zif_zosql_stub,
           lv_table_name TYPE string.
 
@@ -342,6 +373,17 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~MODIFY_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lo_stub       TYPE REF TO zif_zosql_stub,
           lv_table_name TYPE string.
 
@@ -374,6 +416,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   METHOD zif_zosql_db_layer~select_to_itab.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
 
     DATA: ld_result_table           TYPE REF TO data,
           lv_up_to_n_rows           TYPE i,
@@ -439,6 +491,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE.
 
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
+
     DATA: lo_parameters               TYPE REF TO zcl_zosql_parameters,
           lo_set                      TYPE REF TO zcl_zosql_set_processor,
           lo_table_iterator           TYPE REF TO zcl_zosql_table_iterator,
@@ -498,6 +560,16 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
 
 
   method ZIF_ZOSQL_DB_LAYER~UPDATE_BY_ITAB.
+
+***********************************************************************************
+*& This code was downloaded from URL
+*& https://github.com/raaleksandr/zsql_test_double_framework
+*&
+*& Full documentation is on Github
+*&
+*& If you find a bug please open Issue on github
+*& https://github.com/raaleksandr/zsql_test_double_framework/issues/new
+***********************************************************************************
 
     DATA: lo_stub       TYPE REF TO zif_zosql_stub,
           lv_table_name TYPE string.
