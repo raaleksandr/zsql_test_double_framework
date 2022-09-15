@@ -2075,7 +2075,8 @@ CLASS ZCL_ZOSQL_PARSER_RECURS_DESC IMPLEMENTATION.
                                   iv_node_type = node_type-where ).
 
     IF _step_forward( ) <> abap_true.
-      RETURN.
+      MESSAGE e103 INTO zcl_zosql_utils=>dummy.
+      zcl_zosql_utils=>raise_exception_from_sy_msg( ).
     ENDIF.
 
     _expression( iv_parent_id       = lv_where_node_id

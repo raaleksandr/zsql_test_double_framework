@@ -329,6 +329,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZOSQL_DB_LAYER</ARBGB>
+     <MSGNR>103</MSGNR>
+     <TEXT>Unexpected end of SQL expression after WHERE</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZOSQL_DB_LAYER</ARBGB>
      <MSGNR>700</MSGNR>
      <TEXT>---- Messages for examples ----</TEXT>
     </T100>

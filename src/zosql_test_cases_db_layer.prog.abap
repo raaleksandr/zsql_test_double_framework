@@ -124,6 +124,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       error_into_in_select FOR TESTING RAISING zcx_zosql_error,
       error_bad_value_in_where FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_where FOR TESTING RAISING zcx_zosql_error,
+      error_nothing_after_where_word FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_select FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_group_by FOR TESTING RAISING zcx_zosql_error,
       error_bad_field_in_having FOR TESTING RAISING zcx_zosql_error,
@@ -5716,6 +5717,11 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
   METHOD error_bad_field_in_where.
     assert_exception_raised(
       iv_select = 'SELECT * FROM zosql_for_tst WHERE bad_field = ''SOME VALUE''' ).
+  ENDMETHOD.
+
+  METHOD error_nothing_after_where_word.
+    assert_exception_raised(
+      iv_select = 'SELECT * FROM zosql_for_tst WHERE' ).
   ENDMETHOD.
 
   METHOD error_bad_table_name.
