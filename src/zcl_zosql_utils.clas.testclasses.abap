@@ -32,7 +32,9 @@ CLASS ltc_zosql_utils DEFINITION FOR TESTING
              is_char_string FOR TESTING,
              is_char_char_var FOR TESTING,
              is_char_int_negative FOR TESTING,
-             raise_exception_with_text FOR TESTING.
+             raise_exception_with_text FOR TESTING,
+             is_same_var_positive FOR TESTING,
+             is_same_var_negative FOR TESTING.
 ENDCLASS.       "ltc_zosql_Utils
 
 CLASS ltc_split_cond_into_tokens DEFINITION FOR TESTING
@@ -207,6 +209,27 @@ CLASS ltc_zosql_utils IMPLEMENTATION.
       lv_text_from_exception = lx_exception->get_text( ).
       cl_aunit_assert=>assert_equals( act = lv_text_from_exception exp = lc_error_text ).
     ENDTRY.
+  ENDMETHOD.
+
+  METHOD is_same_var_positive.
+    DATA: lv_var    TYPE i,
+          lv_result TYPE abap_bool.
+
+    lv_result = zcl_zosql_utils=>is_same_variable( iv_var1 = lv_var
+                                                   iv_var2 = lv_var ).
+
+    cl_aunit_assert=>assert_equals( act = lv_result exp = abap_true ).
+  ENDMETHOD.
+
+  METHOD is_same_var_negative.
+    DATA: lv_var       TYPE i,
+          lv_other_var TYPE i,
+          lv_result    TYPE abap_bool.
+
+    lv_result = zcl_zosql_utils=>is_same_variable( iv_var1 = lv_var
+                                                   iv_var2 = lv_other_var ).
+
+    cl_aunit_assert=>assert_equals( act = lv_result exp = abap_false ).
   ENDMETHOD.
 ENDCLASS.
 

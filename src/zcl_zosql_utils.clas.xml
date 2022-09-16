@@ -136,6 +136,12 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
+     <CMPNAME>IS_SAME_VARIABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Checks if two passed variables are the same in fact</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ZOSQL_UTILS</CLSNAME>
      <CMPNAME>IS_STRUCTURE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Checks if variable is a structure</DESCRIPT>

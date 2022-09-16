@@ -1548,7 +1548,13 @@ ENDMETHOD.
                    <ls_struct_with_params> TYPE any,
                    <lt_result_table>       TYPE ANY TABLE.
 
-    CLEAR: et_result_table, es_result_line, ev_subrc.
+    CLEAR: es_result_line, ev_subrc.
+
+    IF zcl_zosql_utils=>is_same_variable( iv_var1 = it_for_all_entries_table
+                                          iv_var2 = et_result_table ) <> abap_true.
+
+      CLEAR et_result_table.
+    ENDIF.
 
     lv_from_ready_for_select   = iv_from.
     lv_where_ready_for_select  = iv_where.

@@ -439,7 +439,13 @@ CLASS ZCL_ZOSQL_DB_LAYER_FAKE IMPLEMENTATION.
     FIELD-SYMBOLS: <lt_result_table>      TYPE STANDARD TABLE,
                    <ls_result_first_line> TYPE any.
 
-    CLEAR: et_result_table, es_result_line, ev_subrc.
+    CLEAR: es_result_line, ev_subrc.
+
+    IF zcl_zosql_utils=>is_same_variable( iv_var1 = it_for_all_entries_table
+                                          iv_var2 = et_result_table ) <> abap_true.
+
+      CLEAR et_result_table.
+    ENDIF.
 
     lo_sql_parser = parse_sql( iv_select ).
 

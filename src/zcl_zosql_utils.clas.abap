@@ -46,6 +46,12 @@ public section.
   class-methods IS_VERSION_740_AND_ABOVE
     returning
       value(RV_IS_740_OR_ABOVE) type ABAP_BOOL .
+  class-methods IS_SAME_VARIABLE
+    importing
+      !IV_VAR1 type ANY
+      !IV_VAR2 type ANY
+    returning
+      value(RV_IS_SAME) type ABAP_BOOL .
   class-methods SALV_SET_FIELDNAMES_TO_COL_TIT
     importing
       !IO_SALV type ref to CL_SALV_TABLE
@@ -487,6 +493,20 @@ CLASS ZCL_ZOSQL_UTILS IMPLEMENTATION.
     DESCRIBE FIELD i_variable TYPE lv_type.
     IF lv_type CA 'bsIPaeF'.
       rv_is_number = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD is_same_variable.
+
+    DATA: ld_ref_to_var1 TYPE REF TO data,
+          ld_ref_to_var2 TYPE REF TO data.
+
+    GET REFERENCE OF iv_var1 INTO ld_ref_to_var1.
+    GET REFERENCE OF iv_var2 INTO ld_ref_to_var2.
+
+    IF ld_ref_to_var1 = ld_ref_to_var2.
+      rv_is_same = abap_true.
     ENDIF.
   ENDMETHOD.
 

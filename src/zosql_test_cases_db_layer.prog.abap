@@ -115,6 +115,7 @@ CLASS ltc_cases_for_select DEFINITION ABSTRACT FOR TESTING
       for_all_ent_no_struct FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_empty_base_tab FOR TESTING RAISING zcx_zosql_error,
       for_all_ent_with_params FOR TESTING RAISING zcx_zosql_error,
+      for_all_ent_result_same_var FOR TESTING RAISING zcx_zosql_error,
       param_with_name_like_field FOR TESTING RAISING zcx_zosql_error,
       params_when_one_name_in_other FOR TESTING RAISING zcx_zosql_error,
       view_user_addr FOR TESTING RAISING zcx_zosql_error,
@@ -5237,6 +5238,78 @@ CLASS ltc_cases_for_select IMPLEMENTATION.
     SORT: lt_result_table, lt_expected_table.
 
     cl_aunit_assert=>assert_equals( act = lt_result_table exp = lt_expected_table ).
+  ENDMETHOD.
+
+  METHOD for_all_ent_result_same_var.
+    DATA: ls_line          TYPE zosql_for_tst,
+          lt_initial_table TYPE TABLE OF zosql_for_tst.
+
+    " Check if for all entries works
+
+    " GIVEN
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY1'.
+    ls_line-text_field1 = 'VALUE1_1'.
+    ls_line-text_field2 = 'VALUE1_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY2'.
+    ls_line-text_field1 = 'VALUE2_1'.
+    ls_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    ls_line-mandt       = sy-mandt.
+    ls_line-key_field   = 'KEY3'.
+    ls_line-text_field1 = 'VALUE3_1'.
+    ls_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_line TO lt_initial_table.
+
+    insert_test_data( it_table = lt_initial_table ).
+
+    DATA: lt_base_table           TYPE TABLE OF zosql_for_tst,
+          ls_line_for_all_entries TYPE zosql_for_tst.
+
+    ls_line_for_all_entries-key_field = 'KEY2'.
+    APPEND ls_line_for_all_entries TO lt_base_table.
+
+    ls_line_for_all_entries-key_field = 'KEY3'.
+    APPEND ls_line_for_all_entries TO lt_base_table.
+
+    DATA: lv_select TYPE string.
+
+    CONCATENATE 'SELECT *'
+      'FROM zosql_for_tst'
+      'FOR ALL ENTRIES IN lt_base_table'
+      'WHERE KEY_FIELD = LT_BASE_TABLE-KEY_FIELD'
+      INTO lv_select SEPARATED BY space.
+
+    " WHEN
+    DATA: lt_base_and_result_table TYPE TABLE OF zosql_for_tst.
+
+    lt_base_and_result_table = lt_base_table.
+    f_cut->select_to_itab( EXPORTING iv_select                  = lv_select
+                                     it_for_all_entries_table   = lt_base_and_result_table
+                           IMPORTING et_result_table            = lt_base_and_result_table ).
+
+    " THEN
+    DATA: ls_expected_line  TYPE zosql_for_tst,
+          lt_expected_table TYPE TABLE OF zosql_for_tst.
+
+    ls_expected_line-mandt       = sy-mandt.
+    ls_expected_line-key_field   = 'KEY2'.
+    ls_expected_line-text_field1 = 'VALUE2_1'.
+    ls_expected_line-text_field2 = 'VALUE2_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    ls_expected_line-key_field   = 'KEY3'.
+    ls_expected_line-text_field1 = 'VALUE3_1'.
+    ls_expected_line-text_field2 = 'VALUE3_2'.
+    APPEND ls_expected_line TO lt_expected_table.
+
+    SORT: lt_base_and_result_table, lt_expected_table.
+
+    cl_aunit_assert=>assert_equals( act = lt_base_and_result_table exp = lt_expected_table ).
   ENDMETHOD.
 
   METHOD select_from_table_with_include.
