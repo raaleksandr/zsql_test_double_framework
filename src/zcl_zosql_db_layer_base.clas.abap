@@ -205,6 +205,8 @@ CLASS ZCL_ZOSQL_DB_LAYER_BASE IMPLEMENTATION.
 
     FIELD-SYMBOLS: <ls_result_first_line> TYPE any.
 
+    REFRESH et_result_table.
+
     LOOP AT it_result_table ASSIGNING <ls_result_first_line>.
       _return_line_to_result( EXPORTING is_line_of_result_table  = <ls_result_first_line>
                                         iv_do_into_corresponding = iv_do_into_corresponding
